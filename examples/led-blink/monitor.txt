@@ -1,0 +1,91 @@
+I (25) boot: ESP-IDF v5.5.5 2nd stage bootloader
+I (26) boot: compile time Jun 25 2026 19:12:40
+I (26) boot: Multicore bootloader
+I (27) boot: chip revision: v1.3
+I (29) boot: efuse block revision: v0.3
+I (32) boot.esp32p4: SPI Speed      : 80MHz
+I (36) boot.esp32p4: SPI Mode       : DIO
+I (40) boot.esp32p4: SPI Flash Size : 32MB
+I (44) boot: Enabling RNG early entropy source...
+I (48) boot: Partition Table:
+I (51) boot: ## Label            Usage          Type ST Offset   Length
+I (57) boot:  0 nvs              WiFi data        01 02 00009000 00006000
+I (64) boot:  1 phy_init         RF data          01 01 0000f000 00001000
+I (70) boot:  2 factory          factory app      00 00 00010000 00c00000
+I (78) boot: End of partition table
+I (80) esp_image: segment 0: paddr=00010020 vaddr=40220020 size=bad8ch (765324) map
+I (215) esp_image: segment 1: paddr=000cadb4 vaddr=30100000 size=0007ch (   124) load
+I (217) esp_image: segment 2: paddr=000cae38 vaddr=4ff00000 size=051e0h ( 20960) load
+I (225) esp_image: segment 3: paddr=000d0020 vaddr=40000020 size=21e560h (2221408) map
+I (596) esp_image: segment 4: paddr=002ee588 vaddr=4ff051e0 size=0cd18h ( 52504) load
+I (608) esp_image: segment 5: paddr=002fb2a8 vaddr=4ff11f00 size=039ech ( 14828) load
+I (616) boot: Loaded app from partition at offset 0x10000
+I (617) boot: Disabling RNG early entropy source...
+I (628) hex_psram: vendor id    : 0x0d (AP)
+I (629) hex_psram: Latency      : 0x01 (Fixed)
+I (629) hex_psram: DriveStr.    : 0x00 (25 Ohm)
+I (629) hex_psram: dev id       : 0x03 (generation 4)
+I (634) hex_psram: density      : 0x07 (256 Mbit)
+I (639) hex_psram: good-die     : 0x06 (Pass)
+I (643) hex_psram: SRF          : 0x02 (Slow Refresh)
+I (648) hex_psram: BurstType    : 0x00 ( Wrap)
+I (652) hex_psram: BurstLen     : 0x03 (2048 Byte)
+I (656) hex_psram: BitMode      : 0x01 (X16 Mode)
+I (661) hex_psram: Readlatency  : 0x04 (14 cycles@Fixed)
+I (666) hex_psram: DriveStrength: 0x00 (1/1)
+I (670) MSPI Timing: Enter psram timing tuning
+I (847) esp_psram: Found 32MB PSRAM device
+I (847) esp_psram: Speed: 200MHz
+I (848) hex_psram: psram CS IO is dedicated
+I (848) cpu_start: Multicore app
+I (1799) esp_psram: SPI SRAM memory test OK
+I (1809) cpu_start: GPIO 38 and 37 are used as console UART I/O pins
+I (1809) cpu_start: Pro cpu start user code
+I (1809) cpu_start: cpu freq: 360000000 Hz
+I (1811) app_init: Application information:
+I (1815) app_init: Project name:     php-esp32
+I (1819) app_init: App version:      beaba14
+I (1823) app_init: Compile time:     Jul 14 2026 22:48:19
+I (1829) app_init: ELF file SHA256:  eb45cb5cf...
+I (1833) app_init: ESP-IDF:          v5.5.5
+I (1837) efuse_init: Min chip rev:     v1.0
+I (1841) efuse_init: Max chip rev:     v1.99
+I (1845) efuse_init: Chip rev:         v1.3
+I (1849) heap_init: Initializing. RAM available for dynamic allocation:
+I (1855) heap_init: At 4FF27E60 len 00013160 (76 KiB): RETENT_RAM
+I (1861) heap_init: At 4FF3AFC0 len 00004BF0 (18 KiB): RAM
+I (1866) heap_init: At 4FF45750 len 0005A8B0 (362 KiB): RAM
+I (1872) heap_init: At 50108080 len 00007F80 (31 KiB): RTCRAM
+I (1877) heap_init: At 3010007C len 00001F84 (7 KiB): SPM
+I (1882) esp_psram: Adding pool of 32768K of PSRAM memory to heap allocator
+I (1890) spi_flash: detected chip: gd
+I (1892) spi_flash: flash io: dio
+I (1895) sleep_gpio: Configure to isolate all GPIO pins in sleep state
+I (1902) sleep_gpio: Enable automatic switching of GPIO sleep configuration
+I (1909) main_task: Started on CPU0
+I (1929) esp_psram: Reserving pool of 32K of internal memory for DMA/internal allocations
+I (1929) main_task: Calling app_main()
+I (1929) php-esp32: starting PHP runtime
+W (1939) ldo: The voltage value 0 is out of the recommended range [500, 2700]
+I (1949) main_task: Returned from app_main()
+I (1989) php-esp32: microSD mounted at /sdcard
+I (1989) php-esp32: php_embed_init()...
+PHP 8.3.32 on ESP32-P4
+--- /sdcard/index.php ---
+setup: blinking an LED on GPIO 2 from PHP 8.3.32
+I (2069) php-esp32: entering loop()
+tick 0
+I (2569) php-esp32: tick 0 -- heap free: 32725947 bytes
+tick 10
+tick 20
+tick 30
+tick 40
+tick 50
+tick 60
+tick 70
+tick 80
+tick 90
+tick 100
+tick 110
+tick 120
+..............

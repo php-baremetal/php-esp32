@@ -1,0 +1,11 @@
+{
+    "name": "php-esp32/composer-collections",
+    "description": "Composer autoloading on the ESP32-P4, using Illuminate Collections",
+    "require": {
+        "php": ">=8.2",
+        "illuminate/collections": "^11.0"
+    },
+    "config": {
+        "optimize-autoloader": true
+    }
+}

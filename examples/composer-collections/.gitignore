@@ -1,0 +1,2 @@
+# Third-party code: reproduce it with `composer install` instead of committing it.
+/vendor/

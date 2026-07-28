@@ -1,0 +1,9 @@
+# Partition layout -- 32 MB NOR flash.
+# Scripts don't live here: the SD card is the storage. Executing code runs from
+# the same flash, and writes to it stall execution, so the app owns almost all
+# the space (the image is big).
+#
+# Name,     Type, SubType,  Offset,   Size
+nvs,        data, nvs,      ,         24K
+phy_init,   data, phy,      ,         4K
+factory,    app,  factory,  ,         12M
