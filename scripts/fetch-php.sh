@@ -31,7 +31,7 @@ tar xzf "${TMP}/${TARBALL}" -C "${REPO_ROOT}/components/php/"
 
 # Apply local patches (port fixes that must live in the vendored source). Each
 # patch is a -p1 unified diff rooted at the php-<version> directory.
-PATCH_DIR="${REPO_ROOT}/components/php/patches"
+PATCH_DIR="${REPO_ROOT}/components/php/patches/php"
 if [ -d "${PATCH_DIR}" ]; then
     for patch in "${PATCH_DIR}"/*.patch; do
         [ -e "${patch}" ] || continue

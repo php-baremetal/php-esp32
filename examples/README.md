@@ -27,10 +27,19 @@ working (the LED blinking, the button turning it on, and so on).
 | [`led-blink/`](led-blink/) | The `setup()`/`loop()` model: blinks an LED forever. | LED + resistor (~330 ohm) between GPIO2 and GND |
 | [`blink-sos/`](blink-sos/) | Blinks "SOS" in Morse code on the LED. | same as above |
 | [`button-led/`](button-led/) | Reads a push button and mirrors it to the LED. | LED on GPIO2, button between GPIO4 and GND |
+| [`sd-write/`](sd-write/) | Writes a file to the microSD and reads it back — a quick check that the write path works. | none |
+| [`sqlite-notes/`](sqlite-notes/) | PDO opens a SQLite database on the microSD and writes a row each boot. | needs a firmware built with the sqlite extension |
 
-The linear examples (`hello`, `language-tour`, `require-demo`, `composer-collections`) run
-once and finish; the hardware ones use the `setup()`/`loop()` model and keep going as long
-as the board is powered.
+The linear examples (`hello`, `language-tour`, `require-demo`, `composer-collections`,
+`sd-write`, `sqlite-notes`) run once and finish; the hardware ones use the `setup()`/`loop()`
+model and keep going as long as the board is powered.
+
+## The example that needs a special firmware
+
+[`sqlite-notes`](sqlite-notes/) uses PDO/SQLite, an optional native extension that is off by
+default (native code can't be side-loaded from the card, so it has to be compiled in). Build
+a firmware with it enabled — `./flash.sh` asks whether to include `sqlite`, or use
+`idf.py -DPHP_EXT_SQLITE=ON`. Its README covers the details.
 
 ## The two examples that need more than one file
 

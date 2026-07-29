@@ -8,6 +8,10 @@ sdkconfig.ci
 # tarball with a known sha256). Recreate it with: ./scripts/fetch-php.sh
 /components/php/php-8.3.32/
 
+# SQLite amalgamation for the optional PDO/SQLite extension: fetched on demand,
+# not versioned. Recreate it with: ./scripts/fetch-sqlite.sh
+/components/php/sqlite-amalgamation/
+
 # Editor / OS
 *.swp
 .DS_Store

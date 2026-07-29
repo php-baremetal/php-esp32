@@ -69,6 +69,11 @@ WEAK int umask(int m)        { (void)m; return 0; }
 WEAK int dup(int fd)         { (void)fd; FAIL_ENOSYS(); }
 WEAK int chown(const char *p,uid_t u,gid_t g)  { (void)p;(void)u;(void)g; FAIL_ENOSYS(); }
 WEAK int lchown(const char *p,uid_t u,gid_t g) { (void)p;(void)u;(void)g; FAIL_ENOSYS(); }
+/* FAT has no permissions/ownership/timestamps to change. SQLite's unix VFS calls
+ * these best-effort, so report success (0) -- an error return would be spurious. */
+WEAK int fchmod(int fd,mode_t m)               { (void)fd;(void)m; return 0; }
+WEAK int fchown(int fd,uid_t u,gid_t g)        { (void)fd;(void)u;(void)g; return 0; }
+WEAK int utimes(const char *p,const void *tv)  { (void)p;(void)tv; return 0; }
 WEAK int symlink(const char *a,const char *b)  { (void)a;(void)b; FAIL_ENOSYS(); }
 WEAK ssize_t readlink(const char *p,char *b,size_t s) { (void)p;(void)b;(void)s; FAIL_ENOSYS(); }
 WEAK int lstat(const char *p, void *st) { (void)p;(void)st; FAIL_ENOSYS(); }

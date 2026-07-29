@@ -164,3 +164,31 @@ arena instead of with `emalloc`, so it's freed all at once at the end of the run
 one closure at a time. The price is that the cache isn't reclaimed per closure: a script
 that creates them by the bucketload inside a forever `loop()` grows in memory until the run
 ends. For one-shot scripts it makes no difference.
+
+## SQLite on the SD card (FATFS is not POSIX)
+
+Getting the optional PDO/SQLite extension to write a real database on the microSD ran into a
+subtle FATFS-vs-POSIX difference that took a while to pin down. Plain file writes worked fine
+(`file_put_contents` writes, reads back, persists), yet SQLite always ended up with a corrupt
+file and `SQLITE_NOTADB` — "file is not a database".
+
+The difference is *how* the two write. `file_put_contents` writes sequentially from offset 0;
+SQLite `lseek()`s to an offset and then reads or writes there. And on ESP-IDF's FATFS,
+**`lseek()` past end-of-file expands the file**, filling the new area with raw `0xFF` — unlike
+POSIX, where seeking past EOF is a no-op until you actually write. SQLite seeks past EOF to
+read header fields of a fresh database; that bare `lseek` grew the file to a few bytes of
+`0xFF`, so SQLite then read a bogus header and declared the file "not a database". Instrumenting
+the VFS made it plain: on a freshly created 0-byte db, a lone `lseek` to offset 24 made
+`fstat` jump from 0 to 24 bytes, with no write in between.
+
+The fix is a patch to the amalgamation (in `components/php/patches/sqlite/`, applied by
+`fetch-sqlite.sh`), in two places:
+
+- **Reads** (`seekAndRead`): a read at or beyond the current size returns end-of-file (0)
+  instead of doing the expanding `lseek`.
+- **Writes** (`seekAndWriteFd`): a write past EOF would otherwise leave a `0xFF` hole (POSIX
+  would zero-fill it). Here `ftruncate` *does* zero-fill, so the file is grown to the write
+  offset with it first, turning the hole into zeros.
+
+The lesson for this board: FATFS gives you `open`/`read`/`write`/`lseek`, but not their POSIX
+semantics for sparse files — anything that seeks past EOF has to be guarded.

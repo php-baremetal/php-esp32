@@ -263,7 +263,8 @@ In the [`resources/`](resources/) folder: datasheets and technical manual for th
 plus datasheet, pinout and dimensions of the Waveshare ESP32-P4-Pico board.
 
 More depth in [`docs/`](docs/): the [architecture](docs/architecture.md) with the diagrams,
-the [porting notes](docs/porting-notes.md) with all the technical choices, and the
+the [porting notes](docs/porting-notes.md) with all the technical choices, the
+[footprint](docs/footprint.md) (flash and RAM, per area and per extension), and the
 [flashing guide](docs/flash.md).
 
 ## License

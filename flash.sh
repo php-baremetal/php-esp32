@@ -50,8 +50,37 @@ if [ ! -r "${PORT}" ] || [ ! -w "${PORT}" ]; then
     }
 fi
 
+# Optional PHP extensions, kept out of the default build. Each entry is
+# "key|description|fetch-script" (fetch-script may be empty). Answering yes maps
+# to -DPHP_EXT_<KEY>=ON passed to the build; no maps to =OFF (so toggling off
+# works too). Add more extensions by adding a line here plus the matching blocks
+# in components/php/CMakeLists.txt and internal_functions.c.
+OPTIONAL_EXTS=(
+    "sqlite|PDO + SQLite: read/write .db files on the microSD|scripts/fetch-sqlite.sh"
+)
+
+EXT_ARGS=()
+echo "Optional PHP extensions (off by default):"
+for entry in "${OPTIONAL_EXTS[@]}"; do
+    IFS='|' read -r key desc fetch <<< "${entry}"
+    key_upper="$(printf '%s' "${key}" | tr '[:lower:]' '[:upper:]')"
+    read -r -p "  Include ${key} (${desc})? [y/N] " ans
+    case "${ans}" in
+        y|Y|s|S)
+            if [ -n "${fetch}" ]; then
+                # fetch the extra source on demand (idempotent, git-ignored)
+                "${REPO_ROOT}/${fetch}"
+            fi
+            EXT_ARGS+=("-DPHP_EXT_${key_upper}=ON")
+            ;;
+        *)
+            EXT_ARGS+=("-DPHP_EXT_${key_upper}=OFF")
+            ;;
+    esac
+done
+
 echo "==> Flashing ${PORT}"
-idf.py -p "${PORT}" flash
+idf.py "${EXT_ARGS[@]}" -p "${PORT}" flash
 
 read -r -p "Open the serial monitor on ${PORT}? [y/N] " ans
 case "${ans}" in

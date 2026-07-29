@@ -28,6 +28,14 @@
  * the final link. */
 extern zend_module_entry gpio_module_entry;
 
+/* Optional PDO/SQLite extension, gated by PHP_EXT_SQLITE_ENABLED (set from the
+ * php component's CMakeLists when built with -DPHP_EXT_SQLITE=ON). pdo must be
+ * registered before pdo_sqlite, which depends on it. */
+#ifdef PHP_EXT_SQLITE_ENABLED
+extern zend_module_entry pdo_module_entry;
+extern zend_module_entry pdo_sqlite_module_entry;
+#endif
+
 static zend_module_entry * const php_builtin_extensions[] = {
 	phpext_pcre_ptr,
 	phpext_hash_ptr,
@@ -36,6 +44,10 @@ static zend_module_entry * const php_builtin_extensions[] = {
 	phpext_reflection_ptr,
 	phpext_standard_ptr,
 	phpext_spl_ptr,
+#ifdef PHP_EXT_SQLITE_ENABLED
+	&pdo_module_entry,
+	&pdo_sqlite_module_entry,
+#endif
 	&gpio_module_entry,
 };
 

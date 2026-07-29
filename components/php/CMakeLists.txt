@@ -326,3 +326,55 @@ target_compile_definitions(${COMPONENT_LIB} PRIVATE
 # errors by default (incompatible-pointer-types, implicit-function-declaration,
 # int-conversion), which -w alone doesn't. This is upstream legacy C.
 target_compile_options(${COMPONENT_LIB} PRIVATE -w -fpermissive)
+
+# --- Optional extensions -----------------------------------------------------
+# Kept out of the default build; each is gated by a -DPHP_EXT_<NAME>=ON flag that
+# flash.sh passes to idf.py. The sources come from the (git-ignored) vendored
+# trees, so nothing here changes a plain build. To add another optional extension
+# later, mirror this block and add a matching guard in internal_functions.c.
+
+# PDO + SQLite: read/write .db files on the microSD. Enable with:
+#   idf.py -DPHP_EXT_SQLITE=ON ...   (or answer "y" in flash.sh)
+# Needs the SQLite amalgamation: ./scripts/fetch-sqlite.sh
+option(PHP_EXT_SQLITE "Build the PDO/SQLite extension" OFF)
+if(PHP_EXT_SQLITE)
+    if(NOT EXISTS "${CMAKE_CURRENT_LIST_DIR}/sqlite-amalgamation/sqlite3.c")
+        message(FATAL_ERROR
+            "PHP_EXT_SQLITE=ON but the SQLite amalgamation is missing. "
+            "Run ./scripts/fetch-sqlite.sh first.")
+    endif()
+    target_sources(${COMPONENT_LIB} PRIVATE
+        php-8.3.32/ext/pdo/pdo.c
+        php-8.3.32/ext/pdo/pdo_dbh.c
+        php-8.3.32/ext/pdo/pdo_sql_parser.c
+        php-8.3.32/ext/pdo/pdo_sqlstate.c
+        php-8.3.32/ext/pdo/pdo_stmt.c
+        php-8.3.32/ext/pdo_sqlite/pdo_sqlite.c
+        php-8.3.32/ext/pdo_sqlite/sqlite_driver.c
+        php-8.3.32/ext/pdo_sqlite/sqlite_statement.c
+        sqlite-amalgamation/sqlite3.c
+    )
+    target_include_directories(${COMPONENT_LIB} PRIVATE
+        sqlite-amalgamation
+        php-8.3.32/ext
+    )
+    # Force-include a small shim into sqlite3.c only: it neutralizes the project's
+    # global HAVE_*INT*_T macros (which would misconfigure SQLite's integer
+    # typedefs) and maps lstat->stat. Scoped to this file so nothing else changes.
+    set_source_files_properties(sqlite-amalgamation/sqlite3.c PROPERTIES
+        COMPILE_OPTIONS "-include;${CMAKE_CURRENT_LIST_DIR}/compat/sqlite-compat.h")
+    # PHP_EXT_SQLITE_ENABLED gates the module registration in internal_functions.c.
+    # The SQLite flags tune it for a single-process, no-OS target on FATFS: no
+    # threads, no WAL, no mmap, temp tables in RAM, and URI filenames (so the DSN
+    # can pass ?nolock=1 to skip POSIX file locking, which FATFS doesn't provide).
+    target_compile_definitions(${COMPONENT_LIB} PRIVATE
+        PHP_EXT_SQLITE_ENABLED
+        SQLITE_THREADSAFE=0
+        SQLITE_OMIT_WAL
+        SQLITE_OMIT_LOAD_EXTENSION
+        SQLITE_TEMP_STORE=3
+        SQLITE_MAX_MMAP_SIZE=0
+        SQLITE_DEFAULT_MEMSTATUS=0
+        SQLITE_USE_URI=1
+    )
+endif()

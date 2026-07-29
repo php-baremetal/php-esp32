@@ -1,0 +1,59 @@
+Make SQLite work on FATFS, where lseek() past EOF expands the file.
+
+On ESP-IDF FATFS, lseek() beyond end-of-file EXPANDS the file (filling it with
+0xFF), unlike POSIX. SQLite seeks past EOF to read header fields of a fresh
+database, growing it with 0xFF so it looks corrupt (file is not a database).
+
+  - seekAndRead: a read at/beyond EOF returns 0 without the expanding lseek.
+  - seekAndWriteFd: a write past EOF first zero-fills the gap with ftruncate.
+
+--- a/sqlite3.c
++++ b/sqlite3.c
+@@ -41362,13 +41362,24 @@
+     got = osPread64(id->h, pBuf, cnt, offset);
+     SimulateIOError( got = -1 );
+ #else
+-    newOffset = lseek(id->h, offset, SEEK_SET);
+-    SimulateIOError( newOffset = -1 );
+-    if( newOffset<0 ){
+-      storeLastErrno((unixFile*)id, errno);
+-      return -1;
++    /* ESP32-P4 PORT: on FATFS, lseek() past EOF EXPANDS the file (filling it with
++     * 0xFF), unlike POSIX where it is a no-op until a write. A read past EOF must
++     * NOT grow the file, so return end-of-file (0) instead of seeking when the
++     * offset is at or beyond the current size. */
++    {
++      i64 iSize = lseek(id->h, 0, SEEK_END);
++      if( iSize>=0 && offset>=iSize ){
++        got = 0;
++      }else{
++        newOffset = lseek(id->h, offset, SEEK_SET);
++        SimulateIOError( newOffset = -1 );
++        if( newOffset<0 ){
++          storeLastErrno((unixFile*)id, errno);
++          return -1;
++        }
++        got = osRead(id->h, pBuf, cnt);
++      }
+     }
+-    got = osRead(id->h, pBuf, cnt);
+ #endif
+     if( got==cnt ) break;
+     if( got<0 ){
+@@ -41491,6 +41502,16 @@
+   do{ rc = (int)osPwrite64(fd, pBuf, nBuf, iOff);}while( rc<0 && errno==EINTR);
+ #else
+   do{
++    /* ESP32-P4 PORT: FATFS leaves a gap created by seeking past EOF as raw 0xFF,
++     * not zero-filled like POSIX, which corrupts the database header/pages. On this
++     * target ftruncate() DOES zero-fill, so grow the file to iOff with it before
++     * writing past the current end, turning the hole into zeros. */
++    i64 iEnd = lseek(fd, 0, SEEK_END);
++    if( iEnd>=0 && iOff>iEnd ){
++      int rcT;
++      do{ rcT = osFtruncate(fd, iOff); }while( rcT<0 && errno==EINTR );
++      if( rcT<0 ){ rc = -1; break; }
++    }
+     i64 iSeek = lseek(fd, iOff, SEEK_SET);
+     SimulateIOError( iSeek = -1 );
+     if( iSeek<0 ){
