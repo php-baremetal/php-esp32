@@ -69,15 +69,25 @@ The two symbols (`make_fcontext`, `jump_fcontext`) are filled with inert stubs: 
 `Fiber` class would crash if used, but the setup/loop model doesn't need it, and the rest
 of the language works.
 
-## The ext/date stub
+## The ext/date stub (and the real thing, optionally)
 
-`ext/date` is left out because it drags in about 6.5 MB of timezone database. A few core
-files, though, call some of its functions, so `components/php/compat/date_stub.c` has the
-bare minimum: `php_time()` returns `time(NULL)`, `php_format_date()` does a minimal
-`strftime`-based formatting in UTC (enough for log timestamps, it doesn't interpret PHP's
-format characters), and the timezone functions answer as "absent/UTC". If real time were
-ever needed, the right path is to expose a native function that reads an RTC, not to bring
-timelib back.
+`ext/date` is off by default. A few core files call some of its functions, so
+`components/php/compat/date_stub.c` has the bare minimum: `php_time()` returns `time(NULL)`,
+`php_format_date()` does a minimal `strftime`-based formatting in UTC (enough for log
+timestamps, it doesn't interpret PHP's format characters), and the timezone functions answer
+as "absent/UTC".
+
+The real `ext/date` — the `DateTime` class and the full date/time API — builds in as an
+optional extension (`-DPHP_EXT_DATE=ON`, or `flash.sh` asks). When it's on, timelib provides
+`php_time()`/`php_format_date()` and the stub is dropped (it would be a duplicate symbol). It
+costs about **650 KB** of flash, of which ~350 KB is the builtin timezone database. The only
+code change it needed was turning off `HAVE_STRUCT_TM_TM_GMTOFF`/`HAVE_STRUCT_TM_TM_ZONE` in
+`php_config.h`: newlib's `struct tm` doesn't have those fields.
+
+A sub-option, `-DPHP_EXT_DATE_MINIMAL_TZ=ON`, swaps the full builtin timezone database for a
+UTC-only one (`compat/timezonedb_minimal.h`, ~2.7 KB), saving ~350 KB. `DateTime` then works
+in UTC only; named zones (e.g. `Europe/Rome`) report an error. It's carried as a one-line
+`parse_tz.c` patch (`components/php/patches/php/`, applied by `fetch-php.sh`).
 
 ## Compiler warnings
 

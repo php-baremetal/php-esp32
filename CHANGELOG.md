@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.1.2] 2026-07-30
+
+### Added
+- **`ext/date`** as an optional extension (off by default): the real `DateTime` and date/time
+  API instead of the UTC stub, ~650 KB of flash. When on, timelib replaces the stub, and one
+  config change was needed (`HAVE_STRUCT_TM_TM_GMTOFF`/`_TM_ZONE` off — newlib's `struct tm`
+  lacks those fields).
+- `PHP_EXT_DATE_MINIMAL_TZ`: a sub-option (asked by `flash.sh` when `date` is on) that ships a
+  UTC-only timezone database (~2.7 KB) instead of the full one, saving ~350 KB. Named zones
+  (e.g. `Europe/Rome`) then report an error; UTC works. Carried as a `parse_tz.c` patch under
+  `components/php/patches/php/`.
+- `examples/date-timezones/` and `examples/date-utc/`: `DateTime` across named timezones with
+  DST-aware conversions, and the same language in a UTC-only build.
+
 ## [0.1.1] 2026-07-29
 
 ### Added
@@ -12,11 +26,6 @@
 - `examples/sqlite-notes/`: PDO opens a SQLite database on the microSD and appends a row on
   every boot; the file is created on first run and reused after.
 - `docs/footprint.md`: flash and RAM usage, per area and per optional extension.
-
-### Notes
-- The PDO/SQLite extension compiles and links, and the default (extension-off) build is
-  byte-for-byte the same as before. The runtime path — SQLite's VFS reading and writing on
-  FATFS — has not yet been verified on hardware.
 
 ## [0.1.0] - 2026-07-29
 
@@ -66,6 +75,6 @@ First working version: the real PHP engine runs on the microcontroller.
 - Zend's memory manager set aside (`USE_ZEND_ALLOC=0`); PHP allocates via `malloc`, routed
   into the 32 MB PSRAM so internal RAM stays free for DMA and FreeRTOS.
 - Weak POSIX stubs for the symbols newlib doesn't provide; `ext/date` replaced by a minimal
-  stub (its timezone database is ~6.5 MB).
+  stub (its builtin timezone database is ~350 KB).
 - microSD powered by the chip's on-chip LDO (channel 4); console over the onboard CH343P
   USB-UART bridge; chip revisions below v3.0 unlocked in `sdkconfig.defaults`.

@@ -1,0 +1,87 @@
+I (25) boot: ESP-IDF v5.5.5 2nd stage bootloader
+I (26) boot: compile time Jul 29 2026 22:23:10
+I (26) boot: Multicore bootloader
+I (27) boot: chip revision: v1.3
+I (29) boot: efuse block revision: v0.3
+I (32) boot.esp32p4: SPI Speed      : 80MHz
+I (36) boot.esp32p4: SPI Mode       : DIO
+I (40) boot.esp32p4: SPI Flash Size : 32MB
+I (44) boot: Enabling RNG early entropy source...
+I (48) boot: Partition Table:
+I (51) boot: ## Label            Usage          Type ST Offset   Length
+I (57) boot:  0 nvs              WiFi data        01 02 00009000 00006000
+I (64) boot:  1 phy_init         RF data          01 01 0000f000 00001000
+I (70) boot:  2 factory          factory app      00 00 00010000 00c00000
+I (78) boot: End of partition table
+I (80) esp_image: segment 0: paddr=00010020 vaddr=40260020 size=11f38ch (1176460) map
+I (284) esp_image: segment 1: paddr=0012f3b4 vaddr=30100000 size=0007ch (   124) load
+I (285) esp_image: segment 2: paddr=0012f438 vaddr=4ff00000 size=00be0h (  3040) load
+I (289) esp_image: segment 3: paddr=00130020 vaddr=40000020 size=25e864h (2484324) map
+I (708) esp_image: segment 4: paddr=0038e88c vaddr=4ff00be0 size=14e4ch ( 85580) load
+I (730) boot: Loaded app from partition at offset 0x10000
+I (730) boot: Disabling RNG early entropy source...
+I (742) hex_psram: vendor id    : 0x0d (AP)
+I (742) hex_psram: Latency      : 0x01 (Fixed)
+I (742) hex_psram: DriveStr.    : 0x00 (25 Ohm)
+I (743) hex_psram: dev id       : 0x03 (generation 4)
+I (748) hex_psram: density      : 0x07 (256 Mbit)
+I (752) hex_psram: good-die     : 0x06 (Pass)
+I (756) hex_psram: SRF          : 0x02 (Slow Refresh)
+I (761) hex_psram: BurstType    : 0x00 ( Wrap)
+I (765) hex_psram: BurstLen     : 0x03 (2048 Byte)
+I (770) hex_psram: BitMode      : 0x01 (X16 Mode)
+I (774) hex_psram: Readlatency  : 0x04 (14 cycles@Fixed)
+I (779) hex_psram: DriveStrength: 0x00 (1/1)
+I (783) MSPI Timing: Enter psram timing tuning
+I (961) esp_psram: Found 32MB PSRAM device
+I (961) esp_psram: Speed: 200MHz
+I (961) hex_psram: psram CS IO is dedicated
+I (962) cpu_start: Multicore app
+I (1913) esp_psram: SPI SRAM memory test OK
+I (1922) cpu_start: GPIO 38 and 37 are used as console UART I/O pins
+I (1923) cpu_start: Pro cpu start user code
+I (1923) cpu_start: cpu freq: 360000000 Hz
+I (1925) app_init: Application information:
+I (1929) app_init: Project name:     php-esp32
+I (1933) app_init: App version:      922e761-dirty
+I (1937) app_init: Compile time:     Jul 30 2026 11:35:25
+I (1943) app_init: ELF file SHA256:  0eb6e8157...
+I (1947) app_init: ESP-IDF:          v5.5.5
+I (1951) efuse_init: Min chip rev:     v1.0
+I (1955) efuse_init: Max chip rev:     v1.99
+I (1959) efuse_init: Chip rev:         v1.3
+I (1963) heap_init: Initializing. RAM available for dynamic allocation:
+I (1969) heap_init: At 4FF281A0 len 00012E20 (75 KiB): RETENT_RAM
+I (1975) heap_init: At 4FF3AFC0 len 00004BF0 (18 KiB): RAM
+I (1980) heap_init: At 4FF45790 len 0005A870 (362 KiB): RAM
+I (1986) heap_init: At 50108080 len 00007F80 (31 KiB): RTCRAM
+I (1991) heap_init: At 3010007C len 00001F84 (7 KiB): SPM
+I (1996) esp_psram: Adding pool of 32768K of PSRAM memory to heap allocator
+I (2004) spi_flash: detected chip: gd
+I (2006) spi_flash: flash io: dio
+I (2009) sleep_gpio: Configure to isolate all GPIO pins in sleep state
+I (2016) sleep_gpio: Enable automatic switching of GPIO sleep configuration
+I (2023) main_task: Started on CPU0
+I (2043) esp_psram: Reserving pool of 32K of internal memory for DMA/internal allocations
+I (2043) main_task: Calling app_main()
+I (2043) php-esp32: starting PHP runtime
+W (2053) ldo: The voltage value 0 is out of the recommended range [500, 2700]
+I (2063) main_task: Returned from app_main()
+I (2103) php-esp32: microSD mounted at /sdcard
+I (2103) php-esp32: php_embed_init()...
+PHP 8.3.32 on ESP32-P4
+--- /sdcard/index.php ---
+PHP 8.3.32 -- DateTime with timezones
+
+instant (UTC):  2026-07-29 20:00:00 UTC
+
+same instant, around the world:
+  Europe/Rome        2026-07-29 22:00:00 CEST (+02:00)
+  America/New_York   2026-07-29 16:00:00 EDT (-04:00)
+  Asia/Tokyo         2026-07-30 05:00:00 JST (+09:00)
+  Pacific/Auckland   2026-07-30 08:00:00 NZST (+12:00)
+
+Rome is 6h ahead of New York right now
+UTC + 1y2m10d2h30m: 2027-10-09 22:30:00
+--- end ---
+I (2243) php-esp32: done -- heap free: 33979495 bytes

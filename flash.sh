@@ -56,10 +56,12 @@ fi
 # works too). Add more extensions by adding a line here plus the matching blocks
 # in components/php/CMakeLists.txt and internal_functions.c.
 OPTIONAL_EXTS=(
+    "date|ext/date: real DateTime and date/time functions|"
     "sqlite|PDO + SQLite: read/write .db files on the microSD|scripts/fetch-sqlite.sh"
 )
 
 EXT_ARGS=()
+DATE_ON=0
 echo "Optional PHP extensions (off by default):"
 for entry in "${OPTIONAL_EXTS[@]}"; do
     IFS='|' read -r key desc fetch <<< "${entry}"
@@ -72,12 +74,21 @@ for entry in "${OPTIONAL_EXTS[@]}"; do
                 "${REPO_ROOT}/${fetch}"
             fi
             EXT_ARGS+=("-DPHP_EXT_${key_upper}=ON")
+            [ "${key}" = "date" ] && DATE_ON=1
             ;;
         *)
             EXT_ARGS+=("-DPHP_EXT_${key_upper}=OFF")
             ;;
     esac
 done
+
+# Sub-option of ext/date: ship only UTC instead of the full ~350 KB timezone database.
+MINIMAL_TZ=OFF
+if [ "${DATE_ON}" = "1" ]; then
+    read -r -p "    date: UTC-only timezone db (smaller, but no named zones like Europe/Rome)? [y/N] " ans
+    case "${ans}" in y|Y|s|S) MINIMAL_TZ=ON ;; esac
+fi
+EXT_ARGS+=("-DPHP_EXT_DATE_MINIMAL_TZ=${MINIMAL_TZ}")
 
 echo "==> Flashing ${PORT}"
 idf.py "${EXT_ARGS[@]}" -p "${PORT}" flash

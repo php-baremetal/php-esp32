@@ -1611,10 +1611,10 @@
 #define HAVE_STRUCT_STAT_ST_RDEV 1
 
 /* Define to 1 if 'tm_gmtoff' is a member of 'struct tm'. */
-#define HAVE_STRUCT_TM_TM_GMTOFF 1
+/* #undef HAVE_STRUCT_TM_TM_GMTOFF -- newlib's struct tm has no tm_gmtoff (was 1 on x86-64) */
 
 /* Define to 1 if 'tm_zone' is a member of 'struct tm'. */
-#define HAVE_STRUCT_TM_TM_ZONE 1
+/* #undef HAVE_STRUCT_TM_TM_ZONE -- newlib's struct tm has no tm_zone (was 1 on x86-64) */
 
 /* Define to 1 if your 'struct stat' has 'st_blocks'. Deprecated, use
    'HAVE_STRUCT_STAT_ST_BLOCKS' instead. */
@@ -1772,7 +1772,7 @@
 
 /* Define to 1 if your 'struct tm' has 'tm_zone'. Deprecated, use
    'HAVE_STRUCT_TM_TM_ZONE' instead. */
-#define HAVE_TM_ZONE 1
+/* #undef HAVE_TM_ZONE -- newlib's struct tm has no tm_zone (was 1 on x86-64) */
 
 /* Whether you have a working ttyname_r */
 /* #undef HAVE_TTYNAME_R */

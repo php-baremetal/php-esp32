@@ -265,7 +265,8 @@ idf_component_register(
     "internal_functions.c"
     "compat/syslog.c"
     "compat/posix_stubs.c"
-    "compat/date_stub.c"
+    # compat/date_stub.c OR the real ext/date is added below, depending on
+    # PHP_EXT_DATE (see the optional-extensions block).
 
     # Public: what `main` needs to include the engine (php_config.h lives in ".").
     INCLUDE_DIRS
@@ -332,6 +333,43 @@ target_compile_options(${COMPONENT_LIB} PRIVATE -w -fpermissive)
 # flash.sh passes to idf.py. The sources come from the (git-ignored) vendored
 # trees, so nothing here changes a plain build. To add another optional extension
 # later, mirror this block and add a matching guard in internal_functions.c.
+
+# ext/date: the real DateTime and date/time functions. Off by default -- the core
+# normally uses compat/date_stub.c (a UTC-only stub) so php_time()/php_format_date()
+# resolve. When ON, the real timelib provides those, so the stub must NOT be built
+# (it would be a duplicate symbol). Flash cost ~650 KB, mostly the ~350 KB builtin
+# timezone database. Enable with idf.py -DPHP_EXT_DATE=ON (or "y" in flash.sh).
+option(PHP_EXT_DATE "Build the real ext/date (DateTime) instead of the UTC stub" OFF)
+# With PHP_EXT_DATE, ship only UTC (compat/timezonedb_minimal.h, ~2.7 KB) instead of
+# the full builtin timezone database (~350 KB). DateTime then works in UTC only; named
+# zones report an error. Relies on the parse_tz.c patch (patches/php/0002-...).
+option(PHP_EXT_DATE_MINIMAL_TZ "With PHP_EXT_DATE: UTC-only timezone db, no named zones" OFF)
+if(PHP_EXT_DATE)
+    target_sources(${COMPONENT_LIB} PRIVATE
+        php-8.3.32/ext/date/php_date.c
+        php-8.3.32/ext/date/lib/astro.c
+        php-8.3.32/ext/date/lib/dow.c
+        php-8.3.32/ext/date/lib/interval.c
+        php-8.3.32/ext/date/lib/parse_date.c
+        php-8.3.32/ext/date/lib/parse_iso_intervals.c
+        php-8.3.32/ext/date/lib/parse_posix.c
+        php-8.3.32/ext/date/lib/parse_tz.c
+        php-8.3.32/ext/date/lib/timelib.c
+        php-8.3.32/ext/date/lib/tm2unixtime.c
+        php-8.3.32/ext/date/lib/unixtime2tm.c
+    )
+    target_include_directories(${COMPONENT_LIB} PRIVATE
+        php-8.3.32/ext/date
+        php-8.3.32/ext/date/lib
+    )
+    target_compile_definitions(${COMPONENT_LIB} PRIVATE PHP_EXT_DATE_ENABLED)
+    if(PHP_EXT_DATE_MINIMAL_TZ)
+        # parse_tz.c (patched) picks up compat/timezonedb_minimal.h, already on the path.
+        target_compile_definitions(${COMPONENT_LIB} PRIVATE PHP_EXT_DATE_MINIMAL_TZ)
+    endif()
+else()
+    target_sources(${COMPONENT_LIB} PRIVATE compat/date_stub.c)
+endif()
 
 # PDO + SQLite: read/write .db files on the microSD. Enable with:
 #   idf.py -DPHP_EXT_SQLITE=ON ...   (or answer "y" in flash.sh)

@@ -28,6 +28,12 @@
  * the final link. */
 extern zend_module_entry gpio_module_entry;
 
+/* Optional real ext/date (DateTime), gated by PHP_EXT_DATE_ENABLED. When off, the
+ * core uses compat/date_stub.c instead and no date module is registered. */
+#ifdef PHP_EXT_DATE_ENABLED
+extern zend_module_entry date_module_entry;
+#endif
+
 /* Optional PDO/SQLite extension, gated by PHP_EXT_SQLITE_ENABLED (set from the
  * php component's CMakeLists when built with -DPHP_EXT_SQLITE=ON). pdo must be
  * registered before pdo_sqlite, which depends on it. */
@@ -37,6 +43,9 @@ extern zend_module_entry pdo_sqlite_module_entry;
 #endif
 
 static zend_module_entry * const php_builtin_extensions[] = {
+#ifdef PHP_EXT_DATE_ENABLED
+	&date_module_entry,
+#endif
 	phpext_pcre_ptr,
 	phpext_hash_ptr,
 	phpext_json_ptr,

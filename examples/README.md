@@ -29,17 +29,24 @@ working (the LED blinking, the button turning it on, and so on).
 | [`button-led/`](button-led/) | Reads a push button and mirrors it to the LED. | LED on GPIO2, button between GPIO4 and GND |
 | [`sd-write/`](sd-write/) | Writes a file to the microSD and reads it back — a quick check that the write path works. | none |
 | [`sqlite-notes/`](sqlite-notes/) | PDO opens a SQLite database on the microSD and writes a row each boot. | needs a firmware built with the sqlite extension |
+| [`date-timezones/`](date-timezones/) | `DateTime` across named timezones, DST-aware conversions and interval math. | needs the date extension (full timezone db) |
+| [`date-utc/`](date-utc/) | `DateTime` in a UTC-only build: what still works and the named zones you give up. | needs the date extension (UTC-only db) |
 
 The linear examples (`hello`, `language-tour`, `require-demo`, `composer-collections`,
-`sd-write`, `sqlite-notes`) run once and finish; the hardware ones use the `setup()`/`loop()`
-model and keep going as long as the board is powered.
+`sd-write`, `sqlite-notes`, `date-timezones`, `date-utc`) run once and finish; the hardware
+ones use the `setup()`/`loop()` model and keep going as long as the board is powered.
 
-## The example that needs a special firmware
+## The examples that need a special firmware
 
-[`sqlite-notes`](sqlite-notes/) uses PDO/SQLite, an optional native extension that is off by
-default (native code can't be side-loaded from the card, so it has to be compiled in). Build
-a firmware with it enabled — `./flash.sh` asks whether to include `sqlite`, or use
-`idf.py -DPHP_EXT_SQLITE=ON`. Its README covers the details.
+Some examples use optional native extensions that are off by default (native code can't be
+side-loaded from the card, so it has to be compiled in). `./flash.sh` asks which optional
+extensions to include; each example's README has the exact answers.
+
+- [`sqlite-notes`](sqlite-notes/) — PDO/SQLite (`-DPHP_EXT_SQLITE=ON`).
+- [`date-timezones`](date-timezones/) — `ext/date` with the full timezone database
+  (`-DPHP_EXT_DATE=ON`).
+- [`date-utc`](date-utc/) — `ext/date` with the smaller UTC-only database
+  (`-DPHP_EXT_DATE=ON -DPHP_EXT_DATE_MINIMAL_TZ=ON`).
 
 ## The two examples that need more than one file
 

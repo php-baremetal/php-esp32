@@ -1,6 +1,6 @@
 /*
- * ext/date is left out (its timezone database is ~6.5 MB), but a few core files
- * still call into it. Cover just those symbols:
+ * ext/date is off by default (build it in with -DPHP_EXT_DATE=ON), but a few core
+ * files still call into it. When it's off, cover just those symbols:
  *
  *  - php_time()        -> time(NULL)
  *  - php_format_date() -> a minimal strftime-based formatter (UTC). It does NOT

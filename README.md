@@ -179,11 +179,12 @@ PSRAM. Less refined, but solid.
 compile on this target. I use the portable "call" variant: a touch slower, but it works
 everywhere.
 
-**What I left out.** `ext/date` would drag in about 6.5 MB of timezone data, so it's out (the
-few spots in the code that call it have a minimal stub). Networking and processes don't exist
-on this hardware. And `Fiber`s: they'd need context-switch assembly for 32-bit RISC-V that
-doesn't exist, so here they're more a philosophical concept than a feature. These are choices,
-not limits of the language: classes, closures, generators, exceptions, traits, namespaces and
+**What I left out.** `ext/date` (the `DateTime` class and the date/time functions) is off by
+default — a minimal UTC stub covers the few core call sites — but it builds in as an optional
+extension for about 650 KB when you want it. Networking and processes don't exist on this
+hardware. And `Fiber`s: they'd need context-switch assembly for 32-bit RISC-V that doesn't
+exist, so here they're more a philosophical concept than a feature. These are choices, not
+limits of the language: classes, closures, generators, exceptions, traits, namespaces and
 types are all there.
 
 The "USB stick" variant too (exposing the microSD as a mass-storage drive) was left out. On

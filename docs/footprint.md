@@ -32,6 +32,8 @@ extra flash they add to the image:
 
 | Extension | Adds to flash | Notes |
 |---|---|---|
+| `ext/date` | **~650 KB** | measured image delta. The real `DateTime` and date/time API; ~350 KB of that is the builtin timezone database. Replaces the UTC stub. |
+| `ext/date` (UTC-only tz) | **~300 KB** | the same, with `PHP_EXT_DATE_MINIMAL_TZ`: a UTC-only timezone database instead of the full one, ~350 KB smaller. No named zones. |
 | PDO + SQLite | **~560 KB** | measured image delta. Of that, ~530 KB is the SQLite library itself, ~60 KB `ext/pdo`, ~9 KB `ext/pdo_sqlite`. |
 
 Adding it takes the image from ~3.1 MB to ~3.7 MB — still a small fraction of the 12 MB
