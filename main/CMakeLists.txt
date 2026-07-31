@@ -10,5 +10,7 @@ include("${BOARD_DIR}/board.cmake")
 idf_component_register(
     SRCS "main.c" ${BOARD_SRCS}
     INCLUDE_DIRS "." ${BOARD_INCLUDE_DIRS}
-    REQUIRES php php_ext_gpio ${BOARD_REQUIRES}
+    # esp_partition/fatfs/vfs: main.c mounts the optional read-only embedded source
+    # partition itself (board-agnostic); the board adds its own storage drivers too.
+    REQUIRES php php_ext_gpio esp_partition fatfs vfs ${BOARD_REQUIRES}
 )

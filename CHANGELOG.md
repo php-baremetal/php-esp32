@@ -1,5 +1,29 @@
 # Changelog
 
+## [0.3.0] — embedded storage mode
+
+### Added
+- **Embedded storage mode.** The PHP source can now live inside the chip instead of on a microSD,
+  for boards that ship without a card. A fourth partition, `storage` (8 MB, `fat`), holds a
+  read-only FAT image built from a source directory when the build is given `-DPHP_EMBED_SRC=<dir>`
+  (via `fatfs_create_rawflash_image`, with long-filename support so a Composer `vendor/` fits);
+  `idf.py flash` writes it alongside the app. At boot the firmware mounts the embedded image at
+  `/app` and runs `/app/index.php` if present, otherwise falls back to `/sdcard/index.php`. The two
+  are not exclusive: a microSD, when present, is still mounted read-write at `/sdcard`, so an
+  embedded project can keep writable data (a SQLite database, logs) on the card. Without
+  `PHP_EMBED_SRC` the partition is left empty and the firmware behaves exactly as before (runs from
+  the card). Verified on real ESP32-P4-Pico hardware: with a card inserted, the board still ran the
+  embedded `/app/index.php` from internal flash.
+- `storage`, an 8 MB `fat` partition, in the ESP32-P4-Pico partition table — empty unless a build
+  supplies `PHP_EMBED_SRC`.
+- `storage_type = "embedded"` is now marked available in the version manifest (was reserved);
+  `scripts/info.sh` lists the board's storage as `microsd, embedded`.
+
+### Changed
+- `main/main.c` now mounts both storage sources at boot (microSD at `/sdcard`, the embedded image
+  at `/app`) and picks the script by priority (`/app` over `/sdcard`), instead of only running
+  `/sdcard/index.php`. The `main` component gains the `esp_partition fatfs vfs` requirements.
+
 ## [0.2.0] — multiple PHP versions, boards and chip families
 
 ### Added

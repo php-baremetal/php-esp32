@@ -19,6 +19,8 @@
 
 #include "esp_log.h"
 #include "esp_heap_caps.h"
+#include "esp_partition.h"
+#include "esp_vfs_fat.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 
@@ -36,8 +38,16 @@ static const char *TAG = "php-esp32";
  * ESP-IDF's xTaskCreate takes the stack size in bytes. */
 #define PHP_TASK_STACK_BYTES (64 * 1024)
 
-#define SD_MOUNT_POINT "/sdcard"
-#define PHP_SCRIPT     SD_MOUNT_POINT "/index.php"
+/* Two independent sources, mounted together when both are present:
+ *   - the microSD at /sdcard: writable data (SQLite, logs, files the script writes).
+ *   - the embedded PHP source at /app: a read-only FAT image in internal flash, built
+ *     only when the firmware is made for "embedded" storage. index.php runs from here if
+ *     present, otherwise from the card -- and an embedded project can still use the card
+ *     for its data. */
+#define SD_MOUNT_POINT  "/sdcard"
+#define SD_SCRIPT       SD_MOUNT_POINT "/index.php"
+#define APP_MOUNT_POINT "/app"
+#define APP_SCRIPT      APP_MOUNT_POINT "/index.php"
 
 /*
  * Output sink for the engine: echo, print, printf, var_dump and php_printf() all
@@ -114,6 +124,26 @@ static void run_setup_loop(void)
     }
 }
 
+/* Mount the optional embedded PHP source: a read-only FAT image in the internal
+ * 'storage' partition. Absent on microSD-only firmware (the partition may not exist, or
+ * exist but hold no image) -- in which case this returns false and we run from the SD. */
+static bool s_app_mounted;
+
+static bool mount_embedded(void)
+{
+    const esp_partition_t *p = esp_partition_find_first(
+        ESP_PARTITION_TYPE_DATA, ESP_PARTITION_SUBTYPE_DATA_FAT, "storage");
+    if (!p) {
+        return false;
+    }
+    esp_vfs_fat_mount_config_t cfg = { .max_files = 5 };
+    if (esp_vfs_fat_spiflash_mount_ro(APP_MOUNT_POINT, "storage", &cfg) != ESP_OK) {
+        return false;
+    }
+    s_app_mounted = true;
+    return true;
+}
+
 static void php_task(void *arg)
 {
     (void)arg;
@@ -127,11 +157,25 @@ static void php_task(void *arg)
      * keeps internal RAM free for DMA and FreeRTOS. */
     setenv("USE_ZEND_ALLOC", "0", 1);
 
+    /* microSD -- writable data storage, mounted whenever a card is present. */
     bool have_sd = board_mount_storage(SD_MOUNT_POINT);
     if (have_sd) {
-        ESP_LOGI(TAG, "storage mounted at %s", SD_MOUNT_POINT);
+        ESP_LOGI(TAG, "microSD mounted at %s", SD_MOUNT_POINT);
     } else {
-        ESP_LOGW(TAG, "storage not mounted (no card / wrong format?)");
+        ESP_LOGW(TAG, "microSD not mounted (no card / wrong format?)");
+    }
+    /* Embedded PHP source (read-only) -- only on firmware built for embedded storage. */
+    bool have_app = mount_embedded();
+    if (have_app) {
+        ESP_LOGI(TAG, "embedded source mounted at %s", APP_MOUNT_POINT);
+    }
+
+    /* Run the embedded source if it's there, otherwise the one on the card. */
+    const char *script = NULL;
+    if (have_app && access(APP_SCRIPT, R_OK) == 0) {
+        script = APP_SCRIPT;
+    } else if (have_sd && access(SD_SCRIPT, R_OK) == 0) {
+        script = SD_SCRIPT;
     }
 
     php_embed_module.ub_write = esp_ub_write;
@@ -145,24 +189,27 @@ static void php_task(void *arg)
 
     php_printf("PHP %s on %s\n", PHP_VERSION, BOARD_SOC);
 
-    if (have_sd && access(PHP_SCRIPT, R_OK) == 0) {
-        php_printf("--- %s ---\n", PHP_SCRIPT);
+    if (script) {
+        php_printf("--- %s ---\n", script);
         /* Catch a PHP bailout (fatal error / die) so it doesn't reach exit(). */
         zend_try {
-            run_php_file(PHP_SCRIPT);   /* runs top-level, defines setup()/loop() */
-            run_setup_loop();           /* never returns if loop() is defined */
+            run_php_file(script);   /* runs top-level, defines setup()/loop() */
+            run_setup_loop();       /* never returns if loop() is defined */
         } zend_catch {
             ESP_LOGE(TAG, "PHP bailed out (fatal error)");
         } zend_end_try();
         php_printf("--- end ---\n");
     } else {
-        php_printf("%s not found; engine check: ", PHP_SCRIPT);
+        php_printf("no index.php (embedded or microSD); engine check: ");
         zend_eval_string("echo 1+1;", NULL, "boot");
         php_printf("\n");
     }
 
     php_embed_shutdown();
 
+    if (s_app_mounted) {
+        esp_vfs_fat_spiflash_unmount_ro(APP_MOUNT_POINT, "storage");
+    }
     if (have_sd) {
         board_unmount_storage(SD_MOUNT_POINT);
     }

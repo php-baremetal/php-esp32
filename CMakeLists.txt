@@ -18,3 +18,21 @@ set(SDKCONFIG_DEFAULTS
 
 include($ENV{IDF_PATH}/tools/cmake/project.cmake)
 project(php-esp32)
+
+# --- Embedded PHP source (optional) --------------------------------------------
+# For "embedded" storage: build a read-only FAT image from PHP_EMBED_SRC (a directory
+# holding index.php + vendor/ + ...) and flash it into the `storage` partition, so the
+# firmware runs the script from internal flash instead of the microSD. Without this flag
+# the partition stays empty and the app falls back to the card (plain microSD mode).
+# The image is read-only; a script that needs to write still uses the microSD (mounted
+# alongside it at /sdcard).
+if(DEFINED PHP_EMBED_SRC AND NOT PHP_EMBED_SRC STREQUAL "")
+    if(NOT IS_ABSOLUTE "${PHP_EMBED_SRC}")
+        set(PHP_EMBED_SRC "${CMAKE_SOURCE_DIR}/${PHP_EMBED_SRC}")
+    endif()
+    if(NOT EXISTS "${PHP_EMBED_SRC}")
+        message(FATAL_ERROR "PHP_EMBED_SRC='${PHP_EMBED_SRC}' does not exist")
+    endif()
+    message(STATUS "Embedded PHP source: ${PHP_EMBED_SRC} -> 'storage' partition")
+    fatfs_create_rawflash_image(storage "${PHP_EMBED_SRC}" FLASH_IN_PROJECT)
+endif()

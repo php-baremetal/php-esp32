@@ -73,6 +73,34 @@ long filenames). The top-level `CMakeLists.txt` resolves the board (default `def
 list, and the `main` component pulls in the board's `board.cmake` (its sources, include dir and
 driver requirements). Changing board or family regenerates `sdkconfig` (`rm sdkconfig` first).
 
+## Where the PHP source lives: microSD or embedded
+
+`index.php` (and its `vendor/`) can come from one of two places, and the firmware supports both
+at once. The default is the **microSD**: the card is mounted read-write at `/sdcard` and the app
+runs `/sdcard/index.php`. Editing the code is just swapping the file on the card — no rebuild.
+
+**Embedded** puts the source inside the chip instead, for a board that ships without a card. The
+partition table carries a fourth partition, `storage` (8 MB, type `fat`), and the top-level
+`CMakeLists.txt` builds a **read-only FAT image** from a source directory when you pass
+`-DPHP_EMBED_SRC=<dir>`:
+
+```cmake
+fatfs_create_rawflash_image(storage "${PHP_EMBED_SRC}" FLASH_IN_PROJECT)
+```
+
+That runs ESP-IDF's `fatfsgen.py` with long-filename support (Composer's `vendor/` has paths well
+past 8.3, so LFN is required, same as the SD) and produces `build/storage.bin`, which `idf.py
+flash` writes to the `storage` offset alongside the app. FAT, not SPIFFS: SPIFFS caps filenames at
+32 characters, which breaks a real `vendor/` tree. Without `PHP_EMBED_SRC` the partition is simply
+left empty and nothing changes — the same firmware still runs from the card.
+
+At boot `main.c` mounts both sources: the microSD at `/sdcard` (when a card is present) and, if the
+`storage` partition holds an image, that read-only image at `/app` (via
+`esp_vfs_fat_spiflash_mount_ro`). It runs `/app/index.php` when present, otherwise `/sdcard/index.php`.
+The two are not exclusive: an embedded project that needs to *write* (a SQLite database, logs) still
+gets a writable microSD mounted at `/sdcard`, because the embedded image itself is read-only. So
+"embedded" is really "source in flash, data still on the card if you want it".
+
 ## The virtual machine
 
 PHP has several virtual-machine variants. The fast one, "hybrid", uses computed-gotos and

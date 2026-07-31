@@ -63,8 +63,8 @@ description = "The PHP source (index.php + vendor/) lives on the microSD; the fi
 
 [[storage_type]]
 key = "embedded"
-available = false
-description = "(reserved) the PHP source is compiled into the firmware and flashed with it."
+available = true
+description = "The PHP source is built into a read-only image flashed into internal flash (no card needed to run); a microSD, if present, is still mounted alongside for writable data."
 
 # --- Project types: the execution model ---------------------------------------
 
