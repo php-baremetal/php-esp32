@@ -265,8 +265,9 @@ plus datasheet, pinout and dimensions of the Waveshare ESP32-P4-Pico board.
 
 More depth in [`docs/`](docs/): the [architecture](docs/architecture.md) with the diagrams,
 the [porting notes](docs/porting-notes.md) with all the technical choices, the
-[footprint](docs/footprint.md) (flash and RAM, per area and per extension), and the
-[flashing guide](docs/flash.md).
+[footprint](docs/footprint.md) (flash and RAM, per area and per extension), the
+[extension status](docs/ext-porting.md) (every PHP extension: built-in, flag, or not ported),
+and the [flashing guide](docs/flash.md).
 
 ## License
 
