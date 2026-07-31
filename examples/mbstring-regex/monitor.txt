@@ -1,0 +1,89 @@
+I (25) boot: ESP-IDF v5.5.5 2nd stage bootloader
+I (26) boot: compile time Jul 29 2026 22:23:10
+I (26) boot: Multicore bootloader
+I (27) boot: chip revision: v1.3
+I (29) boot: efuse block revision: v0.3
+I (32) boot.esp32p4: SPI Speed      : 80MHz
+I (36) boot.esp32p4: SPI Mode       : DIO
+I (40) boot.esp32p4: SPI Flash Size : 32MB
+I (44) boot: Enabling RNG early entropy source...
+I (48) boot: Partition Table:
+I (51) boot: ## Label            Usage          Type ST Offset   Length
+I (57) boot:  0 nvs              WiFi data        01 02 00009000 00006000
+I (64) boot:  1 phy_init         RF data          01 01 0000f000 00001000
+I (70) boot:  2 factory          factory app      00 00 00010000 00c00000
+I (78) boot: End of partition table
+I (80) esp_image: segment 0: paddr=00010020 vaddr=40330020 size=23cb14h (2345748) map
+I (477) esp_image: segment 1: paddr=0024cb3c vaddr=30100000 size=0007ch (   124) load
+I (479) esp_image: segment 2: paddr=0024cbc0 vaddr=4ff00000 size=03458h ( 13400) load
+I (485) esp_image: segment 3: paddr=00250020 vaddr=40000020 size=32989ch (3315868) map
+I (1039) esp_image: segment 4: paddr=005798c4 vaddr=4ff03458 size=19ed4h (106196) load
+I (1066) boot: Loaded app from partition at offset 0x10000
+I (1066) boot: Disabling RNG early entropy source...
+I (1078) hex_psram: vendor id    : 0x0d (AP)
+I (1079) hex_psram: Latency      : 0x01 (Fixed)
+I (1079) hex_psram: DriveStr.    : 0x00 (25 Ohm)
+I (1080) hex_psram: dev id       : 0x03 (generation 4)
+I (1085) hex_psram: density      : 0x07 (256 Mbit)
+I (1089) hex_psram: good-die     : 0x06 (Pass)
+I (1093) hex_psram: SRF          : 0x02 (Slow Refresh)
+I (1098) hex_psram: BurstType    : 0x00 ( Wrap)
+I (1102) hex_psram: BurstLen     : 0x03 (2048 Byte)
+I (1107) hex_psram: BitMode      : 0x01 (X16 Mode)
+I (1111) hex_psram: Readlatency  : 0x04 (14 cycles@Fixed)
+I (1117) hex_psram: DriveStrength: 0x00 (1/1)
+I (1121) MSPI Timing: Enter psram timing tuning
+I (1298) esp_psram: Found 32MB PSRAM device
+I (1298) esp_psram: Speed: 200MHz
+I (1299) hex_psram: psram CS IO is dedicated
+I (1299) cpu_start: Multicore app
+I (2251) esp_psram: SPI SRAM memory test OK
+I (2260) cpu_start: GPIO 38 and 37 are used as console UART I/O pins
+I (2261) cpu_start: Pro cpu start user code
+I (2261) cpu_start: cpu freq: 360000000 Hz
+I (2263) app_init: Application information:
+I (2267) app_init: Project name:     php-esp32
+I (2271) app_init: App version:      d37fbc7-dirty
+I (2275) app_init: Compile time:     Jul 30 2026 12:18:28
+I (2281) app_init: ELF file SHA256:  ad17c2191...
+I (2285) app_init: ESP-IDF:          v5.5.5
+I (2289) efuse_init: Min chip rev:     v1.0
+I (2293) efuse_init: Max chip rev:     v1.99
+I (2297) efuse_init: Chip rev:         v1.3
+I (2301) heap_init: Initializing. RAM available for dynamic allocation:
+I (2307) heap_init: At 4FF2B150 len 0000FE70 (63 KiB): RETENT_RAM
+I (2313) heap_init: At 4FF3AFC0 len 00004BF0 (18 KiB): RAM
+I (2318) heap_init: At 4FF4A820 len 000557E0 (341 KiB): RAM
+I (2324) heap_init: At 50108080 len 00007F80 (31 KiB): RTCRAM
+I (2329) heap_init: At 3010007C len 00001F84 (7 KiB): SPM
+I (2334) esp_psram: Adding pool of 32768K of PSRAM memory to heap allocator
+I (2342) spi_flash: detected chip: gd
+I (2344) spi_flash: flash io: dio
+I (2347) sleep_gpio: Configure to isolate all GPIO pins in sleep state
+I (2354) sleep_gpio: Enable automatic switching of GPIO sleep configuration
+I (2361) main_task: Started on CPU0
+I (2381) esp_psram: Reserving pool of 32K of internal memory for DMA/internal allocations
+I (2381) main_task: Calling app_main()
+I (2381) php-esp32: starting PHP runtime
+W (2391) ldo: The voltage value 0 is out of the recommended range [500, 2700]
+I (2401) main_task: Returned from app_main()
+I (2441) php-esp32: microSD mounted at /sdcard
+I (2441) php-esp32: php_embed_init()...
+PHP 8.3.32 on ESP32-P4
+--- /sdcard/index.php ---
+input: Città 42 — naïve 7 — café 100
+
+mb_split on ' — ':
+  [Città 42]
+  [naïve 7]
+  [café 100]
+
+mb_ereg_replace (mask the numbers):
+  Città # — naïve # — café #
+
+mb_ereg with a Unicode property (\p{L}+ followed by digits):
+  first match: word="Città" number=42
+
+mb_ereg_match (does it start with a letter?): bool(true)
+--- end ---
+I (2591) php-esp32: done -- heap free: 33946731 bytes

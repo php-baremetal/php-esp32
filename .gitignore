@@ -12,6 +12,10 @@ sdkconfig.ci
 # not versioned. Recreate it with: ./scripts/fetch-sqlite.sh
 /components/php/sqlite-amalgamation/
 
+# Oniguruma regex library for the optional mbstring mb_ereg support: fetched on
+# demand, not versioned. Recreate it with: ./scripts/fetch-oniguruma.sh
+/components/php/oniguruma/
+
 # Editor / OS
 *.swp
 .DS_Store

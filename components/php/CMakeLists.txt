@@ -416,3 +416,157 @@ if(PHP_EXT_SQLITE)
         SQLITE_USE_URI=1
     )
 endif()
+
+# ext/ctype: the ctype_*() character-class checks. Tiny (one source file, no data
+# tables). Pulled in by doctrine/inflector, Carbon and illuminate/support.
+# Enable with idf.py -DPHP_EXT_CTYPE=ON (or "y" in flash.sh).
+option(PHP_EXT_CTYPE "Build the ext/ctype extension" OFF)
+if(PHP_EXT_CTYPE)
+    target_sources(${COMPONENT_LIB} PRIVATE php-8.3.32/ext/ctype/ctype.c)
+    target_include_directories(${COMPONENT_LIB} PRIVATE php-8.3.32/ext/ctype)
+    # ctype.c wraps its whole body (module entry included) in #ifdef HAVE_CTYPE,
+    # which configure would define. Scope it to this one file so nothing else sees it.
+    set_source_files_properties(php-8.3.32/ext/ctype/ctype.c PROPERTIES
+        COMPILE_DEFINITIONS "HAVE_CTYPE")
+    target_compile_definitions(${COMPONENT_LIB} PRIVATE PHP_EXT_CTYPE_ENABLED)
+endif()
+
+# ext/filter: filter_var() validation and sanitization. Depends on ext/pcre (built
+# in) and ext/standard.
+# Enable with idf.py -DPHP_EXT_FILTER=ON (or "y" in flash.sh).
+option(PHP_EXT_FILTER "Build the ext/filter extension" OFF)
+if(PHP_EXT_FILTER)
+    target_sources(${COMPONENT_LIB} PRIVATE
+        php-8.3.32/ext/filter/filter.c
+        php-8.3.32/ext/filter/logical_filters.c
+        php-8.3.32/ext/filter/sanitizing_filters.c
+        php-8.3.32/ext/filter/callback_filter.c
+    )
+    target_include_directories(${COMPONENT_LIB} PRIVATE php-8.3.32/ext/filter)
+    target_compile_definitions(${COMPONENT_LIB} PRIVATE PHP_EXT_FILTER_ENABLED)
+endif()
+
+# ext/mbstring: the mb_*() multibyte-string functions plus the bundled libmbfl
+# charset library. Built WITHOUT oniguruma, so the mb_ereg* regex family is left
+# out (php_mbregex.c is not compiled and HAVE_MBREGEX stays undefined) -- the rest
+# of mbstring (mb_strlen/substr/convert_encoding/detect_encoding/...) is all there.
+# This is the heavy one: libmbfl carries the CJK conversion tables (~740 KB of it).
+# Enable with idf.py -DPHP_EXT_MBSTRING=ON.
+option(PHP_EXT_MBSTRING "Build the ext/mbstring extension (no mb_ereg/oniguruma)" OFF)
+# Sub-option: drop the legacy CJK (Chinese/Japanese/Korean) encodings. Leaves out
+# mbfilter_cjk.c (and mbfilter_utf8_mobile.c, which reuses its emoji tables) and, via
+# the 0003 patch, their registry entries. Shrinks mbstring by ~740 KB; UTF-8/UTF-16/
+# Latin and everything else keep working. No named CJK codecs (Shift-JIS, EUC-*, Big5).
+option(PHP_EXT_MBSTRING_NO_CJK "With PHP_EXT_MBSTRING: drop the CJK encodings (~740 KB smaller)" OFF)
+# Sub-option: build the mb_ereg*/mb_split multibyte-regex family. PHP does not bundle its
+# regex engine (oniguruma), so this vendors it -- run ./scripts/fetch-oniguruma.sh first.
+# Off by default; only needed by code that calls mb_ereg* or mb_split.
+option(PHP_EXT_MBSTRING_ONIG "With PHP_EXT_MBSTRING: build mb_ereg*/mb_split (bundles oniguruma)" OFF)
+if(PHP_EXT_MBSTRING)
+    # mbstring.c does #include "libmbfl/config.h", a file configure would generate to
+    # pull in the autoconf defines. We don't run configure, so generate a one-line shim
+    # in the build tree (it just includes our hand-written php_config.h) and put its
+    # parent on the include path so the quoted include resolves.
+    set(_mbfl_cfg_dir "${CMAKE_CURRENT_BINARY_DIR}/mbstring-generated")
+    file(MAKE_DIRECTORY "${_mbfl_cfg_dir}/libmbfl")
+    file(WRITE "${_mbfl_cfg_dir}/libmbfl/config.h"
+        "/* generated: libmbfl pulls in the project's php_config.h */\n#include <php_config.h>\n")
+    target_sources(${COMPONENT_LIB} PRIVATE
+        php-8.3.32/ext/mbstring/mbstring.c
+        php-8.3.32/ext/mbstring/php_unicode.c
+        php-8.3.32/ext/mbstring/mb_gpc.c
+        # bundled libmbfl (charset conversion) -- the whole library, minus nothing.
+        php-8.3.32/ext/mbstring/libmbfl/filters/html_entities.c
+        php-8.3.32/ext/mbstring/libmbfl/filters/mbfilter_7bit.c
+        php-8.3.32/ext/mbstring/libmbfl/filters/mbfilter_base64.c
+        php-8.3.32/ext/mbstring/libmbfl/filters/mbfilter_htmlent.c
+        php-8.3.32/ext/mbstring/libmbfl/filters/mbfilter_qprint.c
+        php-8.3.32/ext/mbstring/libmbfl/filters/mbfilter_singlebyte.c
+        php-8.3.32/ext/mbstring/libmbfl/filters/mbfilter_ucs2.c
+        php-8.3.32/ext/mbstring/libmbfl/filters/mbfilter_ucs4.c
+        php-8.3.32/ext/mbstring/libmbfl/filters/mbfilter_utf16.c
+        php-8.3.32/ext/mbstring/libmbfl/filters/mbfilter_utf32.c
+        php-8.3.32/ext/mbstring/libmbfl/filters/mbfilter_utf7.c
+        php-8.3.32/ext/mbstring/libmbfl/filters/mbfilter_utf7imap.c
+        php-8.3.32/ext/mbstring/libmbfl/filters/mbfilter_utf8.c
+        php-8.3.32/ext/mbstring/libmbfl/filters/mbfilter_uuencode.c
+        php-8.3.32/ext/mbstring/libmbfl/mbfl/mbfilter_8bit.c
+        php-8.3.32/ext/mbstring/libmbfl/mbfl/mbfilter.c
+        php-8.3.32/ext/mbstring/libmbfl/mbfl/mbfilter_pass.c
+        php-8.3.32/ext/mbstring/libmbfl/mbfl/mbfilter_wchar.c
+        php-8.3.32/ext/mbstring/libmbfl/mbfl/mbfl_convert.c
+        php-8.3.32/ext/mbstring/libmbfl/mbfl/mbfl_encoding.c
+        php-8.3.32/ext/mbstring/libmbfl/mbfl/mbfl_filter_output.c
+        php-8.3.32/ext/mbstring/libmbfl/mbfl/mbfl_language.c
+        php-8.3.32/ext/mbstring/libmbfl/mbfl/mbfl_memory_device.c
+        php-8.3.32/ext/mbstring/libmbfl/mbfl/mbfl_string.c
+        php-8.3.32/ext/mbstring/libmbfl/nls/nls_de.c
+        php-8.3.32/ext/mbstring/libmbfl/nls/nls_en.c
+        php-8.3.32/ext/mbstring/libmbfl/nls/nls_hy.c
+        php-8.3.32/ext/mbstring/libmbfl/nls/nls_ja.c
+        php-8.3.32/ext/mbstring/libmbfl/nls/nls_kr.c
+        php-8.3.32/ext/mbstring/libmbfl/nls/nls_neutral.c
+        php-8.3.32/ext/mbstring/libmbfl/nls/nls_ru.c
+        php-8.3.32/ext/mbstring/libmbfl/nls/nls_tr.c
+        php-8.3.32/ext/mbstring/libmbfl/nls/nls_ua.c
+        php-8.3.32/ext/mbstring/libmbfl/nls/nls_uni.c
+        php-8.3.32/ext/mbstring/libmbfl/nls/nls_zh.c
+    )
+    # The legacy CJK codecs live in mbfilter_cjk.c (+ mbfilter_utf8_mobile.c, which reuses
+    # its emoji tables) -- ~740 KB. Make them optional: with PHP_EXT_MBSTRING_NO_CJK they're
+    # dropped and the 0003 patch removes their registry entries (guarded by MBSTRING_NO_CJK)
+    # so nothing references the missing symbols.
+    if(NOT PHP_EXT_MBSTRING_NO_CJK)
+        target_sources(${COMPONENT_LIB} PRIVATE
+            php-8.3.32/ext/mbstring/libmbfl/filters/mbfilter_cjk.c
+            php-8.3.32/ext/mbstring/libmbfl/filters/mbfilter_utf8_mobile.c
+        )
+    else()
+        target_compile_definitions(${COMPONENT_LIB} PRIVATE MBSTRING_NO_CJK)
+    endif()
+    target_include_directories(${COMPONENT_LIB} PRIVATE
+        ${_mbfl_cfg_dir}
+        php-8.3.32/ext/mbstring
+        php-8.3.32/ext/mbstring/libmbfl
+        php-8.3.32/ext/mbstring/libmbfl/mbfl
+    )
+    target_compile_definitions(${COMPONENT_LIB} PRIVATE PHP_EXT_MBSTRING_ENABLED)
+
+    # mb_ereg*/mb_split (multibyte regex). PHP doesn't bundle its regex engine, so this
+    # compiles the vendored oniguruma (git-ignored: ./scripts/fetch-oniguruma.sh) plus
+    # php_mbregex.c, and defines HAVE_MBREGEX so mbstring.c and its arginfo register the
+    # mb_ereg* / mb_split functions. Without this the family simply isn't there.
+    if(PHP_EXT_MBSTRING_ONIG)
+        if(NOT EXISTS "${CMAKE_CURRENT_LIST_DIR}/oniguruma/src/oniguruma.h")
+            message(FATAL_ERROR
+                "PHP_EXT_MBSTRING_ONIG=ON but oniguruma is missing. "
+                "Run ./scripts/fetch-oniguruma.sh first.")
+        endif()
+        # libonig sources (the Makefile.am list, minus the POSIX API wrappers and mktable).
+        # The onig .c files find their own headers and src/config.h relative to src/, so
+        # they need no extra include dirs.
+        set(_onig src/regparse.c src/regcomp.c src/regexec.c src/regenc.c src/regerror.c
+            src/regext.c src/regsyntax.c src/regtrav.c src/regversion.c src/st.c src/reggnu.c
+            src/unicode.c src/unicode_unfold_key.c src/unicode_fold1_key.c
+            src/unicode_fold2_key.c src/unicode_fold3_key.c src/ascii.c src/utf8.c
+            src/utf16_be.c src/utf16_le.c src/utf32_be.c src/utf32_le.c src/euc_jp.c
+            src/euc_jp_prop.c src/sjis.c src/sjis_prop.c src/iso8859_1.c src/iso8859_2.c
+            src/iso8859_3.c src/iso8859_4.c src/iso8859_5.c src/iso8859_6.c src/iso8859_7.c
+            src/iso8859_8.c src/iso8859_9.c src/iso8859_10.c src/iso8859_11.c src/iso8859_13.c
+            src/iso8859_14.c src/iso8859_15.c src/iso8859_16.c src/euc_tw.c src/euc_kr.c
+            src/big5.c src/gb18030.c src/koi8.c src/koi8_r.c src/cp1251.c src/onig_init.c)
+        list(TRANSFORM _onig PREPEND oniguruma/)
+        target_sources(${COMPONENT_LIB} PRIVATE
+            php-8.3.32/ext/mbstring/php_mbregex.c
+            ${_onig}
+        )
+        # HAVE_MBREGEX gates the mb_ereg* code in mbstring.c and its arginfo entries.
+        target_compile_definitions(${COMPONENT_LIB} PRIVATE HAVE_MBREGEX)
+        # php_mbregex.c pulls <oniguruma.h> and needs ONIG_ESCAPE_UCHAR_COLLISION so
+        # oniguruma.h doesn't re-typedef UChar (php.h already has it). Scoped to that file
+        # so the include of oniguruma/src doesn't leak a bare "config.h" onto other units.
+        set_source_files_properties(php-8.3.32/ext/mbstring/php_mbregex.c PROPERTIES
+            INCLUDE_DIRECTORIES "${CMAKE_CURRENT_LIST_DIR}/oniguruma/src"
+            COMPILE_DEFINITIONS "ONIG_ESCAPE_UCHAR_COLLISION=1")
+    endif()
+endif()

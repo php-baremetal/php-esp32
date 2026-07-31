@@ -30,15 +30,26 @@ standard library and the built-in extensions.
 Off by default; enabled at build time (see [flash.md](flash.md) and the README). Cost is the
 extra flash they add to the image:
 
+All figures are measured image deltas: the `.bin` size with the extension on, minus the
+baseline (all optional extensions off, ~3.08 MB).
+
 | Extension | Adds to flash | Notes |
 |---|---|---|
-| `ext/date` | **~650 KB** | measured image delta. The real `DateTime` and date/time API; ~350 KB of that is the builtin timezone database. Replaces the UTC stub. |
+| `ext/date` | **~650 KB** | the real `DateTime` and date/time API; ~350 KB of that is the builtin timezone database. Replaces the UTC stub. |
 | `ext/date` (UTC-only tz) | **~300 KB** | the same, with `PHP_EXT_DATE_MINIMAL_TZ`: a UTC-only timezone database instead of the full one, ~350 KB smaller. No named zones. |
-| PDO + SQLite | **~560 KB** | measured image delta. Of that, ~530 KB is the SQLite library itself, ~60 KB `ext/pdo`, ~9 KB `ext/pdo_sqlite`. |
+| PDO + SQLite | **~560 KB** | of that, ~530 KB is the SQLite library itself, ~60 KB `ext/pdo`, ~9 KB `ext/pdo_sqlite`. |
+| `ext/ctype` | **~2.5 KB** | tiny: one source file, no data tables. |
+| `ext/filter` | **~27 KB** | `filter_var()` validation/sanitization. |
+| `ext/mbstring` | **~965 KB** | the heavy one. Bundled libmbfl, most of it the CJK conversion tables. Built without `mb_ereg*` (no oniguruma). |
+| `ext/mbstring` (no CJK) | **~209 KB** | the same, with `PHP_EXT_MBSTRING_NO_CJK`: drops the legacy CJK codecs (Shift-JIS, EUC-*, Big5, GB18030, `mb_convert_kana`), ~755 KB smaller. UTF-8/UTF-16/Latin unaffected. |
+| `ext/mbstring` + `mb_ereg*` | **+~445 KB** | on top of mbstring, with `PHP_EXT_MBSTRING_ONIG`: the `mb_ereg*`/`mb_split` multibyte-regex family, which bundles the oniguruma library. About ~1.38 MB together with full mbstring. |
 
-Adding it takes the image from ~3.1 MB to ~3.7 MB — still a small fraction of the 12 MB
-partition. Runtime memory is negligible: SQLite is built for small devices, and its heap
-comes from the 32 MB PSRAM pool.
+The last three (`ctype` + `filter` + `mbstring`) add ~995 KB together; with `date` and
+`pdo`/`sqlite` also on, everything together lands around ~5.3 MB (the deltas are measured one
+at a time, so summing them is approximate) — still well inside the 12 MB app partition.
+`mbstring` dominates that cost; dropping its CJK codecs (`PHP_EXT_MBSTRING_NO_CJK`) shrinks it
+from ~965 KB to ~209 KB, bringing the three down to ~240 KB together. Runtime memory stays
+negligible: all of these allocate from the 32 MB PSRAM pool.
 
 ## RAM
 

@@ -34,6 +34,19 @@ extern zend_module_entry gpio_module_entry;
 extern zend_module_entry date_module_entry;
 #endif
 
+/* Optional ext/ctype, ext/mbstring and ext/filter, gated by their PHP_EXT_*_ENABLED
+ * macros (set from the php component's CMakeLists). Three more of PHP's bundled
+ * extensions, ported optionally. mbstring is built without the mb_ereg regex family. */
+#ifdef PHP_EXT_CTYPE_ENABLED
+extern zend_module_entry ctype_module_entry;
+#endif
+#ifdef PHP_EXT_MBSTRING_ENABLED
+extern zend_module_entry mbstring_module_entry;
+#endif
+#ifdef PHP_EXT_FILTER_ENABLED
+extern zend_module_entry filter_module_entry;
+#endif
+
 /* Optional PDO/SQLite extension, gated by PHP_EXT_SQLITE_ENABLED (set from the
  * php component's CMakeLists when built with -DPHP_EXT_SQLITE=ON). pdo must be
  * registered before pdo_sqlite, which depends on it. */
@@ -53,6 +66,15 @@ static zend_module_entry * const php_builtin_extensions[] = {
 	phpext_reflection_ptr,
 	phpext_standard_ptr,
 	phpext_spl_ptr,
+#ifdef PHP_EXT_CTYPE_ENABLED
+	&ctype_module_entry,
+#endif
+#ifdef PHP_EXT_MBSTRING_ENABLED
+	&mbstring_module_entry,
+#endif
+#ifdef PHP_EXT_FILTER_ENABLED
+	&filter_module_entry,
+#endif
 #ifdef PHP_EXT_SQLITE_ENABLED
 	&pdo_module_entry,
 	&pdo_sqlite_module_entry,

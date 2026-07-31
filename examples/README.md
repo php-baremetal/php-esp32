@@ -31,10 +31,19 @@ working (the LED blinking, the button turning it on, and so on).
 | [`sqlite-notes/`](sqlite-notes/) | PDO opens a SQLite database on the microSD and writes a row each boot. | needs a firmware built with the sqlite extension |
 | [`date-timezones/`](date-timezones/) | `DateTime` across named timezones, DST-aware conversions and interval math. | needs the date extension (full timezone db) |
 | [`date-utc/`](date-utc/) | `DateTime` in a UTC-only build: what still works and the named zones you give up. | needs the date extension (UTC-only db) |
+| [`ctype-demo/`](ctype-demo/) | The `ctype_*` character-class checks on whole strings. | needs the ctype extension |
+| [`mbstring-demo/`](mbstring-demo/) | Multibyte strings: `mb_strlen`, `mb_substr`, case, encoding detect/convert. | needs the mbstring extension |
+| [`mbstring-no-cjk/`](mbstring-no-cjk/) | The same, on a firmware with the CJK encodings dropped (~755 KB smaller mbstring). | needs mbstring built with `NO_CJK` |
+| [`mbstring-regex/`](mbstring-regex/) | `mb_ereg*` / `mb_split` with Unicode patterns, on the real Oniguruma engine. | needs mbstring built with `ONIG` |
+| [`filter-demo/`](filter-demo/) | `filter_var()` validation and sanitization (email, int, URL, IP…). | needs the filter extension |
+| [`eloquent-demo/`](eloquent-demo/) | Laravel's Eloquent ORM (standalone, no framework) on a SQLite database on the microSD — mbstring **without** oniguruma (`mb_split` polyfilled). | "everything" firmware + `vendor/` |
+| [`eloquent-onig/`](eloquent-onig/) | The same Eloquent demo, on a firmware with mbstring built **with** oniguruma (native `mb_split`, no polyfill). | "everything" firmware + `ONIG` + `vendor/` |
 
 The linear examples (`hello`, `language-tour`, `require-demo`, `composer-collections`,
-`sd-write`, `sqlite-notes`, `date-timezones`, `date-utc`) run once and finish; the hardware
-ones use the `setup()`/`loop()` model and keep going as long as the board is powered.
+`sd-write`, `sqlite-notes`, `date-timezones`, `date-utc`, `ctype-demo`, `mbstring-demo`,
+`mbstring-no-cjk`, `mbstring-regex`, `filter-demo`, `eloquent-demo`, `eloquent-onig`) run once
+and finish; the hardware ones use the `setup()`/`loop()` model and keep going as long as the
+board is powered.
 
 ## The examples that need a special firmware
 
@@ -47,13 +56,29 @@ extensions to include; each example's README has the exact answers.
   (`-DPHP_EXT_DATE=ON`).
 - [`date-utc`](date-utc/) — `ext/date` with the smaller UTC-only database
   (`-DPHP_EXT_DATE=ON -DPHP_EXT_DATE_MINIMAL_TZ=ON`).
+- [`ctype-demo`](ctype-demo/) — `ext/ctype` (`-DPHP_EXT_CTYPE=ON`).
+- [`mbstring-demo`](mbstring-demo/) — `ext/mbstring` (`-DPHP_EXT_MBSTRING=ON`).
+- [`mbstring-no-cjk`](mbstring-no-cjk/) — `ext/mbstring` without the CJK codecs
+  (`-DPHP_EXT_MBSTRING=ON -DPHP_EXT_MBSTRING_NO_CJK=ON`).
+- [`mbstring-regex`](mbstring-regex/) — `ext/mbstring` with the `mb_ereg*`/`mb_split` engine
+  (`-DPHP_EXT_MBSTRING=ON -DPHP_EXT_MBSTRING_ONIG=ON`).
+- [`filter-demo`](filter-demo/) — `ext/filter` (`-DPHP_EXT_FILTER=ON`).
+- [`eloquent-demo`](eloquent-demo/) — the whole set at once: `sqlite` + `mbstring` + `ctype` +
+  `filter` + `date` (`-DPHP_EXT_SQLITE=ON -DPHP_EXT_MBSTRING=ON -DPHP_EXT_CTYPE=ON
+  -DPHP_EXT_FILTER=ON -DPHP_EXT_DATE=ON`).
+- [`eloquent-onig`](eloquent-onig/) — the same set, plus the mbstring regex engine
+  (`… -DPHP_EXT_MBSTRING_ONIG=ON`).
 
-## The two examples that need more than one file
+The middle three (`ctype`, `mbstring`, `filter`) are three more of PHP's bundled extensions,
+ported so more of the standard library is available.
 
-Almost all of them are copied with just their `index.php`. Two are exceptions:
+## The examples that need more than one file
+
+Almost all of them are copied with just their `index.php`. A few are exceptions:
 
 - [`require-demo`](require-demo/) is deliberately made of several files (`index.php`,
   `config.php`, `lib/shapes.php`): copy them to the microSD keeping the same folder layout.
-- [`composer-collections`](composer-collections/) needs the whole `vendor/` directory next
-  to `index.php`. `vendor/` is not committed: generate it with `composer install` (the
-  firmware needs FAT long filenames enabled). Its README walks through every step.
+- [`composer-collections`](composer-collections/), [`eloquent-demo`](eloquent-demo/) and
+  [`eloquent-onig`](eloquent-onig/) need the whole `vendor/` directory next to `index.php`.
+  `vendor/` is not committed: generate it with `composer install` (the firmware needs FAT long
+  filenames enabled). Their READMEs walk through every step.

@@ -1,0 +1,91 @@
+I (25) boot: ESP-IDF v5.5.5 2nd stage bootloader
+I (26) boot: compile time Jul 29 2026 22:23:10
+I (26) boot: Multicore bootloader
+I (27) boot: chip revision: v1.3
+I (29) boot: efuse block revision: v0.3
+I (32) boot.esp32p4: SPI Speed      : 80MHz
+I (36) boot.esp32p4: SPI Mode       : DIO
+I (40) boot.esp32p4: SPI Flash Size : 32MB
+I (44) boot: Enabling RNG early entropy source...
+I (48) boot: Partition Table:
+I (51) boot: ## Label            Usage          Type ST Offset   Length
+I (57) boot:  0 nvs              WiFi data        01 02 00009000 00006000
+I (64) boot:  1 phy_init         RF data          01 01 0000f000 00001000
+I (70) boot:  2 factory          factory app      00 00 00010000 00c00000
+I (78) boot: End of partition table
+I (80) esp_image: segment 0: paddr=00010020 vaddr=40240020 size=d8604h (886276) map
+I (235) esp_image: segment 1: paddr=000e862c vaddr=30100000 size=0007ch (   124) load
+I (237) esp_image: segment 2: paddr=000e86b0 vaddr=4ff00000 size=07968h ( 31080) load
+I (247) esp_image: segment 3: paddr=000f0020 vaddr=40000020 size=23c0ach (2343084) map
+I (636) esp_image: segment 4: paddr=0032c0d4 vaddr=4ff07968 size=0e344h ( 58180) load
+I (653) boot: Loaded app from partition at offset 0x10000
+I (653) boot: Disabling RNG early entropy source...
+I (665) hex_psram: vendor id    : 0x0d (AP)
+I (665) hex_psram: Latency      : 0x01 (Fixed)
+I (666) hex_psram: DriveStr.    : 0x00 (25 Ohm)
+I (666) hex_psram: dev id       : 0x03 (generation 4)
+I (671) hex_psram: density      : 0x07 (256 Mbit)
+I (675) hex_psram: good-die     : 0x06 (Pass)
+I (679) hex_psram: SRF          : 0x02 (Slow Refresh)
+I (684) hex_psram: BurstType    : 0x00 ( Wrap)
+I (688) hex_psram: BurstLen     : 0x03 (2048 Byte)
+I (693) hex_psram: BitMode      : 0x01 (X16 Mode)
+I (697) hex_psram: Readlatency  : 0x04 (14 cycles@Fixed)
+I (702) hex_psram: DriveStrength: 0x00 (1/1)
+I (706) MSPI Timing: Enter psram timing tuning
+I (884) esp_psram: Found 32MB PSRAM device
+I (884) esp_psram: Speed: 200MHz
+I (885) hex_psram: psram CS IO is dedicated
+I (885) cpu_start: Multicore app
+I (1837) esp_psram: SPI SRAM memory test OK
+I (1846) cpu_start: GPIO 38 and 37 are used as console UART I/O pins
+I (1847) cpu_start: Pro cpu start user code
+I (1847) cpu_start: cpu freq: 360000000 Hz
+I (1849) app_init: Application information:
+I (1853) app_init: Project name:     php-esp32
+I (1857) app_init: App version:      d37fbc7-dirty
+I (1861) app_init: Compile time:     Jul 30 2026 12:18:28
+I (1867) app_init: ELF file SHA256:  08a156ec3...
+I (1871) app_init: ESP-IDF:          v5.5.5
+I (1875) efuse_init: Min chip rev:     v1.0
+I (1879) efuse_init: Max chip rev:     v1.99
+I (1883) efuse_init: Chip rev:         v1.3
+I (1887) heap_init: Initializing. RAM available for dynamic allocation:
+I (1893) heap_init: At 4FF28310 len 00012CB0 (75 KiB): RETENT_RAM
+I (1899) heap_init: At 4FF3AFC0 len 00004BF0 (18 KiB): RAM
+I (1904) heap_init: At 4FF45750 len 0005A8B0 (362 KiB): RAM
+I (1910) heap_init: At 50108080 len 00007F80 (31 KiB): RTCRAM
+I (1915) heap_init: At 3010007C len 00001F84 (7 KiB): SPM
+I (1920) esp_psram: Adding pool of 32768K of PSRAM memory to heap allocator
+I (1928) spi_flash: detected chip: gd
+I (1930) spi_flash: flash io: dio
+I (1933) sleep_gpio: Configure to isolate all GPIO pins in sleep state
+I (1940) sleep_gpio: Enable automatic switching of GPIO sleep configuration
+I (1947) main_task: Started on CPU0
+I (1967) esp_psram: Reserving pool of 32K of internal memory for DMA/internal allocations
+I (1967) main_task: Calling app_main()
+I (1967) php-esp32: starting PHP runtime
+W (1977) ldo: The voltage value 0 is out of the recommended range [500, 2700]
+I (1987) main_task: Returned from app_main()
+I (2027) php-esp32: microSD mounted at /sdcard
+I (2027) php-esp32: php_embed_init()...
+PHP 8.3.32 on ESP32-P4
+--- /sdcard/index.php ---
+mb_strlen:       19 chars, 27 bytes
+mb_strtoupper:   CITTÀ — €10 — NAÏVE
+mb_substr(0,6):  Città
+utf8->latin1->utf8: Città
+
+encodings available: 44
+  UTF-8       present
+  UTF-16      present
+  ISO-8859-1  present
+  ASCII       present
+  SJIS        dropped
+  EUC-JP      dropped
+  BIG-5       dropped
+  GB18030     dropped
+
+convert 'A' to SJIS: unavailable — mb_convert_encoding(): Argument #2 ($to_encoding) must be a valid encoding, "SJIS" given
+--- end ---
+I (2177) php-esp32: done -- heap free: 33979191 bytes

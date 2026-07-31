@@ -202,3 +202,47 @@ The fix is a patch to the amalgamation (in `components/php/patches/sqlite/`, app
 
 The lesson for this board: FATFS gives you `open`/`read`/`write`/`lseek`, but not their POSIX
 semantics for sparse files — anything that seeks past EOF has to be guarded.
+
+## Three more bundled extensions (ctype, mbstring, filter)
+
+Carrying the port a bit further with three more of PHP's bundled extensions: `ext/ctype`
+(character-class checks), `ext/mbstring` (multibyte strings) and `ext/filter` (`filter_var()`
+validation and sanitization). All three are optional, off by default, each with its own
+`-DPHP_EXT_<NAME>=ON` flag. Two of them needed a porting touch:
+
+- **ctype** wraps its whole body — the module entry included — in `#ifdef HAVE_CTYPE`, a macro
+  `configure` would define. The hand-written `php_config.h` leaves it undefined, so without help
+  the file compiles to nothing and the link fails with `undefined reference to ctype_module_entry`.
+  The fix is to define `HAVE_CTYPE` for that one file only (scoped in CMake), not globally.
+- **mbstring** is built **without** oniguruma by default (a separate regex library PHP doesn't
+  bundle), so the `mb_ereg*` and `mb_split` functions are left out (`php_mbregex.c` isn't
+  compiled and `HAVE_MBREGEX` stays undefined); everything else — length, case, `substr`,
+  encoding detect/convert — is there. Code that needs `mb_split` can polyfill it over PCRE in a
+  couple of lines (the `eloquent-demo` example does exactly this), **or** turn on the real thing
+  (next bullet). Its one build quirk is that `mbstring.c`
+  does `#include "libmbfl/config.h"`, a header `configure` generates; we generate a one-line shim
+  in the build tree (it just pulls in `php_config.h`) and put it on the include path. The bundled
+  libmbfl is the reason mbstring is by far the heaviest extension (~965 KB — see
+  [footprint.md](footprint.md)): most of that is the CJK conversion tables.
+- **mbstring without CJK.** Because those tables (`mbfilter_cjk.c`) are ~740 KB of the total,
+  a sub-option `-DPHP_EXT_MBSTRING_NO_CJK=ON` drops them, taking mbstring down to ~209 KB. It
+  leaves out `mbfilter_cjk.c` and `mbfilter_utf8_mobile.c` (which reuses the CJK emoji tables),
+  and a patch (`patches/php/0003-...`, gated by the `MBSTRING_NO_CJK` macro so it's a no-op
+  otherwise) removes the three things that would otherwise reference the missing symbols: the
+  CJK/mobile entries in the encoding registry (`mbfl_encoding.c`), a `sjis_mac` fast-path check
+  in `mb_substr`, and the whole `mb_convert_kana()` function (Japanese kana, whose lookup lives
+  in the CJK file — including its entry in the generated `mbstring_arginfo.h` function table).
+  UTF-8/UTF-16/Latin and everything else are unaffected; the named CJK codecs (Shift-JIS,
+  EUC-*, Big5, …) simply aren't registered.
+- **mbstring with mb_ereg (oniguruma).** To get the `mb_ereg*`/`mb_split` regex family for real,
+  `-DPHP_EXT_MBSTRING_ONIG=ON` compiles `php_mbregex.c` and defines `HAVE_MBREGEX` (which is what
+  makes `mbstring.c` and its arginfo register those functions). Since PHP doesn't bundle the
+  regex engine, this **vendors oniguruma** (`scripts/fetch-oniguruma.sh`, git-ignored, like the
+  SQLite amalgamation) and compiles its ~48 library sources. Two port touches: oniguruma expects
+  a `configure`-generated `src/config.h`, so the fetch script drops in a hand-written one (a few
+  `HAVE_*_H` and the `SIZEOF_*` for ILP32); and `php_mbregex.c` is compiled with
+  `ONIG_ESCAPE_UCHAR_COLLISION=1` (so `oniguruma.h` doesn't re-`typedef UChar`, which `php.h`
+  already has) and the `oniguruma/src` include — both scoped to that one file. It adds ~445 KB
+  (see [footprint.md](footprint.md)); off by default, since most code doesn't need mb-regex.
+- **filter** needed nothing special: it defines its module entry unconditionally and leans only
+  on `ext/pcre` and `ext/standard`, both always in.

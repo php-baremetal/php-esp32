@@ -57,11 +57,15 @@ fi
 # in components/php/CMakeLists.txt and internal_functions.c.
 OPTIONAL_EXTS=(
     "date|ext/date: real DateTime and date/time functions|"
+    "ctype|ext/ctype: character-class checks (ctype_*)|"
+    "mbstring|ext/mbstring: multibyte strings (mb_*), no mb_ereg|"
+    "filter|ext/filter: filter_var() validation and sanitization|"
     "sqlite|PDO + SQLite: read/write .db files on the microSD|scripts/fetch-sqlite.sh"
 )
 
 EXT_ARGS=()
 DATE_ON=0
+MBSTRING_ON=0
 echo "Optional PHP extensions (off by default):"
 for entry in "${OPTIONAL_EXTS[@]}"; do
     IFS='|' read -r key desc fetch <<< "${entry}"
@@ -75,12 +79,30 @@ for entry in "${OPTIONAL_EXTS[@]}"; do
             fi
             EXT_ARGS+=("-DPHP_EXT_${key_upper}=ON")
             [ "${key}" = "date" ] && DATE_ON=1
+            [ "${key}" = "mbstring" ] && MBSTRING_ON=1
             ;;
         *)
             EXT_ARGS+=("-DPHP_EXT_${key_upper}=OFF")
             ;;
     esac
 done
+
+# Sub-options of ext/mbstring.
+MBSTRING_NO_CJK=OFF
+MBSTRING_ONIG=OFF
+if [ "${MBSTRING_ON}" = "1" ]; then
+    read -r -p "    mbstring: drop CJK encodings (~740 KB smaller, but no Shift-JIS/EUC/Big5)? [y/N] " ans
+    case "${ans}" in y|Y|s|S) MBSTRING_NO_CJK=ON ;; esac
+    read -r -p "    mbstring: build mb_ereg*/mb_split regex (bundles oniguruma)? [y/N] " ans
+    case "${ans}" in
+        y|Y|s|S)
+            "${REPO_ROOT}/scripts/fetch-oniguruma.sh"   # fetch the regex library on demand
+            MBSTRING_ONIG=ON
+            ;;
+    esac
+fi
+EXT_ARGS+=("-DPHP_EXT_MBSTRING_NO_CJK=${MBSTRING_NO_CJK}")
+EXT_ARGS+=("-DPHP_EXT_MBSTRING_ONIG=${MBSTRING_ONIG}")
 
 # Sub-option of ext/date: ship only UTC instead of the full ~350 KB timezone database.
 MINIMAL_TZ=OFF
