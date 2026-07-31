@@ -1,0 +1,17 @@
+# php-esp32 repository descriptor
+# ================================
+# Which PHP version this checkout builds by default. Each supported version is a
+# self-contained directory under components/php/versions/<version>/ holding its
+# source list, hand-written config headers, patches, optional-extension wiring, and
+# its own extension manifest at versions/<version>/manifest.toml.
+#
+# The build picks it up as the CMake `PHP_VERSION` default (override with
+# -DPHP_VERSION=<ver>); scripts/fetch-php.sh downloads that version's source; and
+# flash-tool reads versions/<version>/manifest.toml for the extension contract.
+
+default_version = "8.3.32"
+
+# Which board to build for by default (override with -DBOARD=<board>). A board is a
+# "family/board" directory under boards/ (chip family, then the specific board); it
+# owns its sdkconfig, pins and mount code (board.c). See boards/<family>/<board>/.
+default_board = "esp32-p4/esp32-p4-pico"

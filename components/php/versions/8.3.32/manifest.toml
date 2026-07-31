@@ -1,0 +1,180 @@
+# php-esp32 extension manifest
+# ==============================
+# The machine-readable contract between this firmware and the `flash-tool` CLI.
+# flash-tool hardcodes nothing about extensions: it reads this file from the
+# installed php-esp32 and only presents the choices, records them, and (at build
+# time) emits exactly the `-D<flag>` arguments declared here.
+#
+# This is the single source of truth. When an extension, setting, flag, dependency
+# or per-type rule changes, edit it HERE and keep it in step with the actual build
+# (`flash.sh` OPTIONAL_EXTS, `components/php/CMakeLists.txt` PHP_EXT_* options, and
+# `components/php/internal_functions.c`). See docs/ext-porting.md for the prose view.
+#
+# Schema
+# ------
+# schema_version : integer, bumped on incompatible format changes.
+#
+# storage_type / project_type declare what the FIRMWARE implements. What a given BOARD
+# can actually run is the intersection of that with the board's hardware capabilities,
+# which the board declares in its own boards/<family>/<board>/board.toml
+# (storage_types/project_types). So a mode is offered only when it is available here AND
+# listed by the selected board -- e.g. `web-server` is implemented-or-not here, but only
+# a board with a network offers it.
+#
+# [[storage_type]]  where the PHP source lives -- the upstream choice, above `type`.
+#   key          : identifier used in php-esp32.config.toml `storage_type` (microsd/embedded).
+#   available    : false = reserved/not implemented in the firmware yet.
+#   description  : one line.
+#
+# [[project_type]]  the execution model.
+#   key          : identifier used in php-esp32.config.toml `type`.
+#   available    : false = reserved/not implemented in the firmware yet.
+#   description  : one line.
+#
+# [[extension]]     every extension the firmware supports.
+#   key          : short name (matches the config table [extensions.<key>]).
+#   description  : one line.
+#   required_for : project-type keys this extension is mandatory for (always compiled
+#                  in, not toggleable). Empty/absent = purely optional. Core extensions
+#                  list every type; the mapping is per-type and owned here.
+#   flag         : the build define to pass when enabled, e.g. "PHP_EXT_DATE=ON".
+#                  Absent for core extensions (always compiled, no flag).
+#   fetch        : optional path (relative to the php-esp32 repo) to a script that must
+#                  run before building when this extension is enabled (it downloads
+#                  git-ignored sources). Absent = nothing to fetch.
+#   requires     : other extension keys that must also be enabled. Enabling an extension
+#                  transitively enables everything it requires.
+#   flash_cost   : informational, approximate measured image delta (for display).
+#   [[extension.setting]]  optional sub-toggles.
+#     key        : setting name (config: [extensions.<ext>] <key> = true/false).
+#     description: one line.
+#     flag       : build define when the setting is on, e.g. "PHP_EXT_DATE_MINIMAL_TZ=ON".
+#     default    : boolean default.
+#     fetch      : optional fetch script needed when the setting is on.
+
+schema_version = 1
+
+# --- Storage types: where the PHP source lives (the upstream choice) ----------
+
+[[storage_type]]
+key = "microsd"
+available = true
+description = "The PHP source (index.php + vendor/) lives on the microSD; the firmware reads it."
+
+[[storage_type]]
+key = "embedded"
+available = false
+description = "(reserved) the PHP source is compiled into the firmware and flashed with it."
+
+# --- Project types: the execution model ---------------------------------------
+
+[[project_type]]
+key = "init-loop"
+available = true
+description = "Runs index.php, then setup() once and loop($tick) repeatedly."
+
+[[project_type]]
+key = "web-server"
+available = false
+description = "(reserved) the device serves HTTP."
+
+[[project_type]]
+key = "event-driven"
+available = false
+description = "(reserved) execution driven by events."
+
+# --- Core extensions: always compiled in, no flag ----------------------------
+
+[[extension]]
+key = "standard"
+description = "Core standard library (strings, arrays, math, url, base64, ...)."
+required_for = ["init-loop", "web-server", "event-driven"]
+
+[[extension]]
+key = "pcre"
+description = "PCRE regular expressions."
+required_for = ["init-loop", "web-server", "event-driven"]
+
+[[extension]]
+key = "hash"
+description = "Hashing (md5, sha, crc, ...)."
+required_for = ["init-loop", "web-server", "event-driven"]
+
+[[extension]]
+key = "json"
+description = "JSON encode/decode."
+required_for = ["init-loop", "web-server", "event-driven"]
+
+[[extension]]
+key = "spl"
+description = "Standard PHP Library (iterators, data structures)."
+required_for = ["init-loop", "web-server", "event-driven"]
+
+[[extension]]
+key = "reflection"
+description = "Reflection API."
+required_for = ["init-loop", "web-server", "event-driven"]
+
+[[extension]]
+key = "random"
+description = "Randomness (the Random\\Engine API, random_int, ...)."
+required_for = ["init-loop", "web-server", "event-driven"]
+
+[[extension]]
+key = "gpio"
+description = "GPIO pins: gpio_mode/gpio_write/gpio_read/delay and the GPIO_* constants."
+required_for = ["init-loop", "event-driven"]
+
+# --- Optional extensions: off by default, enabled by a build flag ------------
+
+[[extension]]
+key = "date"
+description = "Real ext/date: the DateTime class and the date/time API (a UTC stub covers the core when off)."
+required_for = []
+flag = "PHP_EXT_DATE=ON"
+flash_cost = "~650 KB"
+  [[extension.setting]]
+  key = "minimal_tz"
+  description = "UTC-only timezone database instead of the full one (~350 KB smaller; no named zones)."
+  flag = "PHP_EXT_DATE_MINIMAL_TZ=ON"
+  default = false
+
+[[extension]]
+key = "ctype"
+description = "Character-class checks (ctype_alpha, ctype_digit, ...)."
+required_for = []
+flag = "PHP_EXT_CTYPE=ON"
+flash_cost = "~2.5 KB"
+
+[[extension]]
+key = "filter"
+description = "filter_var() validation and sanitization."
+required_for = []
+flag = "PHP_EXT_FILTER=ON"
+flash_cost = "~27 KB"
+
+[[extension]]
+key = "mbstring"
+description = "Multibyte strings (mb_strlen/substr/convert/detect/...). Built without mb_ereg unless the onig setting is on."
+required_for = []
+flag = "PHP_EXT_MBSTRING=ON"
+flash_cost = "~965 KB"
+  [[extension.setting]]
+  key = "no_cjk"
+  description = "Drop the legacy CJK codecs (Shift-JIS, EUC-*, Big5, GB18030, mb_convert_kana); ~755 KB smaller."
+  flag = "PHP_EXT_MBSTRING_NO_CJK=ON"
+  default = false
+  [[extension.setting]]
+  key = "onig"
+  description = "Build the mb_ereg*/mb_split regex family (bundles oniguruma); adds ~445 KB."
+  flag = "PHP_EXT_MBSTRING_ONIG=ON"
+  default = false
+  fetch = "scripts/fetch-oniguruma.sh"
+
+[[extension]]
+key = "sqlite"
+description = "PDO with the SQLite driver (ext/pdo + ext/pdo_sqlite, built together)."
+required_for = []
+flag = "PHP_EXT_SQLITE=ON"
+fetch = "scripts/fetch-sqlite.sh"
+flash_cost = "~560 KB"

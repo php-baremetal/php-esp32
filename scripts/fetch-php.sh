@@ -1,15 +1,35 @@
 #!/usr/bin/env bash
-# Download and extract the pristine PHP source into components/php/php-8.3.32/
+# Download and extract the pristine PHP source into components/php/php-<version>/
 # (kept out of git; see .gitignore). Use the release tarball, not git: it ships
 # the pre-generated lexer and parser, so bison/re2c aren't needed.
+#
+# The version is per-directory: components/php/versions/<version>/ holds its
+# version.env (VERSION + SHA256) and its patches. Which version to fetch defaults
+# to `default_version` in php-esp32.toml; override with e.g.
+#   PHP_VERSION=8.4.1 ./scripts/fetch-php.sh
 set -euo pipefail
 
-PHP_VERSION="8.3.32"
-SHA256="8e1f03eea0b07bc29e1f94d3cfcf0532b0421ec63c1792346b58c3ad8e40fc9b"
+REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+
+# Pick the version: env override, else the repo's default from php-esp32.toml.
+if [ -z "${PHP_VERSION:-}" ]; then
+    PHP_VERSION="$(grep -oE 'default_version[[:space:]]*=[[:space:]]*"[^"]+"' \
+        "${REPO_ROOT}/php-esp32.toml" | grep -oE '"[^"]+"' | tr -d '"')"
+fi
+
+VDIR="${REPO_ROOT}/components/php/versions/${PHP_VERSION}"
+if [ ! -f "${VDIR}/version.env" ]; then
+    echo "!! Unknown PHP version '${PHP_VERSION}': ${VDIR}/version.env not found."
+    echo "   Available versions:"; ls "${REPO_ROOT}/components/php/versions" 2>/dev/null | sed 's/^/     /'
+    exit 1
+fi
+
+# version.env sets PHP_VERSION (authoritative) and PHP_SHA256.
+# shellcheck disable=SC1090
+source "${VDIR}/version.env"
+
 TARBALL="php-${PHP_VERSION}.tar.gz"
 URL="https://www.php.net/distributions/${TARBALL}"
-
-REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 DEST="${REPO_ROOT}/components/php/php-${PHP_VERSION}"
 
 if [ -d "${DEST}" ]; then
@@ -24,14 +44,14 @@ echo "Downloading ${TARBALL}..."
 curl -fsSL -o "${TMP}/${TARBALL}" "${URL}"
 
 echo "Checking sha256..."
-echo "${SHA256}  ${TMP}/${TARBALL}" | sha256sum -c -
+echo "${PHP_SHA256}  ${TMP}/${TARBALL}" | sha256sum -c -
 
 echo "Extracting into ${DEST}..."
 tar xzf "${TMP}/${TARBALL}" -C "${REPO_ROOT}/components/php/"
 
-# Apply local patches (port fixes that must live in the vendored source). Each
-# patch is a -p1 unified diff rooted at the php-<version> directory.
-PATCH_DIR="${REPO_ROOT}/components/php/patches/php"
+# Apply this version's patches (port fixes that must live in the vendored source).
+# Each patch is a -p1 unified diff rooted at the php-<version> directory.
+PATCH_DIR="${VDIR}/patches/php"
 if [ -d "${PATCH_DIR}" ]; then
     for patch in "${PATCH_DIR}"/*.patch; do
         [ -e "${patch}" ] || continue

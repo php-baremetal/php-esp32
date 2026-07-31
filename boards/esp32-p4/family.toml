@@ -1,0 +1,10 @@
+# ESP32-P4 chip-family descriptor -- family-level identity for tooling (flash-tool).
+# The family's build config is in sdkconfig.family (next to this file); every board
+# under esp32-p4/ inherits it. A new chip family is a sibling directory with its own
+# family.toml + sdkconfig.family.
+
+schema_version = 1
+
+name   = "ESP32-P4"      # display name (also what the console banner prints)
+target = "esp32p4"       # the ESP-IDF target
+psram  = true            # in-package PSRAM (the runtime heap lives here)

@@ -1,5 +1,12 @@
 # Extension porting status
 
+> The optional extensions below also have a machine-readable form, **per PHP version**, in
+> `components/php/versions/<version>/manifest.toml` (for the current default,
+> [8.3.32](../components/php/versions/8.3.32/manifest.toml)) — the contract the `flash-tool`
+> CLI reads (flags, settings, dependencies, fetch scripts, per-type rules). The repo's default
+> version is set in [`php-esp32.toml`](../php-esp32.toml); `scripts/check-manifest.py` verifies
+> the manifest stays in sync with that version's build.
+
 Every extension that ships in the PHP 8.3 source tree, and where it stands on this port.
 Three states:
 

@@ -19,12 +19,10 @@
 
 #include "esp_log.h"
 #include "esp_heap_caps.h"
-#include "esp_vfs_fat.h"
-#include "sdmmc_cmd.h"
-#include "driver/sdmmc_host.h"
-#include "sd_pwr_ctrl_by_on_chip_ldo.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
+
+#include "board.h"   /* board_mount_storage()/board_unmount_storage(), BOARD_NAME */
 
 #include "php_embed.h"
 #include "zend_API.h"
@@ -41,19 +39,6 @@ static const char *TAG = "php-esp32";
 #define SD_MOUNT_POINT "/sdcard"
 #define PHP_SCRIPT     SD_MOUNT_POINT "/index.php"
 
-/* microSD wiring on the ESP32-P4-Pico (4-bit SDMMC), from the board schematic. */
-#define SD_PIN_CLK GPIO_NUM_43
-#define SD_PIN_CMD GPIO_NUM_44
-#define SD_PIN_D0  GPIO_NUM_39
-#define SD_PIN_D1  GPIO_NUM_40
-#define SD_PIN_D2  GPIO_NUM_41
-#define SD_PIN_D3  GPIO_NUM_42
-/* The card is powered by the on-chip LDO, channel 4. */
-#define SD_LDO_CHAN 4
-
-static sdmmc_card_t *s_card;
-static sd_pwr_ctrl_handle_t s_pwr_ctrl;
-
 /*
  * Output sink for the engine: echo, print, printf, var_dump and php_printf() all
  * funnel through here. Write straight to the console and always report the full
@@ -66,50 +51,6 @@ static size_t esp_ub_write(const char *str, size_t len)
     fwrite(str, 1, len, stdout);
     fflush(stdout);
     return len;
-}
-
-static esp_err_t mount_sd_try(int width, int freq_khz)
-{
-    esp_vfs_fat_sdmmc_mount_config_t mount_config = {
-        .format_if_mount_failed = false,
-        .max_files = 5,
-        .allocation_unit_size = 16 * 1024,
-    };
-
-    sdmmc_host_t host = SDMMC_HOST_DEFAULT();
-    host.pwr_ctrl_handle = s_pwr_ctrl;   /* on-chip LDO that powers the card */
-    if (freq_khz) {
-        host.max_freq_khz = freq_khz;
-    }
-
-    sdmmc_slot_config_t slot = SDMMC_SLOT_CONFIG_DEFAULT();
-    slot.width = width;
-    slot.clk = SD_PIN_CLK;
-    slot.cmd = SD_PIN_CMD;
-    slot.d0  = SD_PIN_D0;
-    slot.d1  = SD_PIN_D1;
-    slot.d2  = SD_PIN_D2;
-    slot.d3  = SD_PIN_D3;
-    slot.flags |= SDMMC_SLOT_FLAG_INTERNAL_PULLUP;
-
-    return esp_vfs_fat_sdmmc_mount(SD_MOUNT_POINT, &host, &slot, &mount_config, &s_card);
-}
-
-static bool mount_sd(void)
-{
-    sd_pwr_ctrl_ldo_config_t ldo_config = { .ldo_chan_id = SD_LDO_CHAN };
-    if (sd_pwr_ctrl_new_on_chip_ldo(&ldo_config, &s_pwr_ctrl) != ESP_OK) {
-        ESP_LOGE(TAG, "could not enable SD LDO (channel %d)", SD_LDO_CHAN);
-        return false;
-    }
-    if (mount_sd_try(4, 0) == ESP_OK) {
-        return true;
-    }
-    ESP_LOGW(TAG, "4-bit mount failed; retrying 1-bit @ 400 kHz");
-    if (mount_sd_try(1, SDMMC_FREQ_PROBING) == ESP_OK) {
-        return true;
-    }
-    return false;
 }
 
 /* Compile and run a file (handles <?php ... ?>). Defines any functions in it. */
@@ -186,11 +127,11 @@ static void php_task(void *arg)
      * keeps internal RAM free for DMA and FreeRTOS. */
     setenv("USE_ZEND_ALLOC", "0", 1);
 
-    bool have_sd = mount_sd();
+    bool have_sd = board_mount_storage(SD_MOUNT_POINT);
     if (have_sd) {
-        ESP_LOGI(TAG, "microSD mounted at %s", SD_MOUNT_POINT);
+        ESP_LOGI(TAG, "storage mounted at %s", SD_MOUNT_POINT);
     } else {
-        ESP_LOGW(TAG, "microSD not mounted (no card / wrong format?)");
+        ESP_LOGW(TAG, "storage not mounted (no card / wrong format?)");
     }
 
     php_embed_module.ub_write = esp_ub_write;
@@ -202,7 +143,7 @@ static void php_task(void *arg)
         return;
     }
 
-    php_printf("PHP %s on ESP32-P4\n", PHP_VERSION);
+    php_printf("PHP %s on %s\n", PHP_VERSION, BOARD_SOC);
 
     if (have_sd && access(PHP_SCRIPT, R_OK) == 0) {
         php_printf("--- %s ---\n", PHP_SCRIPT);
@@ -223,7 +164,7 @@ static void php_task(void *arg)
     php_embed_shutdown();
 
     if (have_sd) {
-        esp_vfs_fat_sdcard_unmount(SD_MOUNT_POINT, s_card);
+        board_unmount_storage(SD_MOUNT_POINT);
     }
 
     ESP_LOGI(TAG, "done -- heap free: %u bytes", (unsigned) esp_get_free_heap_size());

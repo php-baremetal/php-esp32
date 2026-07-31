@@ -30,10 +30,25 @@ The first time you also need the PHP source, which isn't committed:
 
 ## Build
 
+The board and PHP version default to what `php-esp32.toml` says (an ESP32-P4-Pico running PHP
+8.3.32). The ESP-IDF target comes from the selected board, so there's no manual `set-target`:
+
 ```bash
-idf.py set-target esp32p4     # first time only
 idf.py build
 ```
+
+Pick a different board or PHP version with `-D` flags (`./scripts/info.sh` lists what's
+available):
+
+```bash
+idf.py -DBOARD=esp32-p4-pico -DPHP_VERSION=8.3.32 build
+```
+
+Optional PHP extensions are off by default — `./flash.sh` asks about each, or pass
+`-DPHP_EXT_*=ON` yourself (see [ext-porting.md](ext-porting.md)).
+
+> **Switching board or PHP version?** `sdkconfig` is generated from the board's layered
+> defaults and won't pick up a board switch on its own. Run `rm sdkconfig` first, then build.
 
 ## Connecting
 

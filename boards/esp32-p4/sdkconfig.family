@@ -1,0 +1,16 @@
+# ESP32-P4 family (chip-level) defaults. Layered on top of the base
+# sdkconfig.defaults, and under the board's sdkconfig.board. Applies to every
+# ESP32-P4 board.
+
+CONFIG_IDF_TARGET="esp32p4"
+
+# 32 MB in-package PSRAM. This is where the runtime heap lives: with
+# USE_ZEND_ALLOC=0 the engine uses malloc, and SPIRAM_USE_MALLOC routes large
+# allocations to PSRAM.
+CONFIG_SPIRAM=y
+CONFIG_SPIRAM_USE_MALLOC=y
+# Send ALL malloc() allocations to PSRAM (threshold 0), not just large ones.
+# PHP makes thousands of small allocations; with the default 16 KB threshold they
+# land in internal RAM and exhaust it, starving DMA (the SD card) and FreeRTOS.
+# Internal-only needs (DMA, FreeRTOS objects) still get internal via explicit caps.
+CONFIG_SPIRAM_MALLOC_ALWAYSINTERNAL=0

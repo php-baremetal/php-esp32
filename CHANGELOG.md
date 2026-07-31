@@ -1,5 +1,47 @@
 # Changelog
 
+## [0.2.0] — multiple PHP versions, boards and chip families
+
+### Added
+- **Support for multiple boards and chip families.** Everything specific to a board now lives
+  under `boards/<family>/<board>/` (for now `boards/esp32-p4/esp32-p4-pico/`): its config
+  (`sdkconfig.board`, `partitions.csv`), its pins, and its **code** — `board.c` implements a
+  small interface (`board.h`: `board_mount_storage()`/`board_unmount_storage()`), so the microSD
+  wiring lives with the board and `main/main.c` is board-agnostic. Chip-family settings (ESP-IDF
+  target, PSRAM) sit in `boards/<family>/sdkconfig.family`. `sdkconfig` is layered base → family
+  → board; the top-level `CMakeLists.txt` selects the board (`default_board` in `php-esp32.toml`,
+  override `-DBOARD=<board>`). Adding a board or a whole family is a new directory. Each board
+  also carries a `board.toml` declaring which **storage types** (`microsd`/`embedded`) and
+  **project types** (`init-loop`/`web-server`/`event-driven`) its hardware supports; the version
+  manifest declares which are implemented, and the two combine (e.g. no `web-server` on the Pico,
+  which has no wired network).
+- **Support for multiple PHP versions.** Everything version-specific now lives under
+  `components/php/versions/<version>/`: the hand-written config headers, the source list
+  (`sources.cmake`), the optional-extension wiring (`extensions.cmake`), the patches
+  (`patches/php/`), the version-sensitive `compat/` files (`date_stub.c`, `timelib_config.h`,
+  `timezonedb_minimal.h`), and the tarball coordinates (`version.env`). `components/php/CMakeLists.txt`
+  is now generic and selects `PHP_VERSION` (default from the new root `php-esp32.toml`; override
+  with `-DPHP_VERSION=<ver>`); `scripts/fetch-php.sh` reads the chosen version's `version.env` and
+  patches. Adding a PHP version is a new directory, not edits across the build. The 8.3.32 build
+  is unchanged.
+- A machine-readable **extension manifest** per version
+  (`components/php/versions/<version>/manifest.toml`) — the contract the `flash-tool` CLI reads
+  (build flags, settings, dependencies, fetch scripts, per-project-type rules) — with
+  `scripts/check-manifest.py` verifying it stays in sync with that version's `extensions.cmake`
+  and `flash.sh`.
+- `docs/ext-porting.md`: the status of every PHP 8.3 bundled extension — built-in, behind a
+  build flag, or not ported (with the reason).
+- `scripts/info.sh`: prints what a checkout can build — the default version/board, the available
+  PHP versions and boards, and per board the modes it offers (implemented ∩ board-supported).
+  Also the reference for how `flash-tool` discovers the repo.
+- Add-a-version / add-a-board HOWTOs (`components/php/versions/README.md`, `boards/README.md`),
+  a family descriptor (`boards/<family>/family.toml`), and `check-manifest.py` now also validates
+  the board/family descriptors.
+
+### Changed
+- Dropped `CONFIG_SPIRAM_IGNORE_NOTFOUND` now that PSRAM is proven stable, so a real PSRAM
+  failure panics loudly instead of degrading silently.
+
 ## [0.1.3] — ctype / mbstring / filter + onugiruma (rejex)
 
 ### Added

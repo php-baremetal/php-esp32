@@ -1,44 +1,15 @@
-# Base configuration. Heavier options (TinyUSB, etc.) get added where they're
-# actually needed rather than up front.
+# Base configuration -- board-agnostic knobs the PHP runtime needs on any board.
+# Chip-level options live in boards/<family>/sdkconfig.family and board-level ones in
+# boards/<family>/<board>/sdkconfig.board; the top CMakeLists layers all three via
+# SDKCONFIG_DEFAULTS based on the selected board.
 
-CONFIG_IDF_TARGET="esp32p4"
-
-# Early ESP32-P4-Pico boards carry a rev v1.3 chip; IDF 5.5.5 defaults to a minimum
-# of v3.01 and refuses to flash. The <3.0 and >=3.0 revisions differ a lot in
-# hardware: SELECTS_REV_LESS_V3 unlocks the <3.0 family, then REV_MIN_100 (v1.00)
-# covers this chip.
-CONFIG_ESP32P4_SELECTS_REV_LESS_V3=y
-CONFIG_ESP32P4_REV_MIN_100=y
-
-# 32 MB NOR flash on board (the IDF default is 2 MB, which the app blows past).
-CONFIG_ESPTOOLPY_FLASHSIZE_32MB=y
-CONFIG_ESPTOOLPY_FLASHSIZE="32MB"
-
-# Console on UART0. On this board the USB-C port is an onboard USB-UART bridge
-# (CH343P) wired to UART0, so a single USB-C cable carries flashing and console.
-CONFIG_ESP_CONSOLE_UART_DEFAULT=y
-
-# The main task stack is bumped too; the engine itself runs on its own task
-# with a larger stack (see main.c).
+# The main task stack is bumped; the engine itself runs on its own task with a larger
+# stack (see main/main.c).
 CONFIG_ESP_MAIN_TASK_STACK_SIZE=32768
 
-# Custom partition layout (the app image is large).
+# Custom partition layout (the app image is large). The actual .csv is chosen per
+# board (CONFIG_PARTITION_TABLE_CUSTOM_FILENAME in sdkconfig.board).
 CONFIG_PARTITION_TABLE_CUSTOM=y
-CONFIG_PARTITION_TABLE_CUSTOM_FILENAME="partitions.csv"
-
-# 32 MB in-package PSRAM. This is where the runtime heap lives: with
-# USE_ZEND_ALLOC=0 the engine uses malloc, and SPIRAM_USE_MALLOC routes large
-# allocations to PSRAM.
-CONFIG_SPIRAM=y
-CONFIG_SPIRAM_USE_MALLOC=y
-# Send ALL malloc() allocations to PSRAM (threshold 0), not just large ones.
-# PHP makes thousands of small allocations; with the default 16 KB threshold they
-# land in internal RAM and exhaust it, starving DMA (the SD card) and FreeRTOS.
-# Internal-only needs (DMA, FreeRTOS objects) still get internal via explicit caps.
-CONFIG_SPIRAM_MALLOC_ALWAYSINTERNAL=0
-# Don't panic at boot if PSRAM fails to come up during bring-up; the log still
-# shows heap_caps=0. Drop this once PSRAM is proven stable.
-CONFIG_SPIRAM_IGNORE_NOTFOUND=y
 
 # FAT long filenames. The default (8.3 short names only) can't open files like
 # Composer's ShouldHandleEventsAfterCommit.php, so require/autoload from a real

@@ -23,11 +23,55 @@ A few defines, on the other hand, I add from the component's `CMakeLists.txt`:
 `HAVE_INT32_T`/`HAVE_UINT32_T` (to stop timelib's duplicate typedefs), and the constants
 lwip is missing (`NI_*`, `AF_UNIX`, `PF_UNIX`).
 
-A couple of headers that `configure` would generate I provide by hand in the component
-root, because the source looks for them by name: `zend_config.h` and `main/php_config.h`
-are tiny shims that point back to our `php_config.h`, `build-defs.h` holds cosmetic values
-(paths for `phpinfo`, all pointing at `/sdcard`), and `internal_functions.c` lists the
-static modules to load at startup.
+A couple of headers that `configure` would generate I provide by hand, because the source
+looks for them by name: `zend_config.h` and `main/php_config.h` are tiny shims that point back
+to our `php_config.h`, `build-defs.h` holds cosmetic values (paths for `phpinfo`, all pointing
+at `/sdcard`), and `internal_functions.c` lists the static modules to load at startup.
+
+## One directory per PHP version
+
+Everything that is specific to a PHP version lives under `components/php/versions/<version>/`,
+so supporting a new PHP release is a new directory rather than edits scattered across the build.
+Each version directory owns: the hand-written headers above (`php_config.h`, `zend_config.h`,
+`build-defs.h`, `main/php_config.h`, `internal_functions.c`); the source list and include dirs
+(`sources.cmake`); the optional-extension wiring (`extensions.cmake`); the patches
+(`patches/php/`); the extension manifest flash-tool reads (`manifest.toml`); and the tarball
+coordinates (`version.env`: version + sha256). The version-sensitive parts of `compat/` live
+here too — `date_stub.c`, `timelib_config.h`, `timezonedb_minimal.h` track timelib, which
+changes between PHP versions — and the version include dir comes first on the path, so a version
+can override any shared `compat/` file without duplicating the ones it doesn't touch.
+
+`components/php/CMakeLists.txt` is generic: it picks `PHP_VERSION` (default from `php-esp32.toml`
+at the repo root; override with `-DPHP_VERSION=<ver>`), then includes that version's
+`sources.cmake` and `extensions.cmake`. `scripts/fetch-php.sh` reads the same version's
+`version.env` and applies its patches. Truly version-agnostic pieces stay shared at the
+component root: the platform `compat/` (`posix_stubs.c`, `syslog.*`, `sqlite-compat.h`, `sys/`)
+and the external dependencies (the SQLite amalgamation and oniguruma, which track their own
+upstreams, not PHP's).
+
+## One directory per board (and chip family)
+
+The same idea applies to the hardware. Everything specific to a board lives under
+`boards/<family>/<board>/` — for now `boards/esp32-p4/esp32-p4-pico/`. A board owns three
+things: its **config** (`sdkconfig.board`: flash size, chip revision, console, partition
+table), its **pins**, and its **code** — `board.c` implements a small interface
+(`board.h`: `board_mount_storage()` / `board_unmount_storage()`), so the microSD wiring
+(4-bit SDMMC on GPIO39-44, powered by the on-chip LDO on channel 4) lives with the board, not
+in `main.c`. A different board — even one that wires storage completely differently (SPI SD,
+other pins, no LDO) — is a new directory implementing the same functions; `main/main.c` is
+board-agnostic and just calls them. A board also carries a `board.toml` declaring which storage
+types (`microsd`/`embedded`) and execution modes (`init-loop`/…) its hardware supports — read by
+`flash-tool`, intersected with what the firmware implements (the version manifest), so e.g. the
+Pico offers no `web-server` (no wired network) while an `esp32-p4-eth` would.
+
+Chip-family settings sit one level up, in `boards/<family>/sdkconfig.family` (the ESP-IDF
+target, PSRAM), shared by every board of that family; a future `esp32-s3/` family is a sibling
+directory. `sdkconfig` is layered base → family → board (most specific wins): the repo-root
+`sdkconfig.defaults` holds only board-agnostic PHP-runtime knobs (the bumped task stack, FAT
+long filenames). The top-level `CMakeLists.txt` resolves the board (default `default_board` in
+`php-esp32.toml`, override `-DBOARD=<board>`), assembles that three-file `SDKCONFIG_DEFAULTS`
+list, and the `main` component pulls in the board's `board.cmake` (its sources, include dir and
+driver requirements). Changing board or family regenerates `sdkconfig` (`rm sdkconfig` first).
 
 ## The virtual machine
 

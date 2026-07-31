@@ -130,26 +130,40 @@ The entry point is the `embed` SAPI.
 
 ```
 php-esp32/
-├── setup.sh                  installs ESP-IDF and the PHP source
-├── flash.sh                  builds, asks for the port, flashes
-├── monitor.sh                just opens the serial monitor
-├── CMakeLists.txt            ESP-IDF project
-├── sdkconfig.defaults        target, PSRAM, console, chip revision
-├── partitions.csv
-├── main/
-│   └── main.c                boot: mounts the SD, starts the engine, runs the script
+├── php-esp32.toml            repo descriptor: default PHP version + board
+├── setup.sh · flash.sh · monitor.sh    install · build+flash · serial monitor
+├── scripts/
+│   ├── fetch-php.sh          downloads, verifies and patches the PHP source
+│   ├── fetch-sqlite.sh · fetch-oniguruma.sh   optional-extension sources, on demand
+│   ├── check-manifest.py     keeps the manifests in sync with the build
+│   └── info.sh               what this checkout can build (versions, boards, modes)
+├── CMakeLists.txt            generic: selects the board and PHP version
+├── cmake/resolve-board.cmake board resolution (shared by the top-level and main)
+├── sdkconfig.defaults        base config (board-agnostic: task stack, FAT long names)
+├── boards/                   one directory per chip family, then per board
+│   └── esp32-p4/             family: target + PSRAM (sdkconfig.family, family.toml)
+│       └── esp32-p4-pico/    board: pins + mount code (board.c/.h), sdkconfig.board,
+│                             partitions.csv, board.toml (its capabilities)
+├── main/main.c               boot: mounts storage via the board, starts the engine
 ├── components/
 │   ├── php/
-│   │   ├── CMakeLists.txt     the list of PHP .c files to compile
-│   │   ├── php_config.h       hand-written
-│   │   ├── compat/            the stubs for the missing POSIX symbols
-│   │   ├── patches/           local patches applied to the PHP source
+│   │   ├── CMakeLists.txt     generic: builds the selected PHP version
+│   │   ├── compat/            shared POSIX stubs (posix_stubs, syslog, ...)
+│   │   ├── versions/8.3.32/   per-version: sources.cmake, config headers, patches,
+│   │   │                      manifest.toml, version-sensitive compat
 │   │   └── php-8.3.32/        PHP source (not committed)
 │   └── php_ext_gpio/          the gpio_*/delay extension
 ├── examples/                  example sketches (one per folder)
-├── scripts/fetch-php.sh       downloads, verifies and patches the PHP source
+├── docs/                      architecture, porting notes, footprint, extensions
 └── resources/                 board datasheets and pinout
 ```
+
+Two knobs pick what gets built: `-DPHP_VERSION=<ver>` and `-DBOARD=<board>` (defaults in
+`php-esp32.toml`). Everything version-specific lives under `components/php/versions/<ver>/` and
+everything board/family-specific under `boards/<family>/<board>/`, so adding a PHP version or a
+board is a new directory, not edits across the tree — see
+[`components/php/versions/README.md`](components/php/versions/README.md) and
+[`boards/README.md`](boards/README.md). `./scripts/info.sh` prints what's available.
 
 The PHP source isn't committed (it's ~210 MB, reproducible from the official tarball):
 `scripts/fetch-php.sh` downloads it, checks its sha256 and applies the local patches.

@@ -6,7 +6,7 @@ sdkconfig.ci
 
 # Pristine PHP source: NOT versioned (210 MB, reproducible from the official
 # tarball with a known sha256). Recreate it with: ./scripts/fetch-php.sh
-/components/php/php-8.3.32/
+/components/php/php-*/
 
 # SQLite amalgamation for the optional PDO/SQLite extension: fetched on demand,
 # not versioned. Recreate it with: ./scripts/fetch-sqlite.sh
