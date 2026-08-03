@@ -5,20 +5,10 @@ conversions, and interval arithmetic — the same date handling you'd have on a 
 
 ## This one needs the date extension (full timezone db)
 
-`ext/date` is off by default. Build a firmware with it, keeping the full timezone database:
-
-```
-./flash.sh          # answer "y" to date, then "N" to the UTC-only question
-```
-
-or directly:
-
-```
-idf.py -DPHP_EXT_DATE=ON flash
-```
-
-The full timezone database adds ~650 KB of flash. (If you only need UTC, see the
-[`date-utc`](../date-utc/) example and its smaller build.)
+`ext/date` is off by default. This project's `php-esp32.config.toml` enables it
+(`[extensions.date]`, full timezone database — `minimal_tz` left off), so `phpflash build`
+compiles it in with no flags to pass. The full timezone database adds ~650 KB of flash. (If you
+only need UTC, see the [`date-utc`](../date-utc/) example and its smaller build.)
 
 ## What it does
 
@@ -49,7 +39,11 @@ Rome is 6h ahead of New York right now
 UTC + 1y2m10d2h30m: 2027-10-09 22:30:00
 ```
 
-## Running it
+## Building and running
 
-Build and flash a firmware with date enabled (full tz, above). Copy `index.php` to the
-microSD as `/index.php`, put the card back, press reset. No wiring needed.
+```sh
+phpflash build && phpflash flash && phpflash monitor
+```
+
+To run from a microSD instead, copy `project-src/index.php` to the card root and press
+reset. No wiring needed.

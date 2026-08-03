@@ -7,19 +7,20 @@ Japanese to show byte-length vs character-length.
 
 ## Firmware
 
-`ext/mbstring` is an optional extension, off by default. Build a firmware with it on:
-
-- `./flash.sh` → answer **y** to `Include mbstring`, or
-- `idf.py -DPHP_EXT_MBSTRING=ON ...`
-
-It is built **without** the `mb_ereg*` regex family (that would need the oniguruma
-library, which isn't ported); everything else works. This is the heavy extension —
+`ext/mbstring` is an optional extension, off by default. This project's `php-esp32.config.toml`
+already enables it (`[extensions.mbstring]`), so you don't pass any build flags. It is built
+**without** the `mb_ereg*` regex family (that needs oniguruma — see
+[`mbstring-regex`](../mbstring-regex/)); everything else works. This is the heavy extension —
 the bundled libmbfl carries the CJK conversion tables — see
 [`docs/footprint.md`](../../docs/footprint.md).
 
-## Run
+## Building and running
 
-Copy `index.php` to the microSD as `/index.php`, reset the board, watch the serial port.
+```sh
+phpflash build && phpflash flash && phpflash monitor
+```
+
+To run from a microSD instead, copy `project-src/index.php` to the card root and reset.
 
 ## Output (excerpt)
 

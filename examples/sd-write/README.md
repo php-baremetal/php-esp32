@@ -45,8 +45,12 @@ hello from PHP 8.3.32 tick
 second line
 ```
 
-## Running it
+## Building and running
 
-Copy `index.php` to the microSD as `/index.php` (any firmware is fine), put the card back,
-press reset. Read the serial output, and optionally check that `test.txt` is on the card
-afterwards.
+```sh
+phpflash build && phpflash flash && phpflash monitor
+```
+
+This example writes to the microSD, so keep a card in the board. To run the script from
+the card, copy `project-src/index.php` to the card root and press reset; read the serial
+output, and optionally check that `test.txt` is on the card afterwards.

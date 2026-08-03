@@ -52,10 +52,14 @@ php-esp32: tick 256 -- heap free: 32725547 bytes
 php-esp32: tick 512 -- heap free: 32725547 bytes
 ```
 
-## Running it
+## Building and running
 
-Copy `index.php` to the microSD (in the root, as `index.php`), put the card back in the
-board, and press reset.
+```sh
+phpflash build && phpflash flash && phpflash monitor
+```
+
+To run from a microSD instead, copy `project-src/index.php` to the card root and press
+reset.
 
 Wiring: an LED with a series resistor (~330 ohm) between GPIO2 and GND, and a push button
 between GPIO4 and GND. No external resistor is needed on the button: the pin's internal

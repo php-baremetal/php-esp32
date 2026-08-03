@@ -8,18 +8,10 @@ example shows what you keep and the one thing you lose, versus
 
 ## This one needs the date extension (UTC-only db)
 
-```
-./flash.sh          # answer "y" to date, then "y" to the UTC-only question
-```
-
-or directly:
-
-```
-idf.py -DPHP_EXT_DATE=ON -DPHP_EXT_DATE_MINIMAL_TZ=ON flash
-```
-
-The UTC-only database is ~350 KB smaller than the full one, so the whole date extension costs
-about 300 KB of flash instead of 650 KB.
+This project's `php-esp32.config.toml` enables date with the UTC-only database
+(`[extensions.date]` with `minimal_tz = true`), so `phpflash build` compiles the smaller build in
+with no flags to pass. The UTC-only database is ~350 KB smaller than the full one, so the whole
+date extension costs about 300 KB of flash instead of 650 KB.
 
 ## What it does
 
@@ -57,7 +49,11 @@ The last two lines are the whole point: `UTC` is there, any named zone isn't. On
 firmware (the `date-timezones` example) that last line would read `available` instead — the
 difference is the build, not the code.
 
-## Running it
+## Building and running
 
-Build and flash a firmware with date + the UTC-only db (above). Copy `index.php` to the
-microSD as `/index.php`, put the card back, press reset. No wiring needed.
+```sh
+phpflash build && phpflash flash && phpflash monitor
+```
+
+To run from a microSD instead, copy `project-src/index.php` to the card root and press
+reset. No wiring needed.

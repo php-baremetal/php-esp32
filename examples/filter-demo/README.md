@@ -5,16 +5,17 @@ URLs, IPs, plus a couple of sanitizers and a range-constrained integer.
 
 ## Firmware
 
-`ext/filter` is an optional extension, off by default. Build a firmware with it on:
+`ext/filter` is an optional extension, off by default. This project's `php-esp32.config.toml`
+already enables it (`[extensions.filter]`), so you don't pass any build flags. It builds on
+`ext/pcre` (always in) and `ext/standard`.
 
-- `./flash.sh` → answer **y** to `Include filter`, or
-- `idf.py -DPHP_EXT_FILTER=ON ...`
+## Building and running
 
-It builds on `ext/pcre` (always in) and `ext/standard`.
+```sh
+phpflash build && phpflash flash && phpflash monitor
+```
 
-## Run
-
-Copy `index.php` to the microSD as `/index.php`, reset the board, watch the serial port.
+To run from a microSD instead, copy `project-src/index.php` to the card root and reset.
 
 ## Output (excerpt)
 

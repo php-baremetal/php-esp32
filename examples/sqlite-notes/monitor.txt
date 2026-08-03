@@ -1,5 +1,4 @@
 I (25) boot: ESP-IDF v5.5.5 2nd stage bootloader
-I (26) boot: compile time Jul 29 2026 22:23:10
 I (26) boot: Multicore bootloader
 I (27) boot: chip revision: v1.3
 I (29) boot: efuse block revision: v0.3
@@ -12,63 +11,61 @@ I (51) boot: ## Label            Usage          Type ST Offset   Length
 I (57) boot:  0 nvs              WiFi data        01 02 00009000 00006000
 I (64) boot:  1 phy_init         RF data          01 01 0000f000 00001000
 I (70) boot:  2 factory          factory app      00 00 00010000 00c00000
-I (78) boot: End of partition table
-I (80) esp_image: segment 0: paddr=00010020 vaddr=402a0020 size=cb6cch (833228) map
-I (227) esp_image: segment 1: paddr=000db6f4 vaddr=30100000 size=0007ch (   124) load
-I (228) esp_image: segment 2: paddr=000db778 vaddr=4ff00000 size=048a0h ( 18592) load
-I (235) esp_image: segment 3: paddr=000e0020 vaddr=40000020 size=299bc4h (2726852) map
-I (691) esp_image: segment 4: paddr=00379bec vaddr=4ff048a0 size=12c0ch ( 76812) load
-I (711) boot: Loaded app from partition at offset 0x10000
-I (712) boot: Disabling RNG early entropy source...
-I (724) hex_psram: vendor id    : 0x0d (AP)
-I (724) hex_psram: Latency      : 0x01 (Fixed)
-I (724) hex_psram: DriveStr.    : 0x00 (25 Ohm)
-I (725) hex_psram: dev id       : 0x03 (generation 4)
-I (729) hex_psram: density      : 0x07 (256 Mbit)
-I (734) hex_psram: good-die     : 0x06 (Pass)
-I (738) hex_psram: SRF          : 0x02 (Slow Refresh)
-I (743) hex_psram: BurstType    : 0x00 ( Wrap)
-I (747) hex_psram: BurstLen     : 0x03 (2048 Byte)
-I (751) hex_psram: BitMode      : 0x01 (X16 Mode)
-I (756) hex_psram: Readlatency  : 0x04 (14 cycles@Fixed)
-I (761) hex_psram: DriveStrength: 0x00 (1/1)
-I (765) MSPI Timing: Enter psram timing tuning
-I (942) esp_psram: Found 32MB PSRAM device
-I (943) esp_psram: Speed: 200MHz
-I (943) hex_psram: psram CS IO is dedicated
-I (943) cpu_start: Multicore app
-I (1894) esp_psram: SPI SRAM memory test OK
-I (1904) cpu_start: GPIO 38 and 37 are used as console UART I/O pins
-I (1904) cpu_start: Pro cpu start user code
-I (1905) cpu_start: cpu freq: 360000000 Hz
-I (1907) app_init: Application information:
-I (1910) app_init: Project name:     php-esp32
-I (1915) app_init: App version:      cf472d6-dirty
-I (1919) app_init: Compile time:     Jul 29 2026 22:22:40
-I (1924) app_init: ELF file SHA256:  f0227a1ec...
-I (1929) app_init: ESP-IDF:          v5.5.5
-I (1933) efuse_init: Min chip rev:     v1.0
-I (1937) efuse_init: Max chip rev:     v1.99
-I (1941) efuse_init: Chip rev:         v1.3
-I (1945) heap_init: Initializing. RAM available for dynamic allocation:
-I (1951) heap_init: At 4FF29D80 len 00011240 (68 KiB): RETENT_RAM
-I (1957) heap_init: At 4FF3AFC0 len 00004BF0 (18 KiB): RAM
-I (1962) heap_init: At 4FF45790 len 0005A870 (362 KiB): RAM
-I (1967) heap_init: At 50108080 len 00007F80 (31 KiB): RTCRAM
-I (1973) heap_init: At 3010007C len 00001F84 (7 KiB): SPM
-I (1978) esp_psram: Adding pool of 32768K of PSRAM memory to heap allocator
-I (1985) spi_flash: detected chip: gd
-I (1988) spi_flash: flash io: dio
-I (1991) sleep_gpio: Configure to isolate all GPIO pins in sleep state
-I (1997) sleep_gpio: Enable automatic switching of GPIO sleep configuration
-I (2004) main_task: Started on CPU0
-I (2024) esp_psram: Reserving pool of 32K of internal memory for DMA/internal allocations
-I (2024) main_task: Calling app_main()
-I (2024) php-esp32: starting PHP runtime
-W (2034) ldo: The voltage value 0 is out of the recommended range [500, 2700]
-I (2044) main_task: Returned from app_main()
-I (2084) php-esp32: microSD mounted at /sdcard
-I (2084) php-esp32: php_embed_init()...
+I (84) boot: End of partition table
+I (87) esp_image: segment 0: paddr=00010020 vaddr=402a0020 size=cbc74h (834676) map
+I (233) esp_image: segment 1: paddr=000dbc9c vaddr=30100000 size=0007ch (   124) load
+I (235) esp_image: segment 2: paddr=000dbd20 vaddr=4ff00000 size=042f8h ( 17144) load
+I (242) esp_image: segment 3: paddr=000e0020 vaddr=40000020 size=29a3d0h (2728912) map
+I (698) esp_image: segment 4: paddr=0037a3f8 vaddr=4ff042f8 size=0dd50h ( 56656) load
+I (710) esp_image: segment 5: paddr=00388150 vaddr=4ff12080 size=055ach ( 21932) load
+I (721) boot: Loaded app from partition at offset 0x10000
+I (721) boot: Disabling RNG early entropy source...
+I (733) hex_psram: vendor id    : 0x0d (AP)
+I (733) hex_psram: Latency      : 0x01 (Fixed)
+I (733) hex_psram: DriveStr.    : 0x00 (25 Ohm)
+I (734) hex_psram: dev id       : 0x03 (generation 4)
+I (738) hex_psram: density      : 0x07 (256 Mbit)
+I (743) hex_psram: good-die     : 0x06 (Pass)
+I (747) hex_psram: SRF          : 0x02 (Slow Refresh)
+I (752) hex_psram: BurstType    : 0x00 ( Wrap)
+I (756) hex_psram: BurstLen     : 0x03 (2048 Byte)
+I (760) hex_psram: BitMode      : 0x01 (X16 Mode)
+I (765) hex_psram: Readlatency  : 0x04 (14 cycles@Fixed)
+I (770) hex_psram: DriveStrength: 0x00 (1/1)
+I (774) MSPI Timing: Enter psram timing tuning
+I (952) esp_psram: Found 32MB PSRAM device
+I (952) esp_psram: Speed: 200MHz
+I (952) hex_psram: psram CS IO is dedicated
+I (953) cpu_start: Multicore app
+I (1904) esp_psram: SPI SRAM memory test OK
+I (1913) cpu_start: GPIO 38 and 37 are used as console UART I/O pins
+I (1914) cpu_start: Pro cpu start user code
+I (1914) cpu_start: cpu freq: 360000000 Hz
+I (1916) app_init: Application information:
+I (1920) app_init: Project name:     php-esp32
+I (1938) app_init: ESP-IDF:          v5.5.5
+I (1942) efuse_init: Min chip rev:     v1.0
+I (1946) efuse_init: Max chip rev:     v1.99 
+I (1950) efuse_init: Chip rev:         v1.3
+I (1954) heap_init: Initializing. RAM available for dynamic allocation:
+I (1960) heap_init: At 4FF29F00 len 000110C0 (68 KiB): RETENT_RAM
+I (1966) heap_init: At 4FF3AFC0 len 00004BF0 (18 KiB): RAM
+I (1971) heap_init: At 4FF457B0 len 0005A850 (362 KiB): RAM
+I (1977) heap_init: At 50108080 len 00007F80 (31 KiB): RTCRAM
+I (1982) heap_init: At 3010007C len 00001F84 (7 KiB): SPM
+I (1987) esp_psram: Adding pool of 32768K of PSRAM memory to heap allocator
+I (1995) spi_flash: detected chip: gd
+I (1997) spi_flash: flash io: dio
+I (2000) sleep_gpio: Configure to isolate all GPIO pins in sleep state
+I (2007) sleep_gpio: Enable automatic switching of GPIO sleep configuration
+I (2014) main_task: Started on CPU0
+I (2034) esp_psram: Reserving pool of 32K of internal memory for DMA/internal allocations
+I (2034) main_task: Calling app_main()
+I (2034) php-esp32: starting PHP runtime
+W (2044) ldo: The voltage value 0 is out of the recommended range [500, 2700]
+I (2054) main_task: Returned from app_main()
+I (2094) php-esp32: microSD mounted at /sdcard
+I (2104) php-esp32: php_embed_init()...
 PHP 8.3.32 on ESP32-P4
 --- /sdcard/index.php ---
 created a new database at /sdcard/notes.db
@@ -76,87 +73,4 @@ boots recorded so far: 1
 last 5:
   #1  booted PHP 8.3.32
 --- end ---
-I (2244) php-esp32: done -- heap free: 33972359 bytes
-
-[MANUAL REBOOT]
-
-I (25) boot: ESP-IDF v5.5.5 2nd stage bootloader
-I (26) boot: compile time Jul 29 2026 22:23:10
-I (26) boot: Multicore bootloader
-I (27) boot: chip revision: v1.3
-I (29) boot: efuse block revision: v0.3
-I (32) boot.esp32p4: SPI Speed      : 80MHz
-I (36) boot.esp32p4: SPI Mode       : DIO
-I (40) boot.esp32p4: SPI Flash Size : 32MB
-I (44) boot: Enabling RNG early entropy source...
-I (48) boot: Partition Table:
-I (51) boot: ## Label            Usage          Type ST Offset   Length
-I (57) boot:  0 nvs              WiFi data        01 02 00009000 00006000
-I (64) boot:  1 phy_init         RF data          01 01 0000f000 00001000
-I (70) boot:  2 factory          factory app      00 00 00010000 00c00000
-I (78) boot: End of partition table
-I (80) esp_image: segment 0: paddr=00010020 vaddr=402a0020 size=cb6cch (833228) map
-I (227) esp_image: segment 1: paddr=000db6f4 vaddr=30100000 size=0007ch (   124) load
-I (228) esp_image: segment 2: paddr=000db778 vaddr=4ff00000 size=048a0h ( 18592) load
-I (235) esp_image: segment 3: paddr=000e0020 vaddr=40000020 size=299bc4h (2726852) map
-I (691) esp_image: segment 4: paddr=00379bec vaddr=4ff048a0 size=12c0ch ( 76812) load
-I (711) boot: Loaded app from partition at offset 0x10000
-I (712) boot: Disabling RNG early entropy source...
-I (724) hex_psram: vendor id    : 0x0d (AP)
-I (724) hex_psram: Latency      : 0x01 (Fixed)
-I (724) hex_psram: DriveStr.    : 0x00 (25 Ohm)
-I (725) hex_psram: dev id       : 0x03 (generation 4)
-I (729) hex_psram: density      : 0x07 (256 Mbit)
-I (734) hex_psram: good-die     : 0x06 (Pass)
-I (738) hex_psram: SRF          : 0x02 (Slow Refresh)
-I (743) hex_psram: BurstType    : 0x00 ( Wrap)
-I (747) hex_psram: BurstLen     : 0x03 (2048 Byte)
-I (751) hex_psram: BitMode      : 0x01 (X16 Mode)
-I (756) hex_psram: Readlatency  : 0x04 (14 cycles@Fixed)
-I (761) hex_psram: DriveStrength: 0x00 (1/1)
-I (765) MSPI Timing: Enter psram timing tuning
-I (942) esp_psram: Found 32MB PSRAM device
-I (943) esp_psram: Speed: 200MHz
-I (943) hex_psram: psram CS IO is dedicated
-I (943) cpu_start: Multicore app
-I (1894) esp_psram: SPI SRAM memory test OK
-I (1904) cpu_start: GPIO 38 and 37 are used as console UART I/O pins
-I (1904) cpu_start: Pro cpu start user code
-I (1905) cpu_start: cpu freq: 360000000 Hz
-I (1907) app_init: Application information:
-I (1910) app_init: Project name:     php-esp32
-I (1915) app_init: App version:      cf472d6-dirty
-I (1919) app_init: Compile time:     Jul 29 2026 22:22:40
-I (1924) app_init: ELF file SHA256:  f0227a1ec...
-I (1929) app_init: ESP-IDF:          v5.5.5
-I (1933) efuse_init: Min chip rev:     v1.0
-I (1937) efuse_init: Max chip rev:     v1.99
-I (1941) efuse_init: Chip rev:         v1.3
-I (1945) heap_init: Initializing. RAM available for dynamic allocation:
-I (1951) heap_init: At 4FF29D80 len 00011240 (68 KiB): RETENT_RAM
-I (1957) heap_init: At 4FF3AFC0 len 00004BF0 (18 KiB): RAM
-I (1962) heap_init: At 4FF45790 len 0005A870 (362 KiB): RAM
-I (1967) heap_init: At 50108080 len 00007F80 (31 KiB): RTCRAM
-I (1973) heap_init: At 3010007C len 00001F84 (7 KiB): SPM
-I (1978) esp_psram: Adding pool of 32768K of PSRAM memory to heap allocator
-I (1985) spi_flash: detected chip: gd
-I (1988) spi_flash: flash io: dio
-I (1991) sleep_gpio: Configure to isolate all GPIO pins in sleep state
-I (1997) sleep_gpio: Enable automatic switching of GPIO sleep configuration
-I (2004) main_task: Started on CPU0
-I (2024) esp_psram: Reserving pool of 32K of internal memory for DMA/internal allocations
-I (2024) main_task: Calling app_main()
-I (2024) php-esp32: starting PHP runtime
-W (2034) ldo: The voltage value 0 is out of the recommended range [500, 2700]
-I (2044) main_task: Returned from app_main()
-I (2084) php-esp32: microSD mounted at /sdcard
-I (2084) php-esp32: php_embed_init()...
-PHP 8.3.32 on ESP32-P4
---- /sdcard/index.php ---
-opened existing database /sdcard/notes.db
-boots recorded so far: 2
-last 5:
-  #2  booted PHP 8.3.32
-  #1  booted PHP 8.3.32
---- end ---
-I (2234) php-esp32: done -- heap free: 33972359 bytes
+I (2254) php-esp32: done -- heap free: 33971447 bytes

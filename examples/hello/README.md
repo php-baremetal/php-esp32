@@ -46,7 +46,11 @@ php-esp32: done -- heap free: 33980391 bytes
 so allocations go straight to the system allocator instead of Zend's memory manager, and
 `memory_get_usage()` (which only counts what that manager hands out) sees nothing.
 
-## Running it
+## Building and running
 
-Copy `index.php` to the microSD (in the root, as `index.php`), put the card back in the
-board, and press reset. No wiring needed.
+```sh
+phpflash build && phpflash flash && phpflash monitor
+```
+
+To run from a microSD instead, copy `project-src/index.php` to the card root (as
+`/index.php`) and press reset. No wiring needed.

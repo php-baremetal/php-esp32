@@ -35,16 +35,13 @@ so the `require` paths resolve to the files sitting next to `index.php` on the c
 - **Relative paths behave.** `__DIR__` points at the script's own folder, including a
   subdirectory (`lib/`), so a normal project layout carries over unchanged.
 
-## Running it
+## Building and running
 
-Copy the whole folder's contents to the microSD, keeping the layout:
-
-```
-/index.php
-/config.php
-/lib/shapes.php
+```sh
+phpflash build && phpflash flash && phpflash monitor
 ```
 
-Put the card back in the board and press reset. The entry point stays `index.php`. No
-wiring needed. (These filenames are short on purpose, so this example also works on a
-firmware built without FAT long-filename support.)
+To run from a microSD instead, copy the contents of `project-src/` to the card root,
+keeping the layout (`/index.php`, `/config.php`, `/lib/shapes.php`). The entry point
+stays `index.php`. No wiring needed. (These filenames are short on purpose, so this
+also works on a firmware built without FAT long-filename support.)

@@ -54,10 +54,14 @@ php-esp32: entering loop()
 php-esp32: tick 0 -- heap free: 32724919 bytes
 ```
 
-## Running it
+## Building and running
 
-Copy `index.php` to the microSD (in the root, as `index.php`), put the card back in the
-board, and press reset.
+```sh
+phpflash build && phpflash flash && phpflash monitor
+```
+
+To run from a microSD instead, copy `project-src/index.php` to the card root and press
+reset.
 
 Wiring: an LED with a series resistor between GPIO2 and GND. The GPIO drives **3.3V**,
 not 5V, so a red LED with ~330 ohm is clearly visible; a blue or white LED (higher

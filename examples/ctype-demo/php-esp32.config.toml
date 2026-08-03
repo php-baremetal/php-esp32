@@ -1,0 +1,22 @@
+name = "ctype-demo"
+storage_type = "microsd"   # where the PHP source lives
+type = "init-loop"                  # execution model
+
+[board]
+target = "esp32-p4-pico"
+port   = ""          # empty = autodetect at flash time
+
+[esp-idf]
+path    = ""
+version = ""
+
+[php-esp32]
+path    = ""
+version = ""
+
+[extensions.ctype]
+enabled = true
+
+[php]
+src   = "project-src"      # PHP source folder (copied to the microSD / embedded)
+entry = "index.php"    # entry file within src

@@ -7,22 +7,10 @@ survives resets — the boot counter keeps going up.
 ## This one needs a special firmware
 
 PDO/SQLite is **not** in the default build (it's an optional native extension, and native
-code can't be side-loaded from the card — it has to be compiled into the firmware). Turn it
-on when you flash:
-
-```
-./flash.sh          # answer "y" when it asks about sqlite
-```
-
-or directly:
-
-```
-idf.py -DPHP_EXT_SQLITE=ON flash
-```
-
-The first time, `flash.sh` fetches the SQLite amalgamation (`scripts/fetch-sqlite.sh`, kept
-out of git). Everything else — the general build and the other examples — stays exactly as
-it was; the extension only exists in a firmware you explicitly asked for it in.
+code can't be side-loaded from the card — it has to be compiled into the firmware). This
+project's `php-esp32.config.toml` enables it (`[extensions.sqlite]`), so `phpflash build`
+compiles it in with no flags to pass. The first build fetches the SQLite amalgamation
+(`scripts/fetch-sqlite.sh`, kept out of git) for you.
 
 ## What it does
 
@@ -66,8 +54,11 @@ last 5:
   #1  booted PHP 8.3.32
 ```
 
-## Running it
+## Building and running
 
-Build and flash a firmware with sqlite enabled (above). Copy `index.php` to the microSD as
-`/index.php`, put the card back, press reset. The `notes.db` file is created on the card on
-the first run and reused afterwards. No wiring needed.
+```sh
+phpflash build && phpflash flash && phpflash monitor
+```
+
+To run from a microSD, copy `project-src/index.php` to the card root and press reset. The
+`notes.db` file is created on the card on the first run and reused afterwards. No wiring needed.

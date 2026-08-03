@@ -9,17 +9,19 @@ and the Latin/single-byte charsets are untouched.
 
 ## Firmware
 
-Build with mbstring on and the CJK sub-option enabled:
+This project's `php-esp32.config.toml` enables mbstring with the CJK sub-option
+(`[extensions.mbstring]` with `no_cjk = true`), so `phpflash build` builds the slim mbstring
+with no flags to pass. With a full mbstring firmware (`no_cjk = false`) this same script still
+runs — the CJK rows just show `present` instead of `dropped`, and the `SJIS` conversion
+succeeds.
 
-- `./flash.sh` → answer **y** to `Include mbstring`, then **y** to `drop CJK encodings`, or
-- `idf.py -DPHP_EXT_MBSTRING=ON -DPHP_EXT_MBSTRING_NO_CJK=ON ...`
+## Building and running
 
-With the full mbstring firmware (no `NO_CJK`) this same script still runs — the CJK rows just
-show `present` instead of `dropped`, and the `SJIS` conversion succeeds.
+```sh
+phpflash build && phpflash flash && phpflash monitor
+```
 
-## Run
-
-Copy `index.php` to the microSD as `/index.php`, reset the board, watch the serial port.
+To run from a microSD instead, copy `project-src/index.php` to the card root and reset.
 
 ## Output (excerpt)
 

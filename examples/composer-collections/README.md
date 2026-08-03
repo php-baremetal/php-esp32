@@ -63,27 +63,23 @@ one-shot scripts like this one it makes no difference.
 Composer and a PHP 8.2+ on your computer:
 
 ```
-cd examples/composer-collections
+cd examples/composer-collections/project-src
 composer install --no-dev
 ```
 
 `composer.json` and `composer.lock` are committed, so `install` pins the exact same
 versions that were tested here.
 
-## Running it
+## Building and running
 
-This one needs two things the single-file examples don't:
+After generating `vendor/` (above):
 
-1. **FAT long filenames in the firmware.** The `vendor/` tree has names longer than the old
-   8.3 limit (e.g. `ShouldHandleEventsAfterCommit.php`). The provided `sdkconfig.defaults`
-   already enables long names (`CONFIG_FATFS_LFN_HEAP`); if you built the firmware before
-   that was added, delete `sdkconfig`, rebuild and reflash so the option takes effect.
-2. **The whole folder on the card.** Copy both `index.php` and the entire `vendor/`
-   directory to the microSD, keeping the layout:
+```sh
+phpflash build && phpflash flash && phpflash monitor
+```
 
-   ```
-   /index.php
-   /vendor/...
-   ```
-
-Put the card back in the board and press reset. No wiring needed.
+The `vendor/` tree has names longer than the old 8.3 limit (e.g.
+`ShouldHandleEventsAfterCommit.php`), so the firmware needs FAT long filenames — already
+enabled in the default `sdkconfig`. To run from a microSD instead, copy the contents of
+`project-src/` (both `index.php` and the whole `vendor/`) to the card root and press reset.
+No wiring needed.

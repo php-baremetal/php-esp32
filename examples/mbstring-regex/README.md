@@ -6,21 +6,20 @@ character properties) work on UTF-8 text.
 
 ## Firmware
 
-`mb_ereg*` / `mb_split` are **off by default**: PHP doesn't bundle a regex engine, so this
-example needs a firmware where mbstring is built with Oniguruma:
+`mb_ereg*` / `mb_split` need a regex engine, which PHP doesn't bundle. This project's
+`php-esp32.config.toml` enables mbstring with Oniguruma (`[extensions.mbstring]` with
+`onig = true`), so `phpflash build` fetches the library and builds it in — no flags to pass. It
+adds ~445 KB on top of mbstring — see [`docs/footprint.md`](../../docs/footprint.md). If you only
+need `mb_split` with simple patterns, a PCRE polyfill (see `eloquent-demo`) avoids this cost; the
+difference is the Unicode-property support shown below.
 
-- `./flash.sh` → answer **y** to `mbstring`, then **y** to the *"mb_ereg\*/mb_split regex"*
-  question (it fetches the library on demand), or
-- `idf.py -DPHP_EXT_MBSTRING=ON -DPHP_EXT_MBSTRING_ONIG=ON ...` (run `./scripts/fetch-oniguruma.sh`
-  first).
+## Building and running
 
-It adds ~445 KB on top of mbstring — see [`docs/footprint.md`](../../docs/footprint.md). If you
-only need `mb_split` with simple patterns, a PCRE polyfill (see `eloquent-demo`) avoids this
-cost; the difference is the Unicode-property support shown below.
+```sh
+phpflash build && phpflash flash && phpflash monitor
+```
 
-## Run
-
-Copy `index.php` to the microSD as `/index.php`, reset the board, watch the serial port.
+To run from a microSD instead, copy `project-src/index.php` to the card root and reset.
 
 ## Output
 
