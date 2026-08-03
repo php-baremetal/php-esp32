@@ -51,6 +51,29 @@ at a time, so summing them is approximate) — still well inside the 12 MB app p
 from ~965 KB to ~209 KB, bringing the three down to ~240 KB together. Runtime memory stays
 negligible: all of these allocate from the 32 MB PSRAM pool.
 
+## Networking and the web-server model
+
+Not extensions — these come with the board and the project type. Networking is linked in for a
+board that has it (the `esp32-p4-eth`); the `web-server` project type adds an HTTP server on top.
+Deltas are measured the same way (image size minus the ~3.08 MB baseline, all optional extensions
+off):
+
+| Feature | Adds to flash | Notes |
+|---|---|---|
+| Ethernet networking | **~103 KB** | `esp_eth` + `esp_netif` + `esp_event` + lwIP + the board's `board_network_up()` (IP101 PHY, DHCP). Present on the `esp32-p4-eth` board; used by anything that touches the network — including the `web-server-init-loop` example, where PHP itself runs the socket server. |
+| `web-server` project type | **+~37 KB** | on top of networking: the `esp_http_server` front end and the per-request PHP model (`-DPHP_PROJECT_WEB_SERVER=ON`). |
+
+So a networked init-loop firmware (PHP owns the socket) is about **~103 KB** over the baseline, and
+the `web-server` project type (HTTP server in front) is about **~139 KB** over it — measured on the
+`esp32-p4-eth` with no optional PHP extensions, `php-esp32.bin` going 3.08 MB → 3.19 MB → 3.23 MB.
+Small next to a single extension like `date` or `mbstring`, and far inside the 12 MB app partition.
+
+The other way, you can make the image **smaller**: microSD support (the SDMMC drivers + the board's
+mount code) is on by default but costs about **~51 KB**, and an `embedded` project that runs purely
+from internal flash can drop it (`-DPHP_STORAGE_MICROSD=OFF`, or `[storage] microsd = false` — the
+default for embedded). `fatfs`/`vfs` stay either way, since the embedded image is FAT too. It also
+lets a board with no card slot build without pulling the SD stack.
+
 ## RAM
 
 Two very different pools.

@@ -5,6 +5,11 @@
  */
 #include "board.h"
 
+/* The whole microSD implementation is compiled only when the card is supported
+ * (-DPHP_STORAGE_MICROSD, the default). With it off the SD drivers aren't even linked;
+ * main.c doesn't call board_mount_storage() in that case. */
+#ifdef PHP_STORAGE_MICROSD
+
 #include "esp_log.h"
 #include "esp_vfs_fat.h"
 #include "sdmmc_cmd.h"
@@ -77,3 +82,5 @@ void board_unmount_storage(const char *mount_point)
         s_card = NULL;
     }
 }
+
+#endif /* PHP_STORAGE_MICROSD */

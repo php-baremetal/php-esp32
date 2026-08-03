@@ -29,6 +29,8 @@
 # [[project_type]]  the execution model.
 #   key          : identifier used in php-esp32.config.toml `type`.
 #   available    : false = reserved/not implemented in the firmware yet.
+#   flag         : optional build define selecting this model, e.g. "PHP_PROJECT_WEB_SERVER=ON"
+#                  (an option() in main/CMakeLists.txt). Absent for the default model (init-loop).
 #   description  : one line.
 #
 # [[extension]]     every extension the firmware supports.
@@ -75,8 +77,9 @@ description = "Runs index.php, then setup() once and loop($tick) repeatedly."
 
 [[project_type]]
 key = "web-server"
-available = false
-description = "(reserved) the device serves HTTP."
+available = true
+flag = "PHP_PROJECT_WEB_SERVER=ON"
+description = "An HTTP server (esp_http_server) runs in front and PHP is invoked fresh per request, like a script behind Apache. Needs a board with networking."
 
 [[project_type]]
 key = "event-driven"

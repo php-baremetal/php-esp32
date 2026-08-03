@@ -144,6 +144,131 @@ static bool mount_embedded(void)
     return true;
 }
 
+#ifdef PHP_PROJECT_WEB_SERVER
+#include "freertos/semphr.h"
+#include "esp_http_server.h"
+#include "php_main.h"        /* php_request_startup / php_request_shutdown */
+#include "php_variables.h"   /* php_register_variable, TRACK_VARS_SERVER */
+#include "SAPI.h"            /* sapi_module (the live output sink) */
+
+/*
+ * The web-server execution model. A C HTTP server (esp_http_server) sits in front and PHP is run
+ * fresh for each request -- shared-nothing, the way a script runs behind Apache/nginx. The
+ * script's output (echo/print/...) is captured and returned as the response body, and the script
+ * gets a minimal $_SERVER (method, URI). Selected at build time with -DPHP_PROJECT_WEB_SERVER=ON
+ * (the `web-server` project type); the default build uses the run-script + setup()/loop() model.
+ *
+ * PHP runs in php_task (which already has the big 64 KB stack the compiler needs), NOT in the
+ * httpd task: the httpd handler just parks the request, wakes php_task, and waits. So the httpd
+ * task can keep a small stack, and PHP always runs on the stack it was set up with. The httpd
+ * server handles one request at a time, so a single shared slot is safe.
+ */
+static const char *s_ws_script;
+static char  *s_ws_out;             /* per-request output buffer (grows as needed) */
+static size_t s_ws_len, s_ws_cap;
+static httpd_req_t *s_ws_req;        /* the request php_task should serve */
+static SemaphoreHandle_t s_ws_req_ready;   /* httpd -> php_task: a request is waiting */
+static SemaphoreHandle_t s_ws_resp_ready;  /* php_task -> httpd: the response is ready */
+
+/* ub_write sink for this model (runs in php_task): append output to the response buffer. */
+static size_t ws_ub_write(const char *str, size_t len)
+{
+    if (s_ws_len + len > s_ws_cap) {
+        size_t ncap = (s_ws_len + len) * 2 + 1024;
+        char *n = realloc(s_ws_out, ncap);
+        if (!n) {
+            return len;   /* drop output under OOM rather than fail the write */
+        }
+        s_ws_out = n;
+        s_ws_cap = ncap;
+    }
+    memcpy(s_ws_out + s_ws_len, str, len);
+    s_ws_len += len;
+    return len;
+}
+
+/* Give the script a minimal $_SERVER (method + URI), like a real SAPI would. */
+static void ws_set_server_vars(httpd_req_t *req)
+{
+    /* $_SERVER is a JIT auto-global: force it to materialise before we add to it. */
+    zend_is_auto_global_str(ZEND_STRL("_SERVER"));
+    zval *srv = &PG(http_globals)[TRACK_VARS_SERVER];
+    if (Z_TYPE_P(srv) != IS_ARRAY) {
+        return;   /* still not an array; skip rather than risk it */
+    }
+    const char *method = (req->method == HTTP_POST) ? "POST"
+                       : (req->method == HTTP_GET)  ? "GET"
+                       : "OTHER";
+    php_register_variable("REQUEST_METHOD", method, srv);
+    php_register_variable("REQUEST_URI", req->uri, srv);
+    php_register_variable("SERVER_SOFTWARE", "php-esp32", srv);
+}
+
+/* httpd handler (runs in the httpd task): hand the request to php_task, wait for the response. */
+static esp_err_t ws_handle(httpd_req_t *req)
+{
+    s_ws_req = req;
+    xSemaphoreGive(s_ws_req_ready);                    /* wake php_task */
+    xSemaphoreTake(s_ws_resp_ready, portMAX_DELAY);    /* wait until it has run the script */
+
+    httpd_resp_set_type(req, "text/html; charset=utf-8");
+    httpd_resp_send(req, s_ws_len ? s_ws_out : "", s_ws_len);
+    return ESP_OK;
+}
+
+/* Run one PHP request cycle for the parked request (runs in php_task). */
+static void ws_serve_one(void)
+{
+    s_ws_len = 0;
+    if (php_request_startup() == SUCCESS) {
+        zend_try {
+            ws_set_server_vars(s_ws_req);
+            run_php_file(s_ws_script);   /* fresh compile+run; output -> s_ws_out */
+        } zend_catch {
+            /* a PHP fatal: whatever was produced before it is the response */
+        } zend_end_try();
+        php_request_shutdown(NULL);
+    }
+}
+
+/* Start the HTTP server, then loop in php_task serving one request at a time. php_embed_init()
+ * has already brought the engine up and opened one request; we close that so each HTTP request
+ * owns a clean cycle. Never returns. */
+static void run_web_server(const char *script)
+{
+    s_ws_script = script;
+    /* Redirect output into our per-request buffer. sapi_startup() copied php_embed_module into
+     * the live `sapi_module` at php_embed_init() time, so we set that copy, not php_embed_module. */
+    sapi_module.ub_write = ws_ub_write;
+    php_request_shutdown(NULL);   /* end the request embed_init opened; module stays up */
+
+    s_ws_req_ready  = xSemaphoreCreateBinary();
+    s_ws_resp_ready = xSemaphoreCreateBinary();
+
+    httpd_config_t cfg = HTTPD_DEFAULT_CONFIG();
+    cfg.uri_match_fn = httpd_uri_match_wildcard;
+    cfg.lru_purge_enable = true;   /* httpd task keeps its small default stack -- no PHP here */
+
+    httpd_handle_t server = NULL;
+    esp_err_t err = httpd_start(&server, &cfg);
+    if (err != ESP_OK) {
+        ESP_LOGE(TAG, "httpd_start: %s", esp_err_to_name(err));
+        for (;;) { vTaskDelay(pdMS_TO_TICKS(10000)); }   /* don't fall through to shutdown */
+    }
+    static const httpd_uri_t any_get = {
+        .uri = "/*", .method = HTTP_GET, .handler = ws_handle,
+    };
+    httpd_register_uri_handler(server, &any_get);
+    ESP_LOGI(TAG, "web-server model: serving %s over HTTP on :80", script);
+
+    for (;;) {
+        xSemaphoreTake(s_ws_req_ready, portMAX_DELAY);   /* a request arrived */
+        ws_serve_one();
+        xSemaphoreGive(s_ws_resp_ready);                 /* response is in s_ws_out */
+    }
+}
+#endif /* PHP_PROJECT_WEB_SERVER */
+
 static void php_task(void *arg)
 {
     (void)arg;
@@ -157,26 +282,47 @@ static void php_task(void *arg)
      * keeps internal RAM free for DMA and FreeRTOS. */
     setenv("USE_ZEND_ALLOC", "0", 1);
 
-    /* microSD -- writable data storage, mounted whenever a card is present. */
+#ifdef PHP_STORAGE_MICROSD
+    /* microSD -- writable data storage, mounted whenever a card is present. Compiled out when
+     * microSD support is off (-DPHP_STORAGE_MICROSD=OFF): a board without a card slot, or an
+     * embedded project that didn't opt into the card. */
     bool have_sd = board_mount_storage(SD_MOUNT_POINT);
     if (have_sd) {
         ESP_LOGI(TAG, "microSD mounted at %s", SD_MOUNT_POINT);
     } else {
         ESP_LOGW(TAG, "microSD not mounted (no card / wrong format?)");
     }
+#endif
     /* Embedded PHP source (read-only) -- only on firmware built for embedded storage. */
     bool have_app = mount_embedded();
     if (have_app) {
         ESP_LOGI(TAG, "embedded source mounted at %s", APP_MOUNT_POINT);
     }
 
+#ifdef BOARD_HAS_NETWORK
+    /* Boards with wired networking bring the link up here and log the address, so a PHP
+     * script (e.g. a socket server) has the network ready and you can see where to reach
+     * it. Non-fatal: without a cable/lease we just log it and carry on. */
+    {
+        char ip[16];
+        if (board_network_up(ip, sizeof ip)) {
+            ESP_LOGI(TAG, "network up -- http://%s/", ip);
+        } else {
+            ESP_LOGW(TAG, "network: no IP (link down or no DHCP)");
+        }
+    }
+#endif
+
     /* Run the embedded source if it's there, otherwise the one on the card. */
     const char *script = NULL;
     if (have_app && access(APP_SCRIPT, R_OK) == 0) {
         script = APP_SCRIPT;
-    } else if (have_sd && access(SD_SCRIPT, R_OK) == 0) {
+    }
+#ifdef PHP_STORAGE_MICROSD
+    else if (have_sd && access(SD_SCRIPT, R_OK) == 0) {
         script = SD_SCRIPT;
     }
+#endif
 
     php_embed_module.ub_write = esp_ub_write;
 
@@ -190,6 +336,11 @@ static void php_task(void *arg)
     php_printf("PHP %s on %s\n", PHP_VERSION, BOARD_SOC);
 
     if (script) {
+#ifdef PHP_PROJECT_WEB_SERVER
+        /* web-server model: hand the script to the HTTP server, which runs it per request.
+         * Never returns. */
+        run_web_server(script);
+#else
         php_printf("--- %s ---\n", script);
         /* Catch a PHP bailout (fatal error / die) so it doesn't reach exit(). */
         zend_try {
@@ -199,6 +350,7 @@ static void php_task(void *arg)
             ESP_LOGE(TAG, "PHP bailed out (fatal error)");
         } zend_end_try();
         php_printf("--- end ---\n");
+#endif
     } else {
         php_printf("no index.php (embedded or microSD); engine check: ");
         zend_eval_string("echo 1+1;", NULL, "boot");
@@ -210,9 +362,11 @@ static void php_task(void *arg)
     if (s_app_mounted) {
         esp_vfs_fat_spiflash_unmount_ro(APP_MOUNT_POINT, "storage");
     }
+#ifdef PHP_STORAGE_MICROSD
     if (have_sd) {
         board_unmount_storage(SD_MOUNT_POINT);
     }
+#endif
 
     ESP_LOGI(TAG, "done -- heap free: %u bytes", (unsigned) esp_get_free_heap_size());
     vTaskDelete(NULL);

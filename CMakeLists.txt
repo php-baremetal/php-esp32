@@ -9,6 +9,14 @@ set(REPO_ROOT "${CMAKE_CURRENT_LIST_DIR}")
 include("${REPO_ROOT}/cmake/resolve-board.cmake")   # -> BOARD, BOARD_DIR, FAMILY_DIR
 message(STATUS "Board: ${BOARD}  (${BOARD_DIR})")
 
+# Export the resolved board so main/CMakeLists can recover it in ESP-IDF's early
+# requirement-expansion phase, which doesn't see -DBOARD (see resolve-board.cmake). The
+# web-server and microSD flags have the same blind spot (the board's board.cmake reads
+# PHP_ESP32_MICROSD to decide whether to pull the SD drivers), so export them too.
+set(ENV{PHP_ESP32_BOARD} "${BOARD}")
+set(ENV{PHP_ESP32_WEB_SERVER} "${PHP_PROJECT_WEB_SERVER}")
+set(ENV{PHP_ESP32_MICROSD} "${PHP_STORAGE_MICROSD}")
+
 # Layer sdkconfig defaults: base (repo root) < family < board. Must be set before
 # project() so ESP-IDF reads them (the target and all board config come from here).
 set(SDKCONFIG_DEFAULTS

@@ -4,6 +4,13 @@ Each board is `boards/<family>/<board>/` — a chip **family**, then a specific 
 Pick one with `-DBOARD=<board>` (or `<family>/<board>`); the default is `default_board` in the
 repo-root [`php-esp32.toml`](../php-esp32.toml). `./scripts/info.sh` lists what's available.
 
+## Boards in this repo
+
+| Board | Family | Notes |
+|---|---|---|
+| `esp32-p4-pico` | `esp32-p4` | Waveshare ESP32-P4-Pico. 4-bit SDMMC microSD, 32 MB flash. The default board. |
+| `esp32-p4-eth` | `esp32-p4` | Waveshare ESP32-P4-ETH. Same P4 SD design as the Pico plus a GPIO45 card-power switch, and a wired Ethernet PHY (IP101GRI) — so it also advertises `web-server` (offered once the firmware implements networking). |
+
 ## What a board owns
 
 - `board.toml` — identity + which storage/execution modes its **hardware** supports (read by

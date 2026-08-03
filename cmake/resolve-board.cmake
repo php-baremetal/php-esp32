@@ -13,9 +13,18 @@ if(NOT DEFINED REPO_ROOT)
 endif()
 
 if(NOT DEFINED BOARD OR BOARD STREQUAL "")
-    file(STRINGS "${REPO_ROOT}/php-esp32.toml" _board_line REGEX "^[ \t]*default_board")
-    string(REGEX MATCH "\"([^\"]+)\"" _ "${_board_line}")
-    set(BOARD "${CMAKE_MATCH_1}")
+    # -DBOARD is NOT visible in ESP-IDF's early requirement-expansion phase (where this file
+    # runs while gathering main's REQUIRES). The top-level CMakeLists exports the resolved board
+    # into the environment, which IS visible across the whole cmake process; fall back to that,
+    # then to default_board in php-esp32.toml. Without this, a non-default board would get the
+    # default board's component REQUIRES.
+    if(NOT "$ENV{PHP_ESP32_BOARD}" STREQUAL "")
+        set(BOARD "$ENV{PHP_ESP32_BOARD}")
+    else()
+        file(STRINGS "${REPO_ROOT}/php-esp32.toml" _board_line REGEX "^[ \t]*default_board")
+        string(REGEX MATCH "\"([^\"]+)\"" _ "${_board_line}")
+        set(BOARD "${CMAKE_MATCH_1}")
+    endif()
 endif()
 if(BOARD STREQUAL "")
     message(FATAL_ERROR "No board selected: pass -DBOARD=<board> or set default_board in php-esp32.toml")

@@ -52,17 +52,21 @@ upstreams, not PHP's).
 ## One directory per board (and chip family)
 
 The same idea applies to the hardware. Everything specific to a board lives under
-`boards/<family>/<board>/` — for now `boards/esp32-p4/esp32-p4-pico/`. A board owns three
-things: its **config** (`sdkconfig.board`: flash size, chip revision, console, partition
-table), its **pins**, and its **code** — `board.c` implements a small interface
-(`board.h`: `board_mount_storage()` / `board_unmount_storage()`), so the microSD wiring
-(4-bit SDMMC on GPIO39-44, powered by the on-chip LDO on channel 4) lives with the board, not
-in `main.c`. A different board — even one that wires storage completely differently (SPI SD,
-other pins, no LDO) — is a new directory implementing the same functions; `main/main.c` is
-board-agnostic and just calls them. A board also carries a `board.toml` declaring which storage
-types (`microsd`/`embedded`) and execution modes (`init-loop`/…) its hardware supports — read by
-`flash-tool`, intersected with what the firmware implements (the version manifest), so e.g. the
-Pico offers no `web-server` (no wired network) while an `esp32-p4-eth` would.
+`boards/<family>/<board>/` — currently `boards/esp32-p4/esp32-p4-pico/` and
+`boards/esp32-p4/esp32-p4-eth/`. A board owns three things: its **config**
+(`sdkconfig.board`: flash size, chip revision, console, partition table), its **pins**, and
+its **code** — `board.c` implements a small interface (`board.h`: `board_mount_storage()` /
+`board_unmount_storage()`), so the microSD wiring (4-bit SDMMC on GPIO39-44, powered by the
+on-chip LDO on channel 4) lives with the board, not in `main.c`. A different board — even one
+that wires storage completely differently (SPI SD, other pins, no LDO) — is a new directory
+implementing the same functions; `main/main.c` is board-agnostic and just calls them. A board
+also carries a `board.toml` declaring which storage types (`microsd`/`embedded`) and execution
+modes (`init-loop`/…) its hardware supports — read by `flash-tool`, intersected with what the
+firmware implements (the version manifest). That's where the two P4 boards differ: the Pico has
+no wired network so it omits `web-server`, while the `esp32-p4-eth` (an on-board IP101GRI
+Ethernet PHY) advertises it — offered once the firmware implements it. The two share the same P4
+SD reference design and pin-out; the ETH adds only a GPIO45 high-side switch on the card's VDD,
+which its `board.c` enables before mounting.
 
 Chip-family settings sit one level up, in `boards/<family>/sdkconfig.family` (the ESP-IDF
 target, PSRAM), shared by every board of that family; a future `esp32-s3/` family is a sibling
@@ -100,6 +104,51 @@ At boot `main.c` mounts both sources: the microSD at `/sdcard` (when a card is p
 The two are not exclusive: an embedded project that needs to *write* (a SQLite database, logs) still
 gets a writable microSD mounted at `/sdcard`, because the embedded image itself is read-only. So
 "embedded" is really "source in flash, data still on the card if you want it".
+
+microSD support is itself optional (`-DPHP_STORAGE_MICROSD`, on by default). A `microsd` project
+needs it (the source is on the card); an `embedded` one defaults to **off** — a self-contained
+firmware that never touches a card. Off, `main.c` doesn't compile the mount call and the board's
+`board.cmake` doesn't pull the SDMMC drivers (the whole SD block in `board.c` is behind the same
+`#ifdef`), so it's ~51 KB smaller and a board with no card slot builds cleanly. `fatfs`/`vfs` stay,
+since the embedded image is FAT too. An embedded project opts the card back in with
+`[storage] microsd = true`. Like the board and web-server flags, the flag isn't visible in the
+early requirement-expansion phase, so the top-level exports it to the environment for `board.cmake`.
+
+## Networking and the web-server model
+
+A board with wired Ethernet (the `esp32-p4-eth`) declares `BOARD_HAS_NETWORK`, and its `board.c`
+implements `board_network_up()`: it initialises the EMAC and the IP101 RMII PHY, starts a DHCP
+client, waits (bounded) for a lease and returns the address. The ESP32-P4's default EMAC pin map
+already matches this board's wiring, so the MAC config is the stock `ETH_ESP32_EMAC_DEFAULT_CONFIG()`
+plus the PHY reset pin. `main.c` calls this for any board that has it and logs
+`network up -- http://<ip>/`; a board without a network never links the code in.
+
+On top of that, PHP can serve HTTP two ways. The plain way is entirely in PHP: a script opens
+`stream_socket_server('tcp://0.0.0.0:80')` and accepts connections in `loop()` — the socket calls
+go through lwIP, no extension needed (`ext/sockets` isn't built; the stream server is core). The
+other way is the **`web-server` project type** (`-DPHP_PROJECT_WEB_SERVER=ON`): a C HTTP server
+(`esp_http_server`) runs in front and PHP is invoked fresh per request, like a script behind
+Apache. The subtlety there is running one PHP *request* per HTTP request: `php_embed_init()` opens
+a single request, so the firmware closes it and then cycles `php_request_startup()` → run the
+script → `php_request_shutdown()` for each hit (shared-nothing, so re-running the top-level script
+doesn't hit "cannot redeclare"). Output is captured by pointing the **live** `sapi_module.ub_write`
+(not `php_embed_module`'s — `sapi_startup` already copied that) at a buffer, and `$_SERVER` is
+filled by forcing that JIT auto-global to materialise and then `php_register_variable()`. PHP runs
+in the main task, which has the big stack the compiler needs; the httpd task just parks the request
+and waits, so it can keep a small stack.
+
+One fix this needed: **the CSPRNG.** `ext/random`'s `csprng.c` only reaches for `getrandom()` on
+Linux/BSD and otherwise opens `/dev/urandom`, which doesn't exist here — so `random_int()`,
+`random_bytes()` and anything built on them threw `Random\RandomException`. ESP-IDF's newlib
+*does* provide a working `getrandom()` (backed by `esp_fill_random`, the hardware RNG), so a patch
+(`patches/php/0004-csprng-esp-getrandom.patch`) enables the `getrandom()` path whenever the libc
+has it. PHP's random functions then work — which real web apps (session ids, CSRF tokens) lean on.
+
+(Aside on the build: `-DBOARD` and `-DPHP_PROJECT_WEB_SERVER` are invisible in ESP-IDF's early
+requirement-expansion phase, where a component's `REQUIRES` are gathered. A non-default board used
+to silently inherit the *default* board's component requirements there; it only bit once the ETH
+board needed networking components the Pico doesn't. The top-level `CMakeLists` now exports both
+into the environment, which the early-phase code reads as a fallback.)
 
 ## The virtual machine
 

@@ -54,6 +54,14 @@ for f in sorted(manifest_flags - cmake_flags):
 for f in sorted(cmake_flags - manifest_flags):
     errors.append(f"CMake option {f} is not declared in the manifest")
 
+# 1b) project-type flags (e.g. web-server) vs option()s in main/CMakeLists.txt
+pt_flags = {t["flag"].split("=")[0] for t in manifest["project_type"] if "flag" in t}
+main_opts = set(re.findall(r"option\((PHP_PROJECT_[A-Z_]+)", read(os.path.join("main", "CMakeLists.txt"))))
+for f in sorted(pt_flags - main_opts):
+    errors.append(f"project-type flag {f} is in the manifest but not an option() in main/CMakeLists.txt")
+for f in sorted(main_opts - pt_flags):
+    errors.append(f"main/CMakeLists.txt option {f} is not declared as a project-type flag in the manifest")
+
 # 2) optional extension keys vs flash.sh OPTIONAL_EXTS ("key|desc|fetch" lines)
 flash = read("flash.sh")
 block = re.search(r"OPTIONAL_EXTS=\(\n(.*?)\n\)", flash, re.S)
@@ -112,5 +120,5 @@ if errors:
     sys.exit(1)
 
 print(f"check-manifest: OK ({len(exts)} extensions, {len(storage_types)} storage types, "
-      f"{len(types)} project types, {len(manifest_flags)} flags all match CMake; "
-      f"{len(families)} family/families, {len(boards)} board(s) validated)")
+      f"{len(types)} project types, {len(manifest_flags)} ext + {len(pt_flags)} project flags "
+      f"all match CMake; {len(families)} family/families, {len(boards)} board(s) validated)")

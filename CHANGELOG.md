@@ -1,5 +1,52 @@
 # Changelog
 
+## [0.4.0] — ESP32-P4-ETH board, Ethernet and the web-server project type
+
+### Added
+- **ESP32-P4-ETH board** (`boards/esp32-p4/esp32-p4-eth/`), the second board on the ESP32-P4
+  family. It shares the P4 SD reference design with the Pico — the same 4-bit SDMMC microSD on
+  GPIO39-44, powered by the on-chip LDO (channel 4) — so its `board.c` mounts storage the same
+  way, with one addition: the card's VDD is gated by a high-side P-MOSFET driven from GPIO45,
+  which the board drives on before mounting (it defaults on via a pulldown, so this just makes it
+  deterministic). Console is UART0 over the on-board CH343P USB-UART bridge, same single-cable
+  flashing/monitor as the Pico. Select it with `-DBOARD=esp32-p4-eth`. Verified on real hardware.
+- **Ethernet bring-up.** A board that declares `BOARD_HAS_NETWORK` (the ETH board) brings its
+  network up at boot and logs the address — `board_network_up()` in the board's `board.c`
+  initialises the IP101 RMII PHY, runs a DHCP client and returns the IPv4 address, which `main.c`
+  logs as `network up -- http://<ip>/`. The ESP32-P4 EMAC default pin map matches this board's
+  wiring exactly. The Pico (no network) skips all of it. Verified end-to-end (real DHCP lease).
+- **`web-server` project type** — a second firmware execution model, selected with
+  `-DPHP_PROJECT_WEB_SERVER=ON` (which `phpflash` passes when a project's `type = "web-server"`).
+  Instead of the run-script + `setup()`/`loop()` model, an HTTP server (`esp_http_server`) runs in
+  front and PHP is invoked **fresh per request** — shared-nothing, the way a script runs behind
+  Apache/PHP-FPM. The firmware captures the script's output as the response body and gives it a
+  minimal `$_SERVER` (method, URI). PHP runs in the main task (with its large stack); the httpd
+  task just hands off each request. Now marked available in the manifest (with its build flag),
+  and advertised by the ETH board. Verified on hardware (page served to a browser).
+- Two examples: **`web-server-init-loop`** (the whole HTTP server written in PHP with
+  `stream_socket_server`, in the init-loop model — stateful across requests) and **`web-server`**
+  (the `web-server` project type — shared-nothing per request). Both need the ETH board.
+- **microSD support is now optional** (`-DPHP_STORAGE_MICROSD`, on by default). An `embedded`
+  project can turn it off to build a self-contained firmware that runs from internal flash with no
+  card — dropping the SDMMC drivers and the board's SD mount code (~51 KB) and skipping the mount
+  at boot. Also lets a board that has no card slot build cleanly. `phpflash` sets it from the
+  project: `microsd` storage → on; `embedded` → off unless the config opts in with
+  `[storage] microsd = true` (also mount a card for writable data). The board's `board.cmake`
+  pulls the SD drivers only when it's on.
+
+### Changed
+- **PHP's CSPRNG now uses the ESP32 hardware RNG.** `ext/random`'s `csprng.c` only reached for
+  `getrandom()` on Linux/BSD and otherwise fell straight to `/dev/urandom`, which doesn't exist
+  here — so `random_bytes()`, `random_int()`, `session_id()` etc. threw `Random\RandomException`.
+  A patch (`patches/php/0004-csprng-esp-getrandom.patch`) enables the `getrandom()` path whenever
+  the libc provides it; on ESP-IDF newlib backs `getrandom()` with `esp_fill_random` (the hardware
+  RNG). PHP's random functions now work. Verified on hardware.
+- Fixed board selection in ESP-IDF's early requirement-expansion phase, which doesn't see
+  `-DBOARD`: a non-default board previously inherited the **default** board's component
+  requirements (latent until the ETH board needed networking components the Pico doesn't). The
+  top-level `CMakeLists` now exports the resolved board (and the web-server flag) into the
+  environment, which `resolve-board.cmake` / `main/CMakeLists` read as a fallback.
+
 ## [0.3.0] — embedded storage mode
 
 ### Added

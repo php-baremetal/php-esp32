@@ -28,8 +28,9 @@ Every example holds the same things:
 - `monitor.txt` — the serial log of a real run on an ESP32-P4-Pico, so you can see the result
   without a board in front of you.
 
-The examples that use hardware also include a `display.gif`: a short clip of the circuit
-working (the LED blinking, the button turning it on, and so on).
+Many examples also include an image of the result: a `display.gif` clip for the hardware ones
+(the LED blinking, the button turning it on) and an `output.png` screenshot for the web-server
+ones (the page in a browser).
 
 ## The examples
 
@@ -53,9 +54,16 @@ working (the LED blinking, the button turning it on, and so on).
 | [`filter-demo/`](filter-demo/) | `filter_var()` validation and sanitization (email, int, URL, IP…). | `filter` extension |
 | [`eloquent-demo/`](eloquent-demo/) | Laravel's Eloquent ORM (standalone, no framework) on a SQLite database on the microSD — mbstring **without** oniguruma (`mb_split` polyfilled). | "everything" firmware + `vendor/` |
 | [`eloquent-onig/`](eloquent-onig/) | The same Eloquent demo, on a firmware with mbstring built **with** oniguruma (native `mb_split`, no polyfill). | "everything" firmware + `onig` + `vendor/` |
+| [`web-server-init-loop/`](web-server-init-loop/) | Serves a web page over Ethernet, with the whole HTTP server written in PHP (`setup()`/`loop()`). | `esp32-p4-eth` board + network |
+| [`web-server/`](web-server/) | The same page, using the firmware's **`web-server`** project type: a C HTTP server in front, PHP run fresh per request (like behind Apache). | `esp32-p4-eth` board + network |
 
 The linear examples run once and finish; the hardware ones (`led-blink`, `blink-sos`,
 `button-led`) use the `setup()`/`loop()` model and keep going as long as the board is powered.
+
+The two **web-server** examples need the `esp32-p4-eth` board (wired Ethernet) and its RJ45 plugged
+into a network; the firmware brings the link up at boot and logs the address. They show the two
+ways to serve HTTP: the whole server in PHP (`web-server-init-loop`), or PHP behind the firmware's
+HTTP server via the `web-server` project type (`web-server`).
 
 ## The examples that need an extension
 
