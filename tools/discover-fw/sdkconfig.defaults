@@ -1,0 +1,5 @@
+# Discovery-firmware overrides, layered LAST (over base + family + board). The only thing overridden
+# is the partition table: the board's custom .csv path is relative to the main project (not here),
+# so use a plain single-app image. Everything else -- target, chip-rev min, flash size, PSRAM --
+# comes from the board's own sdkconfig, so the probe wiring and config stay board-defined.
+CONFIG_PARTITION_TABLE_SINGLE_APP_LARGE=y

@@ -1,5 +1,36 @@
 # Changelog
 
+## [0.6.0] — TLS client (HTTPS) and static DNS
+
+### Added
+- **TLS client / HTTPS** for the full openssl build, via a new **`tls`** setting
+  (`[extensions.openssl] tls = true` → `-DPHP_EXT_OPENSSL_TLS=ON`). openssl.c registers the
+  `ssl://` / `tls://` stream transports but its own TLS layer (`xp_ssl.c` + libssl) can't be built on
+  this target; instead the transport factory is implemented on ESP-IDF's **esp-tls / mbedTLS**
+  (`components/php/compat/openssl_tls_esptls.c`), which does DNS + TCP + TLS handshake in one call.
+  So PHP's normal stream layer reaches HTTPS: `file_get_contents('https://…')`,
+  `stream_socket_client('tls://host:443')`. The crypto stays real OpenSSL 3.0 (libcrypto); only the
+  TLS record layer rides mbedTLS. **Client only**, needs a networked board. Verified on real
+  ESP32-P4-ETH: a certificate-verified GET of `https://example.com/`. See the
+  [`https-client`](examples/https-client/) example and `docs/openssl.md`.
+- **Certificate provisioning.** When a project builds the TLS client, `phpflash build` copies the
+  **host's** root-CA bundle into the project (`project-src/certs/ca-bundle.crt` by default) so it
+  ships to the device, and the firmware verifies TLS peers against it. Configurable with
+  `[extensions.openssl] certs_path` (destination) and `certs_source` (host bundle; auto-detected from
+  the usual Fedora/Debian/… locations otherwise). Git-ignored in examples. `phpflash build` ships it
+  once but won't overwrite it; the new **`phpflash update-certs`** command refreshes it (re-copies
+  the host trust store into `certs_path`), for renewed roots or a changed `certs_source`.
+- **Static DNS** — `[network] dns = ["1.1.1.1", "8.8.8.8"]`. The firmware applies these to the netif
+  after the DHCP lease (so they win over DHCP's); empty keeps the DHCP-provided servers. Passed as
+  `-DPHP_NET_DNS` (comma-separated).
+- **`https-client` example** (ESP32-P4-ETH): a certificate-verified HTTPS GET from PHP.
+
+### Changed
+- The base config now uses **software AES/GCM in mbedTLS** (`CONFIG_MBEDTLS_HARDWARE_AES=n`,
+  `…_GCM=n`). The PHP heap is PSRAM, and the hardware AES accelerator's DMA can't reach PSRAM, which
+  made the TLS handshake fail to allocate DMA descriptors. Software AES works from any memory (a TLS
+  handshake takes ~10 s — software RSA verify + AES — which the widened watchdog covers).
+
 ## [0.5.0] — the `openssl` extension (mbedTLS subset + real OpenSSL)
 
 ### Added

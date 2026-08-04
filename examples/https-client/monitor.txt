@@ -1,0 +1,96 @@
+ESP-ROM:esp32p4-eco2-20240710
+Build:Jul 10 2024
+rst:0x1 (POWERON),boot:0x10f (SPI_FAST_FLASH_BOOT)
+SPI mode:DIO, clock div:1
+load:0x4ff33ce0,len:0x15e4
+load:0x4ff29ed0,len:0xe64
+load:0x4ff2cbd0,len:0x3534
+entry 0x4ff29eda
+I (25) boot: ESP-IDF v5.5.5 2nd stage bootloader
+I (26) boot: compile time Aug  4 2026 10:40:49
+I (26) boot: Multicore bootloader
+I (27) boot: chip revision: v1.3
+I (29) boot: efuse block revision: v0.3
+I (32) boot.esp32p4: SPI Speed      : 80MHz
+I (36) boot.esp32p4: SPI Mode       : DIO
+I (40) boot.esp32p4: SPI Flash Size : 32MB
+I (44) boot: Enabling RNG early entropy source...
+I (48) boot: Partition Table:
+I (51) boot: ## Label            Usage          Type ST Offset   Length
+I (57) boot:  0 nvs              WiFi data        01 02 00009000 00006000
+I (64) boot:  1 phy_init         RF data          01 01 0000f000 00001000
+I (70) boot:  2 factory          factory app      00 00 00010000 00c00000
+I (77) boot:  3 storage          Unknown data     01 81 00c10000 00800000
+I (84) boot: End of partition table
+I (87) esp_image: segment 0: paddr=00010020 vaddr=403f0020 size=146050h (1335376) map
+I (316) esp_image: segment 1: paddr=00156078 vaddr=30100000 size=00098h (   152) load
+I (318) esp_image: segment 2: paddr=00156118 vaddr=4ff00000 size=09f00h ( 40704) load
+I (329) esp_image: segment 3: paddr=00160020 vaddr=40000020 size=3e5598h (4085144) map
+I (1007) esp_image: segment 4: paddr=005455c0 vaddr=4ff09f00 size=0d1a8h ( 53672) load
+I (1023) boot: Loaded app from partition at offset 0x10000
+I (1023) boot: Disabling RNG early entropy source...
+I (1035) hex_psram: vendor id    : 0x0d (AP)
+I (1036) hex_psram: Latency      : 0x01 (Fixed)
+I (1036) hex_psram: DriveStr.    : 0x00 (25 Ohm)
+I (1037) hex_psram: dev id       : 0x03 (generation 4)
+I (1042) hex_psram: density      : 0x07 (256 Mbit)
+I (1046) hex_psram: good-die     : 0x06 (Pass)
+I (1050) hex_psram: SRF          : 0x02 (Slow Refresh)
+I (1055) hex_psram: BurstType    : 0x00 ( Wrap)
+I (1059) hex_psram: BurstLen     : 0x03 (2048 Byte)
+I (1064) hex_psram: BitMode      : 0x01 (X16 Mode)
+I (1068) hex_psram: Readlatency  : 0x04 (14 cycles@Fixed)
+I (1074) hex_psram: DriveStrength: 0x00 (1/1)
+I (1078) MSPI Timing: Enter psram timing tuning
+I (1255) esp_psram: Found 32MB PSRAM device
+I (1255) esp_psram: Speed: 200MHz
+I (1256) hex_psram: psram CS IO is dedicated
+I (1256) cpu_start: Multicore app
+I (2208) esp_psram: SPI SRAM memory test OK
+I (2217) cpu_start: GPIO 38 and 37 are used as console UART I/O pins
+I (2218) cpu_start: Pro cpu start user code
+I (2218) cpu_start: cpu freq: 360000000 Hz
+I (2220) app_init: Application information:
+I (2224) app_init: Project name:     php-esp32
+I (2228) app_init: App version:      732be6c-dirty
+I (2232) app_init: Compile time:     Aug  4 2026 10:59:43
+I (2238) app_init: ELF file SHA256:  78e500d46...
+I (2242) app_init: ESP-IDF:          v5.5.5
+I (2246) efuse_init: Min chip rev:     v1.0
+I (2250) efuse_init: Max chip rev:     v1.99 
+I (2254) efuse_init: Chip rev:         v1.3
+I (2258) heap_init: Initializing. RAM available for dynamic allocation:
+I (2264) heap_init: At 4FF29C40 len 00011380 (68 KiB): RETENT_RAM
+I (2270) heap_init: At 4FF3AFC0 len 00004BF0 (18 KiB): RAM
+I (2275) heap_init: At 4FF47050 len 00058FB0 (355 KiB): RAM
+I (2281) heap_init: At 50108080 len 00007F80 (31 KiB): RTCRAM
+I (2286) heap_init: At 30100098 len 00001F68 (7 KiB): SPM
+I (2291) esp_psram: Adding pool of 32768K of PSRAM memory to heap allocator
+I (2299) spi_flash: detected chip: gd
+I (2301) spi_flash: flash io: dio
+I (2357) sleep_gpio: Configure to isolate all GPIO pins in sleep state
+I (2358) sleep_gpio: Enable automatic switching of GPIO sleep configuration
+I (2360) main_task: Started on CPU0
+I (2360) esp_psram: Reserving pool of 32K of internal memory for DMA/internal allocations
+I (2370) main_task: Calling app_main()
+I (2370) php-esp32: starting PHP runtime
+I (2380) php-esp32: embedded source mounted at /app
+I (2380) main_task: Returned from app_main()
+I (2430) esp_eth.netif.netif_glue: e8:f6:0a:e0:ce:92
+I (2430) esp_eth.netif.netif_glue: ethernet attached to netif
+I (6450) esp_netif_handlers: eth ip: 10.42.0.224, mask: 255.255.255.0, gw: 10.42.0.1
+I (6530) php-esp32: network up -- http://10.42.0.224/
+I (6530) php-esp32: static DNS[0] = 1.1.1.1
+I (6530) php-esp32: static DNS[1] = 8.8.8.8
+I (6530) php-esp32: php_embed_init()...
+PHP 8.3.32 on ESP32-P4
+--- /app/index.php ---
+CA bundle: /app/certs/ca-bundle.crt
+
+I (6660) php-tls: loaded CA bundle /app/certs/ca-bundle.crt (223752 bytes)
+I (17980) php-tls: TLS connected to example.com:443
+GET https://example.com/ -> HTTP/1.1 200 OK in 11416 ms
+  559 bytes, <title>Example Domain</title>
+--- end ---
+--- end ---
+I (18060) php-esp32: done -- heap free: 33578239 bytes

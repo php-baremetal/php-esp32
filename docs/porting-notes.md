@@ -367,3 +367,64 @@ validation and sanitization). All three are optional, off by default, each with 
   (see [footprint.md](footprint.md)); off by default, since most code doesn't need mb-regex.
 - **filter** needed nothing special: it defines its module entry unconditionally and leans only
   on `ext/pcre` and `ext/standard`, both always in.
+
+## The openssl extension, in two flavours (and a TLS client)
+
+`ext/openssl` is written against the OpenSSL C library, which doesn't exist for this target
+(ESP-IDF ships mbedTLS, a different API). So it comes in two forms a project picks between —
+`[extensions.openssl] full = true|false`. The reference doc is [openssl.md](openssl.md); the port
+touches worth recording:
+
+- **The compatible subset** (`-DPHP_EXT_OPENSSL=ON`, default, ~42 KB) is a *hand-written* extension
+  (`components/php/compat/openssl_compat.c`) backed by ESP-IDF's mbedTLS. It provides just the
+  symmetric-cipher surface — `openssl_encrypt`/`decrypt` (AES-128/192/256 CBC+GCM),
+  `openssl_cipher_iv_length`, `openssl_random_pseudo_bytes` (hardware RNG), the `OPENSSL_RAW_DATA`/
+  `OPENSSL_ZERO_PADDING` constants — enough for e.g. a framework's encrypter. It registers the same
+  `openssl` module name and is byte-for-byte interoperable with desktop OpenSSL (KAT-verified). No
+  RSA/X.509/TLS.
+
+- **The full build** (`-DPHP_EXT_OPENSSL_FULL=ON`, ~2.1 MB) is the *real* `ext/openssl/openssl.c`
+  compiled against a **ported OpenSSL 3.0 libcrypto**. `scripts/fetch-openssl.sh` cross-compiles
+  OpenSSL for `riscv32-esp-elf` + newlib, **static and `no-pic`** — bare metal has no dynamic loader,
+  so a `.got.plt` would fail the final link (`ld: discarded output section .got.plt`). It's
+  configured `no-sock no-dgram no-threads no-engine no-legacy …`, seeded `--with-rand-seed=getrandom`
+  (newlib's `getentropy`→`getrandom`→`esp_random`), with a one-line `<syslog.h>` shim newlib lacks.
+  Two compile touches for `openssl.c` itself: `-Dtimezone=_timezone` (newlib spells the POSIX global
+  `_timezone`), and a stubbed `OPENSSL_init_ssl` (we don't link libssl). A `RAND_METHOD` backed by
+  `esp_fill_random` is installed at startup so the legacy RNG path also uses the hardware RNG.
+
+- **On-chip key generation needed a config file.** `openssl_pkey_new()` first failed with
+  *"configuration file routines: no such file"* — OpenSSL 3.0 brings its providers up by reading an
+  `openssl.cnf`, and there's no filesystem default on the chip. Setting `OPENSSL_INIT_NO_LOAD_CONFIG`
+  at runtime did **not** fix it; shipping a minimal `openssl.cnf` (that just activates the default
+  provider) and pointing `OPENSSL_CONF` at it — the firmware does this in `main.c`, path from
+  `-DPHP_OPENSSL_CONF` — did. RSA-2048 keygen then works (verified on hardware); it's CPU-bound
+  (~20-45 s, so the task-watchdog window is widened to 60 s). The `no_load_config` setting flips back
+  to the config-less init for devices that only *use* provisioned keys. EC keygen still needs curve
+  defaults the minimal cnf doesn't carry.
+
+- **The TLS client rides mbedTLS, not libssl.** `openssl.c`'s MINIT registers the `ssl://`/`tls://`
+  stream transports, but pointing them at OpenSSL's own `xp_ssl.c` would need **libssl + BSD
+  sockets** — and the standalone OpenSSL cross-build has neither (the sysroot has no lwIP sockets,
+  hence `no-sock`). So with the `tls` setting (`-DPHP_EXT_OPENSSL_TLS=ON`) the transport factory
+  (`php_openssl_ssl_socket_factory`, stubbed to "refuse to open" otherwise) is implemented in
+  `components/php/compat/openssl_tls_esptls.c` over ESP-IDF's **esp-tls/mbedTLS**, which is compiled
+  *inside* ESP-IDF where lwIP and mbedTLS are available. `esp_tls_conn_new_sync()` does DNS + TCP +
+  handshake in one call; the factory wraps it as a `php_stream` (a transport whose `set_option`
+  handles the `XPORT_API` connect op), so PHP's normal stream layer reaches HTTPS —
+  `file_get_contents('https://…')`, `stream_socket_client('tls://…')`. The crypto stays real OpenSSL
+  (libcrypto); only the TLS record layer is mbedTLS. Client only, and a networked board is required.
+
+- **Software AES was mandatory for TLS.** The first handshake died with *"esp-aes: Failed to
+  allocate memory for the array of DMA descriptors"*: the PHP heap is PSRAM (`USE_ZEND_ALLOC=0` →
+  `malloc` → PSRAM), so the TLS record buffers live in PSRAM, and the hardware AES accelerator drives
+  DMA that can't reach PSRAM. `sdkconfig.defaults` disables it (`CONFIG_MBEDTLS_HARDWARE_AES=n`,
+  `…_GCM=n`); software AES works from any memory. A handshake then takes ~10 s (software RSA verify +
+  AES), which the watchdog window covers.
+
+- **Certificates and DNS.** TLS verification uses a CA bundle the firmware reads from
+  `$PHP_TLS_CAFILE` (path from `-DPHP_TLS_CAFILE`, default `certs/ca-bundle.crt` under the source);
+  `phpflash` copies the host's root store into the project (and `phpflash update-certs` refreshes
+  it). With no bundle the client connects but doesn't verify (and logs it). Static DNS servers
+  (`[network] dns`) are applied to the netif after DHCP via `-DPHP_NET_DNS` (comma-separated — a
+  semicolon would be split by CMake's list syntax). See the `https-client` example.

@@ -24,7 +24,11 @@
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 
-#include "board.h"   /* board_mount_storage()/board_unmount_storage(), BOARD_NAME */
+#include "board.h"   /* board_mount_storage()/board_unmount_storage(), BOARD_NAME, BOARD_HAS_NETWORK */
+
+#ifdef BOARD_HAS_NETWORK
+#include "esp_netif.h"   /* after board.h: BOARD_HAS_NETWORK is defined there */
+#endif
 
 #include "php_embed.h"
 #include "zend_API.h"
@@ -33,6 +37,45 @@
 #include "zend_exceptions.h"
 
 static const char *TAG = "php-esp32";
+
+#ifdef BOARD_HAS_NETWORK
+/* Apply static DNS servers (a ","-separated list) to the default netif, overriding whatever DHCP
+ * handed out. Up to two are used (lwIP keeps a main + a backup); extras and blanks are ignored.
+ * An empty list is a no-op, leaving the DHCP-provided servers in place. */
+static void net_apply_static_dns(const char *list)
+{
+    if (!list || !*list) {
+        return;
+    }
+    esp_netif_t *netif = esp_netif_get_default_netif();
+    if (!netif) {
+        ESP_LOGW(TAG, "static DNS: no default netif");
+        return;
+    }
+    char buf[128];
+    strncpy(buf, list, sizeof buf - 1);
+    buf[sizeof buf - 1] = '\0';
+
+    int idx = 0;
+    for (char *save = NULL, *tok = strtok_r(buf, ",", &save);
+         tok && idx < 2;
+         tok = strtok_r(NULL, ",", &save)) {
+        while (*tok == ' ') tok++;              /* trim leading spaces */
+        if (!*tok) continue;
+        esp_netif_dns_info_t dns = {0};
+        dns.ip.type = ESP_IPADDR_TYPE_V4;
+        if (esp_netif_str_to_ip4(tok, &dns.ip.u_addr.ip4) != ESP_OK) {
+            ESP_LOGW(TAG, "static DNS: bad address '%s'", tok);
+            continue;
+        }
+        esp_netif_dns_type_t t = (idx == 0) ? ESP_NETIF_DNS_MAIN : ESP_NETIF_DNS_BACKUP;
+        if (esp_netif_set_dns_info(netif, t, &dns) == ESP_OK) {
+            ESP_LOGI(TAG, "static DNS[%d] = %s", idx, tok);
+            idx++;
+        }
+    }
+}
+#endif
 
 /* 64 KB: with a smaller stack the board resets on trivial scripts.
  * ESP-IDF's xTaskCreate takes the stack size in bytes. */
@@ -311,6 +354,12 @@ static void php_task(void *arg)
             ESP_LOGW(TAG, "network: no IP (link down or no DHCP)");
         }
     }
+#ifdef PHP_NET_DNS
+    /* Static DNS servers from [network] dns in the project config (","-separated, passed as
+     * -DPHP_NET_DNS). Set them on the default netif *after* the DHCP lease so they take
+     * precedence over DHCP-provided ones; if this list is empty the DHCP servers stand. */
+    net_apply_static_dns(PHP_NET_DNS);
+#endif
 #endif
 
     /* Run the embedded source if it's there, otherwise the one on the card. */
@@ -343,6 +392,21 @@ static void php_task(void *arg)
             snprintf(ossl_conf, sizeof ossl_conf, "%s/%s", src_dir, PHP_OPENSSL_CONF);
         setenv("OPENSSL_CONF", ossl_conf, 1);
     }
+
+    /* The TLS client (PHP_EXT_OPENSSL_TLS) verifies peers against a CA bundle shipped with the
+     * source. PHP_TLS_CAFILE is its path (from [extensions.openssl] certs_path, default
+     * "certs/ca-bundle.crt"): absolute used as-is, relative resolved against the source mount. The
+     * esp-tls factory reads $PHP_TLS_CAFILE; with none it connects unverified (and logs it). */
+#ifdef PHP_TLS_CAFILE
+    if (src_dir) {
+        static char tls_ca[128];
+        if (PHP_TLS_CAFILE[0] == '/')
+            snprintf(tls_ca, sizeof tls_ca, "%s", PHP_TLS_CAFILE);
+        else
+            snprintf(tls_ca, sizeof tls_ca, "%s/%s", src_dir, PHP_TLS_CAFILE);
+        setenv("PHP_TLS_CAFILE", tls_ca, 1);
+    }
+#endif
 
     php_embed_module.ub_write = esp_ub_write;
 

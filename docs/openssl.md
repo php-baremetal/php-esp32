@@ -10,12 +10,12 @@ differ in how much of OpenSSL they actually implement, and in size.
 | Build | `-DPHP_EXT_OPENSSL=ON` | `… -DPHP_EXT_OPENSSL_FULL=ON` |
 | Backed by | ESP-IDF's **mbedTLS** | the **real OpenSSL 3.0** libcrypto, cross-compiled for the chip |
 | Flash cost | **~42 KB** | **~2 MB** |
-| Symmetric ciphers (AES-CBC/GCM) | ✅ | ✅ |
-| `openssl_random_pseudo_bytes` | ✅ | ✅ |
-| Public-key (RSA, EC, DSA, DH) | ❌ | ✅ |
-| Signatures / X.509 / CSR / PKCS7/12 | ❌ | ✅ |
-| Digests (`openssl_digest`, many algos) | ❌ | ✅ |
-| TLS stream wrappers (`ssl://`, `tls://`) | ❌ | ❌ (crypto-only; see below) |
+| Symmetric ciphers (AES-CBC/GCM) | yes | yes |
+| `openssl_random_pseudo_bytes` | yes | yes |
+| Public-key (RSA, EC, DSA, DH) | no | yes |
+| Signatures / X.509 / CSR / PKCS7/12 | no | yes |
+| Digests (`openssl_digest`, many algos) | no | yes |
+| TLS client (`https://`, `tls://`) | no | yes, with the `tls` setting (esp-tls; needs a networked board) |
 
 Both are verified on real ESP32-P4 hardware, and both are byte-for-byte interoperable with desktop
 OpenSSL (e.g. an `openssl_encrypt` here decrypts on a server, and vice-versa).
@@ -70,10 +70,74 @@ The only runtime adaptation is entropy: OpenSSL is configured with `--with-rand-
 no `/dev/urandom`), and the firmware installs a `RAND_METHOD` backed by the ESP32 hardware RNG
 (`esp_fill_random`) at startup, so key/IV/nonce generation works.
 
-**Crypto only, no TLS transport.** The full build compiles `openssl.c` (all the crypto functions)
-but **not** `xp_ssl.c` (the `ssl://` / `tls://` stream wrappers), which would need `libssl` and BSD
-sockets. Its factory is stubbed, so those stream wrappers are registered but refuse to open. Every
-crypto function works; only wrapping a socket in TLS via `fopen("ssl://…")` is unavailable.
+**The crypto stays real OpenSSL; the TLS transport rides mbedTLS.** The full build compiles
+`openssl.c` (all the crypto functions) but **not** OpenSSL's own `xp_ssl.c` TLS stream — that needs
+`libssl` + BSD sockets, and the standalone OpenSSL cross-build has neither (hence `no-sock`). So the
+`ssl://` / `tls://` stream transport is provided separately, backed by ESP-IDF's **esp-tls /
+mbedTLS**, and only when you ask for it (the `tls` setting). See *TLS client* below.
+
+## TLS client (HTTPS) — the `tls` setting
+
+By default the full build is crypto-only: the `ssl://`/`tls://` transports are registered but refuse
+to open, so `https://` is unavailable. Turn on the **`tls`** setting to build a working TLS client:
+
+```toml
+[extensions.openssl]
+enabled = true
+full    = true
+tls     = true      # build the ssl://tls:// transport -> https:// works
+
+[network]
+dns = ["1.1.1.1", "8.8.8.8"]   # optional static DNS (DHCP-provided otherwise)
+```
+
+Then, from PHP on the chip:
+
+```php
+$html = file_get_contents('https://example.com/');          // verified HTTPS GET
+$fp   = stream_socket_client('tls://api.example.com:443');  // raw TLS socket
+```
+
+**Requirements and how it works:**
+- **A networked board** (e.g. `esp32-p4-eth`). The transport does DNS + TCP + TLS in one esp-tls
+  call, so name resolution rides the board's network (DHCP DNS, or the static `[network] dns`).
+- **Root certificates.** OpenSSL 3.0's TLS still verifies peers, so the device needs a CA bundle.
+  `phpflash build` copies your **host's** root-CA store into the project (`project-src/certs/
+  ca-bundle.crt` by default) so it ships to the device; the firmware points the transport at it. See
+  *Certificates* below. Without a bundle the transport still connects but **does not verify** the
+  peer (it logs a warning) — fine for a quick test, not for production.
+- **Software AES.** The base config disables mbedTLS's hardware AES (`CONFIG_MBEDTLS_HARDWARE_AES`):
+  the PHP heap is PSRAM, and the AES accelerator's DMA can't reach PSRAM, so the handshake would fail
+  to allocate DMA descriptors. Software AES works from any memory. A handshake takes ~10 s (software
+  RSA cert-chain verify + AES); fine for occasional requests, and the watchdog window covers it.
+- **Client only.** No TLS *server* (accept), and this is the crypto library's transport — it isn't
+  OpenSSL's own `libssl`, so a few OpenSSL-specific stream-context knobs (e.g. `peer_fingerprint`,
+  `capture_peer_cert`) aren't honored. The common client cases — verified `https://`, `tls://`
+  sockets — work.
+
+Verified on real ESP32-P4-ETH hardware: `file_get_contents('https://example.com/')` returns the page
+over a certificate-verified TLS 1.2/1.3 connection.
+
+### Certificates
+
+The bundle location is `project-src/certs/ca-bundle.crt`, overridable with `certs_path` (relative to
+the source folder, or an absolute on-device path you manage yourself). By default `phpflash` copies
+the first system trust store it finds — `/etc/pki/tls/certs/ca-bundle.crt` (Fedora/RHEL),
+`/etc/ssl/certs/ca-certificates.crt` (Debian/Ubuntu), … — set `certs_source` to force a specific
+file. It's git-ignored in the examples (a host-specific, regenerated artifact).
+
+`phpflash build` writes the bundle once and never overwrites it. To refresh it later (renewed roots,
+a new `certs_source`), run **`phpflash update-certs`**: it re-copies the host trust store into
+`certs_path`, overwriting the old bundle.
+
+```toml
+[extensions.openssl]
+enabled      = true
+full         = true
+tls          = true
+certs_path   = "certs/ca-bundle.crt"          # where it ships (default)
+certs_source = "/etc/pki/tls/certs/ca-bundle.crt"   # host bundle to copy (auto-detected if unset)
+```
 
 ## Configuration: `openssl.cnf` (full build)
 
@@ -171,6 +235,8 @@ keys on the chip.
   doesn't set (you'll see *"Private key length must be at least 384 bits, configured to 0"*). Stick
   to RSA on-device, or ship EC keys provisioned off-device. `openssl_csr_sign` / X.509 issuing are
   likewise untested on this port.
-- **No DNS / no TLS client.** For HTTPS you'd still need `libssl` + a resolver; not built here.
+- **HTTPS / TLS client** is available with the `tls` setting on a networked board (see *TLS client*
+  above) — DNS resolution and certificate-verified `https://` both work. The subset and a plain full
+  build (no `tls`) have no TLS transport.
 - Random bytes use the hardware RNG in both flavours (`random_bytes`,
   `openssl_random_pseudo_bytes`), so symmetric keys/IVs/nonces have real entropy.

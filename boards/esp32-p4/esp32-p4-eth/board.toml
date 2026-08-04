@@ -10,6 +10,10 @@
 # `web-server`; it is listed here as a hardware capability even though the firmware
 # doesn't implement web-server yet (the manifest still marks it unavailable, so it isn't
 # offered until then).
+#
+# network : the board's network interface -- "ethernet" | "wifi" | absent (none). A
+#   board-level peripheral (external PHY / radio), which a chip probe can't see, so it's
+#   declared here; `phpflash discover` reports it. The ESP32-P4 has no built-in radio.
 
 schema_version = 1
 
@@ -18,3 +22,4 @@ family = "esp32-p4"
 
 storage_types = ["microsd", "embedded"]
 project_types = ["init-loop", "event-driven", "web-server"]
+network       = "ethernet"

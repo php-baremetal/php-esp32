@@ -1,0 +1,29 @@
+name = "https-client"
+storage_type = "embedded"   # source (and the CA bundle) are flashed into the image; no card needed
+type = "init-loop"          # execution model
+
+[board]
+target = "esp32-p4-eth"     # a board with a network -- TLS/HTTPS need one
+port   = ""                 # empty = autodetect at flash time
+
+[esp-idf]
+path    = ""
+version = ""
+
+[php-esp32]
+path    = ""
+version = ""
+
+[network]
+dns = ["1.1.1.1", "8.8.8.8"]   # static DNS; comment out to use whatever DHCP hands out
+
+[extensions.openssl]
+enabled = true
+full    = true
+tls     = true              # build the ssl://tls:// client transport (esp-tls) -> https:// works
+# certs_path   = "certs/ca-bundle.crt"   # where the CA bundle ships (default; relative to source)
+# certs_source = "/etc/ssl/certs/ca-certificates.crt"  # host bundle to copy (auto-detected if unset)
+
+[php]
+src   = "project-src"       # PHP source folder (built into the embedded image)
+entry = "index.php"

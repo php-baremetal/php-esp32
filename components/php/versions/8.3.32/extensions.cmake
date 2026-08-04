@@ -258,6 +258,9 @@ option(PHP_EXT_OPENSSL_FULL "With PHP_EXT_OPENSSL: build the real ext/openssl on
 # Full only: skip loading openssl.cnf at startup (OPENSSL_INIT_NO_LOAD_CONFIG) instead of reading
 # one via OPENSSL_CONF. Off by default -- see docs/openssl.md for when to turn it on.
 option(PHP_EXT_OPENSSL_NO_LOAD_CONFIG "With PHP_EXT_OPENSSL_FULL: don't load openssl.cnf (skip config)" OFF)
+# Full only: build the real ssl://tls:// stream transport (esp-tls/mbedTLS backed) so PHP can do
+# HTTPS. Needs a networked board. Off by default -- see docs/openssl.md.
+option(PHP_EXT_OPENSSL_TLS "With PHP_EXT_OPENSSL_FULL: build the TLS client transport (HTTPS) on esp-tls" OFF)
 if(PHP_EXT_OPENSSL)
     if(PHP_EXT_OPENSSL_FULL)
         include("${PHP_COMPONENT_DIR}/${PHP_VER_DIR}/openssl-full.cmake")

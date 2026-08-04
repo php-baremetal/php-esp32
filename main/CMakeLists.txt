@@ -55,3 +55,23 @@ endif()
 if(_ossl_conf)
     target_compile_definitions(${COMPONENT_LIB} PRIVATE "PHP_OPENSSL_CONF=\"${_ossl_conf}\"")
 endif()
+
+# Static DNS servers (";"-separated) from [network] dns, passed by flash-tool as -DPHP_NET_DNS.
+# main.c applies them to the netif after DHCP. Absent -> DHCP-provided DNS stands.
+set(_net_dns "${PHP_NET_DNS}")
+if(NOT _net_dns AND NOT "$ENV{PHP_NET_DNS}" STREQUAL "")
+    set(_net_dns "$ENV{PHP_NET_DNS}")
+endif()
+if(_net_dns)
+    target_compile_definitions(${COMPONENT_LIB} PRIVATE "PHP_NET_DNS=\"${_net_dns}\"")
+endif()
+
+# CA bundle path for the TLS client, from [extensions.openssl] certs_path (flash-tool passes
+# -DPHP_TLS_CAFILE). main.c sets $PHP_TLS_CAFILE so the esp-tls factory verifies peers against it.
+set(_tls_ca "${PHP_TLS_CAFILE}")
+if(NOT _tls_ca AND NOT "$ENV{PHP_TLS_CAFILE}" STREQUAL "")
+    set(_tls_ca "$ENV{PHP_TLS_CAFILE}")
+endif()
+if(_tls_ca)
+    target_compile_definitions(${COMPONENT_LIB} PRIVATE "PHP_TLS_CAFILE=\"${_tls_ca}\"")
+endif()

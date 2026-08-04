@@ -66,6 +66,9 @@ static void oc_openssl_full_init(void)
 	RAND_add(seed, (int) sizeof seed, (double) sizeof seed);
 }
 
+#ifndef PHP_EXT_OPENSSL_TLS
+/* Crypto-only build: no TLS transport. The real factory (esp-tls backed) lives in
+ * openssl_tls_esptls.c and is compiled instead when PHP_EXT_OPENSSL_TLS is set. */
 php_stream *php_openssl_ssl_socket_factory(const char *proto, size_t protolen,
 		const char *resourcename, size_t resourcenamelen,
 		const char *persistent_id, int options, int flags,
@@ -77,3 +80,4 @@ php_stream *php_openssl_ssl_socket_factory(const char *proto, size_t protolen,
 	/* TLS stream transport not built (crypto-only openssl). */
 	return NULL;
 }
+#endif

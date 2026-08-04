@@ -64,6 +64,7 @@ off):
 |---|---|---|
 | Ethernet networking | **~103 KB** | `esp_eth` + `esp_netif` + `esp_event` + lwIP + the board's `board_network_up()` (IP101 PHY, DHCP). Present on the `esp32-p4-eth` board; used by anything that touches the network — including the `web-server-init-loop` example, where PHP itself runs the socket server. |
 | `web-server` project type | **+~37 KB** | on top of networking: the `esp_http_server` front end and the per-request PHP model (`-DPHP_PROJECT_WEB_SERVER=ON`). |
+| TLS client (HTTPS) | **~180 KB** | the `openssl` `tls` setting (`-DPHP_EXT_OPENSSL_TLS=ON`): `esp-tls` + the mbedTLS TLS record layer + the stream-transport factory, on top of the full openssl build. Needs networking. Lets PHP do `https://`. The shipped CA bundle (~220 KB) lives with the source, not in the app image. |
 
 So a networked init-loop firmware (PHP owns the socket) is about **~103 KB** over the baseline, and
 the `web-server` project type (HTTP server in front) is about **~139 KB** over it — measured on the

@@ -1,0 +1,5 @@
+/build/
+/sdkconfig
+/project-src/vendor/
+/project-src/certs/
+/php-esp32.config.local.toml

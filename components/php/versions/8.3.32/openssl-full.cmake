@@ -36,3 +36,13 @@ target_compile_definitions(${COMPONENT_LIB} PRIVATE HAVE_OPENSSL_EXT)
 
 # Link the ported libcrypto, and esp_hw_support for esp_fill_random (the RNG method).
 target_link_libraries(${COMPONENT_LIB} PRIVATE "${_ossl_dir}/lib/libcrypto.a" idf::esp_hw_support)
+
+# Optional TLS client (-DPHP_EXT_OPENSSL_TLS=ON): compile the real ssl://tls:// transport factory
+# backed by esp-tls/mbedTLS instead of the stub, so HTTPS works from PHP. Needs a networked board.
+if(PHP_EXT_OPENSSL_TLS)
+    target_sources(${COMPONENT_LIB} PRIVATE "${PHP_COMPONENT_DIR}/compat/openssl_tls_esptls.c")
+    set_source_files_properties("${PHP_COMPONENT_DIR}/compat/openssl_tls_esptls.c" PROPERTIES
+        INCLUDE_DIRECTORIES "${_ext_openssl};${_ossl_dir}/include")
+    target_compile_definitions(${COMPONENT_LIB} PRIVATE PHP_EXT_OPENSSL_TLS)
+    target_link_libraries(${COMPONENT_LIB} PRIVATE idf::esp-tls)
+endif()

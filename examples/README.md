@@ -53,7 +53,8 @@ ones (the page in a browser).
 | [`mbstring-regex/`](mbstring-regex/) | `mb_ereg*` / `mb_split` with Unicode patterns, on the real Oniguruma engine. | `mbstring` + `onig` |
 | [`filter-demo/`](filter-demo/) | `filter_var()` validation and sanitization (email, int, URL, IP…). | `filter` extension |
 | [`openssl-compat/`](openssl-compat/) | AES encryption via the mbedTLS-backed `openssl` subset (symmetric only, ~42 KB). | `openssl` extension |
-| [`openssl-full/`](openssl-full/) | Real OpenSSL: RSA sign/verify, encrypt, full digests (public-key crypto, ~2 MB). | `openssl` + `full` |
+| [`openssl-full/`](openssl-full/) | Real OpenSSL: RSA sign/verify, encrypt, full digests, on-chip key generation (public-key crypto, ~2 MB). | `openssl` + `full` |
+| [`https-client/`](https-client/) | A certificate-verified HTTPS GET from PHP (`file_get_contents('https://…')`) over the esp-tls TLS client. | `esp32-p4-eth` board + network, `openssl` + `full` + `tls` |
 | [`eloquent-demo/`](eloquent-demo/) | Laravel's Eloquent ORM (standalone, no framework) on a SQLite database on the microSD — mbstring **without** oniguruma (`mb_split` polyfilled). | "everything" firmware + `vendor/` |
 | [`eloquent-onig/`](eloquent-onig/) | The same Eloquent demo, on a firmware with mbstring built **with** oniguruma (native `mb_split`, no polyfill). | "everything" firmware + `onig` + `vendor/` |
 | [`web-server-init-loop/`](web-server-init-loop/) | Serves a web page over Ethernet, with the whole HTTP server written in PHP (`setup()`/`loop()`). | `esp32-p4-eth` board + network |

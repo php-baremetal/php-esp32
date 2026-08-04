@@ -191,6 +191,11 @@ flash_cost = "~42 KB (subset)"
   description = "Full build only: skip loading openssl.cnf at startup instead of reading one shipped with the source. Off by default. See docs/openssl.md for when to turn it on."
   flag = "PHP_EXT_OPENSSL_NO_LOAD_CONFIG=ON"
   default = false
+  [[extension.setting]]
+  key = "tls"
+  description = "Full build only: build the real ssl://tls:// stream transport (esp-tls/mbedTLS backed) so PHP can do HTTPS (file_get_contents('https://...'), TLS sockets). Needs a networked board; flash-tool ships the host root CAs. See docs/openssl.md."
+  flag = "PHP_EXT_OPENSSL_TLS=ON"
+  default = false
 
 [[extension]]
 key = "sqlite"

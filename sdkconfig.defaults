@@ -23,3 +23,11 @@ CONFIG_FATFS_MAX_LFN=255
 # spew watchdog dumps. It never panics (CONFIG_ESP_TASK_WDT_PANIC off), so this only affects the
 # warning threshold, not a real hang guard.
 CONFIG_ESP_TASK_WDT_TIMEOUT_S=60
+
+# Software AES/GCM in mbedTLS. The PHP heap is PSRAM (USE_ZEND_ALLOC=0 -> malloc -> PSRAM), so TLS
+# record buffers live in PSRAM -- but the ESP32 hardware AES accelerator drives DMA, which can't
+# reach PSRAM ("esp-aes: Failed to allocate memory for the array of DMA descriptors" during the TLS
+# handshake). Software AES works from any memory. Slower, but fine for this target's occasional
+# crypto, and it's what makes the TLS client (ext/openssl PHP_EXT_OPENSSL_TLS) actually connect.
+CONFIG_MBEDTLS_HARDWARE_AES=n
+CONFIG_MBEDTLS_HARDWARE_GCM=n

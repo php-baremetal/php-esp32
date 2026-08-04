@@ -263,6 +263,27 @@ The details, port selection and troubleshooting are in [docs/flash.md](docs/flas
 To change what runs on the board there's no rebuild: pull out the microSD, rewrite
 `index.php` from your PC, put it back, press reset.
 
+## Identifying a board: `tools/discover-fw`
+
+Not sure which board is plugged in — or holding a blank one you just bought? [`tools/discover-fw/`](tools/discover-fw/)
+is a small throwaway firmware that **actively probes a connected board's peripherals** — it brings
+up the Ethernet link and mounts the microSD — and prints what's really there. The chip alone can't
+tell a P4-Pico from a P4-ETH (same silicon); this can.
+
+It's built **per board, reusing that board's `board.c`**, so it uses the real GPIO wiring — no
+hardcoded pins, and a new board's probe follows automatically. By hand:
+
+```bash
+source ~/esp/esp-idf/export.sh
+idf.py -C tools/discover-fw -B /tmp/disc -DBOARD=esp32-p4-eth flash monitor
+# -> board=ESP32-P4-ETH  ethernet=yes  microsd=card:14895MB  ...
+```
+
+The [`phpflash`](https://github.com/php-baremetal/flash-tool) CLI wraps this in `phpflash discover --all`: it identifies the chip,
+then builds and flashes the probe for each candidate board and names the match. It **overwrites the
+app** on the board (re-flash your firmware afterwards), so it asks first. Ethernet detection needs
+the cable connected (it brings the link up).
+
 ## Status
 
 The engine compiles and links with no unresolved symbols, boots on the board (registers a few
