@@ -22,3 +22,5 @@ sdkconfig.ci
 
 # editor local-history / nested repos
 .history/
+components/php/openssl-src/
+components/php/openssl-build/

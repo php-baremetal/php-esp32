@@ -46,6 +46,11 @@ extern zend_module_entry mbstring_module_entry;
 #ifdef PHP_EXT_FILTER_ENABLED
 extern zend_module_entry filter_module_entry;
 #endif
+/* Optional openssl extension, gated by PHP_EXT_OPENSSL_ENABLED. Same module name whether it's
+ * the mbedTLS-backed subset or the real ext/openssl (PHP_EXT_OPENSSL_FULL). */
+#ifdef PHP_EXT_OPENSSL_ENABLED
+extern zend_module_entry openssl_module_entry;
+#endif
 
 /* Optional PDO/SQLite extension, gated by PHP_EXT_SQLITE_ENABLED (set from the
  * php component's CMakeLists when built with -DPHP_EXT_SQLITE=ON). pdo must be
@@ -74,6 +79,9 @@ static zend_module_entry * const php_builtin_extensions[] = {
 #endif
 #ifdef PHP_EXT_FILTER_ENABLED
 	&filter_module_entry,
+#endif
+#ifdef PHP_EXT_OPENSSL_ENABLED
+	&openssl_module_entry,
 #endif
 #ifdef PHP_EXT_SQLITE_ENABLED
 	&pdo_module_entry,

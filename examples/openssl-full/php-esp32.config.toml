@@ -1,0 +1,27 @@
+name = "openssl-full"
+storage_type = "microsd"   # where the PHP source lives
+type = "init-loop"                  # execution model
+
+[board]
+target = "esp32-p4-pico"
+port   = ""          # empty = autodetect at flash time
+
+[esp-idf]
+path    = ""
+version = ""
+
+[php-esp32]
+path    = ""
+version = ""
+
+[extensions.openssl]
+enabled = true
+full = true
+# The full build reads an openssl.cnf at startup (phpflash ships one in project-src/ and the
+# firmware points OPENSSL_CONF at it) -- that's what lets OpenSSL 3.0 generate keys on-chip.
+# config_path = "openssl.cnf"   # relative to the source folder; default. Or an absolute on-device path.
+# no_load_config = true         # skip the openssl.cnf entirely (leaner; loses on-chip keygen).
+
+[php]
+src   = "project-src"      # PHP source folder (copied to the microSD / embedded)
+entry = "index.php"    # entry file within src

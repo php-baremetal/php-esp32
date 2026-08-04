@@ -1,5 +1,39 @@
 # Changelog
 
+## [0.5.0] — the `openssl` extension (mbedTLS subset + real OpenSSL)
+
+### Added
+- **`openssl` extension**, in two flavours a project picks between (`[extensions.openssl]`, off by
+  default):
+  - **Compatible subset** (`-DPHP_EXT_OPENSSL=ON`, ~42 KB) — a hand-written extension backed by
+    ESP-IDF's **mbedTLS**, providing the symmetric-cipher functions: `openssl_encrypt` /
+    `openssl_decrypt` (AES-128/192/256-CBC and -GCM), `openssl_cipher_iv_length`,
+    `openssl_random_pseudo_bytes` (hardware RNG), `openssl_error_string`, and the `OPENSSL_RAW_DATA`
+    / `OPENSSL_ZERO_PADDING` constants. Byte-for-byte interoperable with desktop OpenSSL; enough for
+    e.g. a framework's encrypter. No RSA/X.509/TLS.
+  - **Full** (`… -DPHP_EXT_OPENSSL_FULL=ON`, ~2.1 MB) — the *real* `ext/openssl` compiled against a
+    **ported OpenSSL 3.0 libcrypto**, cross-compiled for the chip by `scripts/fetch-openssl.sh`
+    (static, no-PIC, hardware-RNG seed, a one-line `<syslog.h>` shim). The full crypto API: RSA/EC
+    keys, `openssl_sign`/`verify`, `openssl_public_encrypt`/`private_decrypt`, `openssl_digest`
+    (SHA-2/3, RIPEMD, …), X.509/PKCS parsing. Crypto only — no TLS stream transport (`ssl://`), which
+    would need `libssl`. Both flavours verified on real ESP32-P4 hardware.
+  - Choose via the config (`[extensions.openssl] full = true|false`); `phpflash` and `flash.sh` pass
+    the flags and run the fetch. `docs/openssl.md` explains when to use which.
+  - **On-chip RSA key generation** (`openssl_pkey_new`) works in the full build. OpenSSL 3.0 needs a
+    config file to bring its providers up, so the firmware reads an `openssl.cnf` shipped with the
+    source (`phpflash build` writes a minimal one into `project-src/`, and the firmware sets
+    `OPENSSL_CONF` to it). Verified on hardware: RSA-2048 generation + sign/verify. It's CPU-bound
+    (~20-45 s, probabilistic), so the base config raises the task-watchdog timeout to 60 s
+    (`CONFIG_ESP_TASK_WDT_TIMEOUT_S`). EC keygen and `openssl_csr_sign`/X.509 issuing remain untested
+    on this port.
+  - **`[extensions.openssl] config_path`** — override where the `openssl.cnf` lives (relative to the
+    source folder, or an absolute on-device path). Passed to the firmware as `-DPHP_OPENSSL_CONF`.
+  - **`no_load_config` setting** (`-DPHP_EXT_OPENSSL_NO_LOAD_CONFIG=ON`, off by default) — build the
+    full openssl to skip the config file entirely (`OPENSSL_INIT_NO_LOAD_CONFIG`): leaner, for
+    devices that only *use* provisioned keys and never generate them on-chip.
+- Examples: **`openssl-compat`** (AES via the subset) and **`openssl-full`** (RSA sign/verify +
+  digests + on-chip keygen via real OpenSSL).
+
 ## [0.4.0] — ESP32-P4-ETH board, Ethernet and the web-server project type
 
 ### Added

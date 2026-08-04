@@ -175,6 +175,24 @@ flash_cost = "~965 KB"
   fetch = "scripts/fetch-oniguruma.sh"
 
 [[extension]]
+key = "openssl"
+description = "The openssl_* functions. Default is a small mbedTLS-backed subset (symmetric AES: openssl_encrypt/decrypt, cipher_iv_length, random_pseudo_bytes) -- enough for e.g. Laravel's Encrypter. The `full` setting builds the real ext/openssl instead (RSA/X.509/...). See docs/openssl.md."
+required_for = []
+flag = "PHP_EXT_OPENSSL=ON"
+flash_cost = "~42 KB (subset)"
+  [[extension.setting]]
+  key = "full"
+  description = "Build the real ext/openssl against a ported OpenSSL 3.0 libcrypto (full API: RSA/EC/X.509/EVP/...) instead of the mbedTLS subset. Adds ~2 MB. See docs/openssl.md."
+  flag = "PHP_EXT_OPENSSL_FULL=ON"
+  default = false
+  fetch = "scripts/fetch-openssl.sh"
+  [[extension.setting]]
+  key = "no_load_config"
+  description = "Full build only: skip loading openssl.cnf at startup instead of reading one shipped with the source. Off by default. See docs/openssl.md for when to turn it on."
+  flag = "PHP_EXT_OPENSSL_NO_LOAD_CONFIG=ON"
+  default = false
+
+[[extension]]
 key = "sqlite"
 description = "PDO with the SQLite driver (ext/pdo + ext/pdo_sqlite, built together)."
 required_for = []

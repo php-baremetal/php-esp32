@@ -1,0 +1,12 @@
+# Minimal OpenSSL config for php-esp32's full openssl build. The firmware sets OPENSSL_CONF to
+# this file (shipped alongside index.php); OpenSSL 3.0 reads it to bring up the default provider.
+openssl_conf = openssl_init
+
+[openssl_init]
+providers = provider_sect
+
+[provider_sect]
+default = default_sect
+
+[default_sect]
+activate = 1

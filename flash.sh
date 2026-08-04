@@ -60,12 +60,14 @@ OPTIONAL_EXTS=(
     "ctype|ext/ctype: character-class checks (ctype_*)|"
     "mbstring|ext/mbstring: multibyte strings (mb_*), no mb_ereg|"
     "filter|ext/filter: filter_var() validation and sanitization|"
+    "openssl|ext/openssl: openssl_* (mbedTLS subset by default; symmetric AES)|"
     "sqlite|PDO + SQLite: read/write .db files on the microSD|scripts/fetch-sqlite.sh"
 )
 
 EXT_ARGS=()
 DATE_ON=0
 MBSTRING_ON=0
+OPENSSL_ON=0
 echo "Optional PHP extensions (off by default):"
 for entry in "${OPTIONAL_EXTS[@]}"; do
     IFS='|' read -r key desc fetch <<< "${entry}"
@@ -80,6 +82,7 @@ for entry in "${OPTIONAL_EXTS[@]}"; do
             EXT_ARGS+=("-DPHP_EXT_${key_upper}=ON")
             [ "${key}" = "date" ] && DATE_ON=1
             [ "${key}" = "mbstring" ] && MBSTRING_ON=1
+            [ "${key}" = "openssl" ] && OPENSSL_ON=1
             ;;
         *)
             EXT_ARGS+=("-DPHP_EXT_${key_upper}=OFF")
@@ -103,6 +106,19 @@ if [ "${MBSTRING_ON}" = "1" ]; then
 fi
 EXT_ARGS+=("-DPHP_EXT_MBSTRING_NO_CJK=${MBSTRING_NO_CJK}")
 EXT_ARGS+=("-DPHP_EXT_MBSTRING_ONIG=${MBSTRING_ONIG}")
+
+# Sub-option of ext/openssl: the real ext/openssl on a ported OpenSSL instead of the subset.
+OPENSSL_FULL=OFF
+if [ "${OPENSSL_ON}" = "1" ]; then
+    read -r -p "    openssl: build the FULL real ext/openssl (ported OpenSSL, ~2 MB) instead of the mbedTLS subset? [y/N] " ans
+    case "${ans}" in
+        y|Y|s|S)
+            "${REPO_ROOT}/scripts/fetch-openssl.sh"   # download + cross-compile libcrypto (slow, one-time)
+            OPENSSL_FULL=ON
+            ;;
+    esac
+fi
+EXT_ARGS+=("-DPHP_EXT_OPENSSL_FULL=${OPENSSL_FULL}")
 
 # Sub-option of ext/date: ship only UTC instead of the full ~350 KB timezone database.
 MINIMAL_TZ=OFF

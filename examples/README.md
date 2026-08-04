@@ -52,6 +52,8 @@ ones (the page in a browser).
 | [`mbstring-no-cjk/`](mbstring-no-cjk/) | The same, with the CJK encodings dropped (~755 KB smaller mbstring). | `mbstring` + `no_cjk` |
 | [`mbstring-regex/`](mbstring-regex/) | `mb_ereg*` / `mb_split` with Unicode patterns, on the real Oniguruma engine. | `mbstring` + `onig` |
 | [`filter-demo/`](filter-demo/) | `filter_var()` validation and sanitization (email, int, URL, IP…). | `filter` extension |
+| [`openssl-compat/`](openssl-compat/) | AES encryption via the mbedTLS-backed `openssl` subset (symmetric only, ~42 KB). | `openssl` extension |
+| [`openssl-full/`](openssl-full/) | Real OpenSSL: RSA sign/verify, encrypt, full digests (public-key crypto, ~2 MB). | `openssl` + `full` |
 | [`eloquent-demo/`](eloquent-demo/) | Laravel's Eloquent ORM (standalone, no framework) on a SQLite database on the microSD — mbstring **without** oniguruma (`mb_split` polyfilled). | "everything" firmware + `vendor/` |
 | [`eloquent-onig/`](eloquent-onig/) | The same Eloquent demo, on a firmware with mbstring built **with** oniguruma (native `mb_split`, no polyfill). | "everything" firmware + `onig` + `vendor/` |
 | [`web-server-init-loop/`](web-server-init-loop/) | Serves a web page over Ethernet, with the whole HTTP server written in PHP (`setup()`/`loop()`). | `esp32-p4-eth` board + network |
@@ -80,6 +82,8 @@ The `[extensions.*]` block in each config:
 - [`mbstring-no-cjk`](mbstring-no-cjk/) — `[extensions.mbstring]` with `no_cjk = true`
 - [`mbstring-regex`](mbstring-regex/) — `[extensions.mbstring]` with `onig = true`
 - [`filter-demo`](filter-demo/) — `[extensions.filter]`
+- [`openssl-compat`](openssl-compat/) — `[extensions.openssl]` (mbedTLS subset)
+- [`openssl-full`](openssl-full/) — `[extensions.openssl]` with `full = true` (real OpenSSL, ~2 MB)
 
 If an extension pulls in a library (sqlite's amalgamation, mbstring's oniguruma), `phpflash
 build` runs the fetch step for you the first time.

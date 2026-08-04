@@ -315,14 +315,34 @@ static void php_task(void *arg)
 
     /* Run the embedded source if it's there, otherwise the one on the card. */
     const char *script = NULL;
+    const char *src_dir = NULL;   /* the mount that source lives on (for OPENSSL_CONF below) */
     if (have_app && access(APP_SCRIPT, R_OK) == 0) {
         script = APP_SCRIPT;
+        src_dir = APP_MOUNT_POINT;
     }
 #ifdef PHP_STORAGE_MICROSD
     else if (have_sd && access(SD_SCRIPT, R_OK) == 0) {
         script = SD_SCRIPT;
+        src_dir = SD_MOUNT_POINT;
     }
 #endif
+
+    /* The full openssl build needs an openssl.cnf; point it at one shipped with the source
+     * (see docs/openssl.md). The path is PHP_OPENSSL_CONF (set from the project config's
+     * [extensions.openssl] config_path, default "openssl.cnf"): an absolute path is used as-is,
+     * a relative one is resolved against the source mount. Harmless when openssl isn't built or
+     * the file isn't there. */
+#ifndef PHP_OPENSSL_CONF
+#define PHP_OPENSSL_CONF "openssl.cnf"
+#endif
+    if (src_dir) {
+        static char ossl_conf[128];
+        if (PHP_OPENSSL_CONF[0] == '/')
+            snprintf(ossl_conf, sizeof ossl_conf, "%s", PHP_OPENSSL_CONF);
+        else
+            snprintf(ossl_conf, sizeof ossl_conf, "%s/%s", src_dir, PHP_OPENSSL_CONF);
+        setenv("OPENSSL_CONF", ossl_conf, 1);
+    }
 
     php_embed_module.ub_write = esp_ub_write;
 

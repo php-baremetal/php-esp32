@@ -244,3 +244,30 @@ if(PHP_EXT_MBSTRING)
             COMPILE_DEFINITIONS "ONIG_ESCAPE_UCHAR_COLLISION=1")
     endif()
 endif()
+
+# --- openssl (optional) -------------------------------------------------------
+# The `openssl` extension comes in two flavours; a project picks one:
+#   PHP_EXT_OPENSSL             a small mbedTLS-backed *compatible subset* (symmetric AES only:
+#                              openssl_encrypt/decrypt, iv_length, random_pseudo_bytes). No RSA/
+#                              X.509/TLS. Enough for e.g. Laravel's Encrypter. Adds ~tens of KB.
+#   + PHP_EXT_OPENSSL_FULL      instead build the *real* ext/openssl against a ported OpenSSL
+#                              library -- the full API, but large (~MBs). See docs/openssl.md.
+# Both register the same `openssl` module, so exactly one is compiled.
+option(PHP_EXT_OPENSSL "Build the openssl extension (mbedTLS-backed compatible subset by default)" OFF)
+option(PHP_EXT_OPENSSL_FULL "With PHP_EXT_OPENSSL: build the real ext/openssl on a ported OpenSSL (full API, large)" OFF)
+# Full only: skip loading openssl.cnf at startup (OPENSSL_INIT_NO_LOAD_CONFIG) instead of reading
+# one via OPENSSL_CONF. Off by default -- see docs/openssl.md for when to turn it on.
+option(PHP_EXT_OPENSSL_NO_LOAD_CONFIG "With PHP_EXT_OPENSSL_FULL: don't load openssl.cnf (skip config)" OFF)
+if(PHP_EXT_OPENSSL)
+    if(PHP_EXT_OPENSSL_FULL)
+        include("${PHP_COMPONENT_DIR}/${PHP_VER_DIR}/openssl-full.cmake")
+        if(PHP_EXT_OPENSSL_NO_LOAD_CONFIG)
+            target_compile_definitions(${COMPONENT_LIB} PRIVATE PHP_EXT_OPENSSL_NO_LOAD_CONFIG)
+        endif()
+    else()
+        # Compatible subset: our hand-written extension on ESP-IDF's mbedTLS + hardware RNG.
+        target_sources(${COMPONENT_LIB} PRIVATE "${PHP_COMPONENT_DIR}/compat/openssl_compat.c")
+        target_link_libraries(${COMPONENT_LIB} PRIVATE idf::mbedtls idf::esp_hw_support)
+    endif()
+    target_compile_definitions(${COMPONENT_LIB} PRIVATE PHP_EXT_OPENSSL_ENABLED)
+endif()

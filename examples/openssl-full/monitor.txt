@@ -1,0 +1,88 @@
+I (25) boot: ESP-IDF v5.5.5 2nd stage bootloader
+I (26) boot: Multicore bootloader
+I (27) boot: chip revision: v1.3
+I (29) boot: efuse block revision: v0.3
+I (32) boot.esp32p4: SPI Speed      : 80MHz
+I (36) boot.esp32p4: SPI Mode       : DIO
+I (40) boot.esp32p4: SPI Flash Size : 32MB
+I (44) boot: Enabling RNG early entropy source...
+I (48) boot: Partition Table:
+I (51) boot: ## Label            Usage          Type ST Offset   Length
+I (57) boot:  0 nvs              WiFi data        01 02 00009000 00006000
+I (64) boot:  1 phy_init         RF data          01 01 0000f000 00001000
+I (70) boot:  2 factory          factory app      00 00 00010000 00c00000
+I (84) boot: End of partition table
+I (87) esp_image: segment 0: paddr=00010020 vaddr=403c0020 size=13b5c0h (1291712) map
+I (309) esp_image: segment 1: paddr=0014b5e8 vaddr=30100000 size=0007ch (   124) load
+I (311) esp_image: segment 2: paddr=0014b66c vaddr=4ff00000 size=049ach ( 18860) load
+I (318) esp_image: segment 3: paddr=00150020 vaddr=40000020 size=3b63fch (3892220) map
+I (966) esp_image: segment 4: paddr=00506424 vaddr=4ff049ac size=0d5a4h ( 54692) load
+I (978) esp_image: segment 5: paddr=005139d0 vaddr=4ff11f80 size=048ech ( 18668) load
+I (988) boot: Loaded app from partition at offset 0x10000
+I (988) boot: Disabling RNG early entropy source...
+I (1000) hex_psram: vendor id    : 0x0d (AP)
+I (1000) hex_psram: Latency      : 0x01 (Fixed)
+I (1000) hex_psram: DriveStr.    : 0x00 (25 Ohm)
+I (1001) hex_psram: dev id       : 0x03 (generation 4)
+I (1006) hex_psram: density      : 0x07 (256 Mbit)
+I (1011) hex_psram: good-die     : 0x06 (Pass)
+I (1015) hex_psram: SRF          : 0x02 (Slow Refresh)
+I (1020) hex_psram: BurstType    : 0x00 ( Wrap)
+I (1024) hex_psram: BurstLen     : 0x03 (2048 Byte)
+I (1028) hex_psram: BitMode      : 0x01 (X16 Mode)
+I (1033) hex_psram: Readlatency  : 0x04 (14 cycles@Fixed)
+I (1038) hex_psram: DriveStrength: 0x00 (1/1)
+I (1042) MSPI Timing: Enter psram timing tuning
+I (1220) esp_psram: Found 32MB PSRAM device
+I (1220) esp_psram: Speed: 200MHz
+I (1221) hex_psram: psram CS IO is dedicated
+I (1221) cpu_start: Multicore app
+I (2172) esp_psram: SPI SRAM memory test OK
+I (2182) cpu_start: GPIO 38 and 37 are used as console UART I/O pins
+I (2182) cpu_start: Pro cpu start user code
+I (2182) cpu_start: cpu freq: 360000000 Hz
+I (2184) app_init: Application information:
+I (2188) app_init: Project name:     php-esp32
+I (2197) app_init: Compile time:     Aug  3 2026 23:23:19
+I (2207) app_init: ESP-IDF:          v5.5.5
+I (2210) efuse_init: Min chip rev:     v1.0
+I (2214) efuse_init: Max chip rev:     v1.99 
+I (2218) efuse_init: Chip rev:         v1.3
+I (2222) heap_init: Initializing. RAM available for dynamic allocation:
+I (2229) heap_init: At 4FF29300 len 00011CC0 (71 KiB): RETENT_RAM
+I (2234) heap_init: At 4FF3AFC0 len 00004BF0 (18 KiB): RAM
+I (2240) heap_init: At 4FF46C00 len 00059400 (357 KiB): RAM
+I (2245) heap_init: At 50108080 len 00007F80 (31 KiB): RTCRAM
+I (2250) heap_init: At 3010007C len 00001F84 (7 KiB): SPM
+I (2256) esp_psram: Adding pool of 32768K of PSRAM memory to heap allocator
+I (2263) spi_flash: detected chip: gd
+I (2266) spi_flash: flash io: dio
+I (2321) sleep_gpio: Configure to isolate all GPIO pins in sleep state
+I (2321) sleep_gpio: Enable automatic switching of GPIO sleep configuration
+I (2323) main_task: Started on CPU0
+I (2323) esp_psram: Reserving pool of 32K of internal memory for DMA/internal allocations
+I (2333) main_task: Calling app_main()
+I (2333) php-esp32: starting PHP runtime
+W (2343) ldo: The voltage value 0 is out of the recommended range [500, 2700]
+I (2353) main_task: Returned from app_main()
+I (2383) php-esp32: microSD mounted at /sdcard
+I (2383) php-esp32: embedded source mounted at /app
+I (2393) php-esp32: php_embed_init()...
+PHP 8.3.32 on ESP32-P4
+--- /sdcard/index.php ---
+digests (real OpenSSL EVP -- more than the subset offers):
+  sha256('abc')    = ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad
+  sha3-256('abc')  = 3a985da74fe225b2045c172d6bd390bd855f086e3e9d525b46bfe24511431532
+  ripemd160('abc') = 8eb208f7e05d987a9b044a8e98c6b087f15a0bfc
+
+loaded an RSA 2048-bit key
+
+RSA-SHA256 sign/verify: valid (256-byte signature)
+RSA public-encrypt / private-decrypt: OK
+
+AES-256-CBC roundtrip: OK
+
+generated a fresh RSA 2048-bit key on-chip in 42265 ms
+sign/verify with the new key: valid
+--- end ---
+I (45574) php-esp32: done -- heap free: 33761895 bytes

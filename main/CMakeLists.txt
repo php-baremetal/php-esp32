@@ -45,3 +45,13 @@ endif()
 if(_microsd)
     target_compile_definitions(${COMPONENT_LIB} PRIVATE PHP_STORAGE_MICROSD=1)
 endif()
+
+# Path of the openssl.cnf the full openssl build reads (see docs/openssl.md). flash-tool passes
+# -DPHP_OPENSSL_CONF from [extensions.openssl] config_path; main.c falls back to "openssl.cnf".
+set(_ossl_conf "${PHP_OPENSSL_CONF}")
+if(NOT _ossl_conf AND NOT "$ENV{PHP_OPENSSL_CONF}" STREQUAL "")
+    set(_ossl_conf "$ENV{PHP_OPENSSL_CONF}")
+endif()
+if(_ossl_conf)
+    target_compile_definitions(${COMPONENT_LIB} PRIVATE "PHP_OPENSSL_CONF=\"${_ossl_conf}\"")
+endif()

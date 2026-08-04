@@ -40,6 +40,8 @@ baseline (all optional extensions off, ~3.08 MB).
 | PDO + SQLite | **~560 KB** | of that, ~530 KB is the SQLite library itself, ~60 KB `ext/pdo`, ~9 KB `ext/pdo_sqlite`. |
 | `ext/ctype` | **~2.5 KB** | tiny: one source file, no data tables. |
 | `ext/filter` | **~27 KB** | `filter_var()` validation/sanitization. |
+| `openssl` (subset) | **~42 KB** | the mbedTLS-backed `openssl` subset: symmetric AES (`openssl_encrypt`/`decrypt`, ...). |
+| `openssl` (full) | **~2.1 MB** | the real ext/openssl on a ported OpenSSL 3.0 libcrypto: RSA/EC/X.509/EVP. Replaces the subset. See [`docs/openssl.md`](openssl.md). |
 | `ext/mbstring` | **~965 KB** | the heavy one. Bundled libmbfl, most of it the CJK conversion tables. Built without `mb_ereg*` (no oniguruma). |
 | `ext/mbstring` (no CJK) | **~209 KB** | the same, with `PHP_EXT_MBSTRING_NO_CJK`: drops the legacy CJK codecs (Shift-JIS, EUC-*, Big5, GB18030, `mb_convert_kana`), ~755 KB smaller. UTF-8/UTF-16/Latin unaffected. |
 | `ext/mbstring` + `mb_ereg*` | **+~445 KB** | on top of mbstring, with `PHP_EXT_MBSTRING_ONIG`: the `mb_ereg*`/`mb_split` multibyte-regex family, which bundles the oniguruma library. About ~1.38 MB together with full mbstring. |

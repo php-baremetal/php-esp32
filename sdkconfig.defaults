@@ -16,3 +16,10 @@ CONFIG_PARTITION_TABLE_CUSTOM=y
 # vendor/ tree fails. LFN_HEAP keeps the name buffer on the heap (PSRAM here).
 CONFIG_FATFS_LFN_HEAP=y
 CONFIG_FATFS_MAX_LFN=255
+
+# A PHP script can legitimately run CPU-bound for tens of seconds (on-chip RSA-2048 key
+# generation measured ~20-45 s here, and it's probabilistic so it varies), which starves the idle
+# task and trips the task watchdog's default 5 s. Widen it generously so heavy compute doesn't
+# spew watchdog dumps. It never panics (CONFIG_ESP_TASK_WDT_PANIC off), so this only affects the
+# warning threshold, not a real hang guard.
+CONFIG_ESP_TASK_WDT_TIMEOUT_S=60
