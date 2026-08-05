@@ -1,0 +1,81 @@
+ESP-IDF v5.5.5 2nd stage bootloader
+I (26) boot: compile time Aug  4 2026 21:37:02
+I (26) boot: Multicore bootloader
+I (27) boot: chip revision: v1.3
+I (29) boot: efuse block revision: v0.3
+I (32) boot.esp32p4: SPI Speed      : 80MHz
+I (36) boot.esp32p4: SPI Mode       : DIO
+I (40) boot.esp32p4: SPI Flash Size : 32MB
+I (44) boot: Enabling RNG early entropy source...
+I (48) boot: Partition Table:
+I (51) boot: ## Label            Usage          Type ST Offset   Length
+I (57) boot:  0 nvs              WiFi data        01 02 00009000 00006000
+I (64) boot:  1 phy_init         RF data          01 01 0000f000 00001000
+I (70) boot:  2 factory          factory app      00 00 00010000 00c00000
+I (77) boot:  3 storage          Unknown data     01 81 00c10000 00800000
+I (84) boot: End of partition table
+I (87) esp_image: segment 0: paddr=00010020 vaddr=40240020 size=c3b04h (801540) map
+I (228) esp_image: segment 1: paddr=000d3b2c vaddr=30100000 size=00098h (   152) load
+I (230) esp_image: segment 2: paddr=000d3bcc vaddr=4ff00000 size=0c44ch ( 50252) load
+I (243) esp_image: segment 3: paddr=000e0020 vaddr=40000020 size=23ca88h (2345608) map
+I (632) esp_image: segment 4: paddr=0031cab0 vaddr=4ff0c44c size=061d4h ( 25044) load
+I (639) esp_image: segment 5: paddr=00322c8c vaddr=4ff12680 size=03cach ( 15532) load
+I (648) boot: Loaded app from partition at offset 0x10000
+I (648) boot: Disabling RNG early entropy source...
+I (660) hex_psram: vendor id    : 0x0d (AP)
+I (660) hex_psram: Latency      : 0x01 (Fixed)
+I (660) hex_psram: DriveStr.    : 0x00 (25 Ohm)
+I (661) hex_psram: dev id       : 0x03 (generation 4)
+I (666) hex_psram: density      : 0x07 (256 Mbit)
+I (670) hex_psram: good-die     : 0x06 (Pass)
+I (674) hex_psram: SRF          : 0x02 (Slow Refresh)
+I (679) hex_psram: BurstType    : 0x00 ( Wrap)
+I (683) hex_psram: BurstLen     : 0x03 (2048 Byte)
+I (688) hex_psram: BitMode      : 0x01 (X16 Mode)
+I (692) hex_psram: Readlatency  : 0x04 (14 cycles@Fixed)
+I (697) hex_psram: DriveStrength: 0x00 (1/1)
+I (701) MSPI Timing: Enter psram timing tuning
+I (879) esp_psram: Found 32MB PSRAM device
+I (879) esp_psram: Speed: 200MHz
+I (880) hex_psram: psram CS IO is dedicated
+I (880) cpu_start: Multicore app
+I (1831) esp_psram: SPI SRAM memory test OK
+I (1841) cpu_start: GPIO 38 and 37 are used as console UART I/O pins
+I (1841) cpu_start: Pro cpu start user code
+I (1841) cpu_start: cpu freq: 360000000 Hz
+I (1843) app_init: Application information:
+I (1847) app_init: Project name:     php-esp32
+I (1851) app_init: App version:      be1d3d1-dirty
+I (1856) app_init: Compile time:     Aug  4 2026 21:36:37
+I (1861) app_init: ELF file SHA256:  1a414d3c1...
+I (1865) app_init: ESP-IDF:          v5.5.5
+I (1869) efuse_init: Min chip rev:     v1.0
+I (1873) efuse_init: Max chip rev:     v1.99 
+I (1877) efuse_init: Chip rev:         v1.3
+I (1881) heap_init: Initializing. RAM available for dynamic allocation:
+I (1888) heap_init: At 4FF28A60 len 00012560 (73 KiB): RETENT_RAM
+I (1893) heap_init: At 4FF3AFC0 len 00004BF0 (18 KiB): RAM
+I (1899) heap_init: At 4FF45A20 len 0005A5E0 (361 KiB): RAM
+I (1904) heap_init: At 50108080 len 00007F80 (31 KiB): RTCRAM
+I (1909) heap_init: At 30100098 len 00001F68 (7 KiB): SPM
+I (1915) esp_psram: Adding pool of 32768K of PSRAM memory to heap allocator
+I (1922) spi_flash: detected chip: gd
+I (1925) spi_flash: flash io: dio
+I (1928) sleep_gpio: Configure to isolate all GPIO pins in sleep state
+I (1934) sleep_gpio: Enable automatic switching of GPIO sleep configuration
+I (1941) main_task: Started on CPU0
+I (1961) esp_psram: Reserving pool of 32K of internal memory for DMA/internal allocations
+I (1961) main_task: Calling app_main()
+I (1961) php-esp32: starting PHP runtime
+W (1971) ldo: The voltage value 0 is out of the recommended range [500, 2700]
+I (1981) main_task: Returned from app_main()
+I (2011) php-esp32: microSD mounted at /sdcard
+I (2011) php-esp32: embedded source mounted at /app
+I (6161) php-esp32: php_embed_init()...
+PHP 8.3.32 on ESP32-P4
+--- /app/index.php ---
+session 'demo': visit #8 (persisted to /sdcard/sessions)
+read back -> visits=8, note="hello from PHP on ESP32"
+session file: present on the card
+(reset the board and the visit count keeps climbing -- it lives on the card)
+--- end ---

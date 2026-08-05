@@ -36,8 +36,10 @@ echo "<p>fresh random number: " . random_int(1000, 9999) . "</p>";
 
 The firmware runs it once per HTTP request. Because each request is a clean PHP run
 (shared-nothing), there's no state to carry between them — the random number is there to show
-each hit really executes again. The firmware fills a minimal `$_SERVER` (`REQUEST_METHOD`,
-`REQUEST_URI`, `SERVER_SOFTWARE`) before running the script.
+each hit really executes again. The firmware builds a full CGI-style request environment before
+running the script: `$_SERVER` (method, request-URI, query string, `Host`, headers, peer address),
+`$_GET`, `$_POST` / `php://input`, and `$_COOKIE`; the status, headers and cookies the script sets
+become the HTTP response.
 
 ## How it works
 
@@ -46,9 +48,12 @@ The `web-server` project type is a firmware execution model, selected at build t
 the default run-script + `setup()`/`loop()` model, `main.c`:
 
 1. brings the network up (via the board) and starts `esp_http_server` on port 80;
-2. for each request, runs one PHP request cycle (`php_request_startup()` → run `index.php` →
-   `php_request_shutdown()`), capturing the script's output;
-3. sends that output as the HTTP response body.
+2. for a `GET`/`HEAD` of an existing file next to the entry script (a `public/` static asset —
+   `robots.txt`, images, css/js), serves that file directly with a by-extension `Content-Type`, no
+   PHP;
+3. otherwise parses the request (method, URI, headers, cookies, body) into a CGI-style environment,
+   runs one PHP request cycle (`php_request_startup()` → run `index.php` → `php_request_shutdown()`),
+   and sends the status, headers and cookies the script set, with its output as the response body.
 
 So the HTTP server, connection handling and request parsing are C (robust, one request at a
 time by default), and only the page itself is PHP — exactly the split you get with a web server

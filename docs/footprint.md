@@ -40,6 +40,8 @@ baseline (all optional extensions off, ~3.08 MB).
 | PDO + SQLite | **~560 KB** | of that, ~530 KB is the SQLite library itself, ~60 KB `ext/pdo`, ~9 KB `ext/pdo_sqlite`. |
 | `ext/ctype` | **~2.5 KB** | tiny: one source file, no data tables. |
 | `ext/filter` | **~27 KB** | `filter_var()` validation/sanitization. |
+| `ext/tokenizer` | **~13 KB** | `token_get_all()`/`PhpToken` over the engine's own lexer (no bundled data). |
+| `ext/session` | **~50 KB** | `session_start()`/`$_SESSION` with the files + user save handlers. |
 | `openssl` (subset) | **~42 KB** | the mbedTLS-backed `openssl` subset: symmetric AES (`openssl_encrypt`/`decrypt`, ...). |
 | `openssl` (full) | **~2.1 MB** | the real ext/openssl on a ported OpenSSL 3.0 libcrypto: RSA/EC/X.509/EVP. Replaces the subset. See [`docs/openssl.md`](openssl.md). |
 | `ext/mbstring` | **~965 KB** | the heavy one. Bundled libmbfl, most of it the CJK conversion tables. Built without `mb_ereg*` (no oniguruma). |

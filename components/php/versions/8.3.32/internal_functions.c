@@ -46,6 +46,12 @@ extern zend_module_entry mbstring_module_entry;
 #ifdef PHP_EXT_FILTER_ENABLED
 extern zend_module_entry filter_module_entry;
 #endif
+#ifdef PHP_EXT_TOKENIZER_ENABLED
+extern zend_module_entry tokenizer_module_entry;
+#endif
+#ifdef PHP_EXT_SESSION_ENABLED
+extern zend_module_entry session_module_entry;
+#endif
 /* Optional openssl extension, gated by PHP_EXT_OPENSSL_ENABLED. Same module name whether it's
  * the mbedTLS-backed subset or the real ext/openssl (PHP_EXT_OPENSSL_FULL). */
 #ifdef PHP_EXT_OPENSSL_ENABLED
@@ -79,6 +85,12 @@ static zend_module_entry * const php_builtin_extensions[] = {
 #endif
 #ifdef PHP_EXT_FILTER_ENABLED
 	&filter_module_entry,
+#endif
+#ifdef PHP_EXT_TOKENIZER_ENABLED
+	&tokenizer_module_entry,
+#endif
+#ifdef PHP_EXT_SESSION_ENABLED
+	&session_module_entry,
 #endif
 #ifdef PHP_EXT_OPENSSL_ENABLED
 	&openssl_module_entry,

@@ -23,9 +23,8 @@ The **Roadmap** column says where each one is headed:
 
 - **Done** — ported (every Built-in / Flag / Stub).
 - **Planned** — realistic next ports (self-contained, no external library or missing OS feature),
-  ranked into three tiers by value-add, then complexity and semantic area:
-  - **Planned #1** — the highest-value *framework enablers*: `session` (stateful web apps) and
-    `tokenizer` (frameworks, static analysis). These unlock the most and are portable.
+  ranked by value-add. The top tier — the *framework enablers* `session` and `tokenizer` — is now
+  **Done** (shipped, flag-gated below); the rest, in order:
   - **Planned #2** — self-contained *utilities* with broad value: `bcmath` (arbitrary-precision
     math) and `phar` (bundling an app into a single archive).
   - **Planned #3** — *niche or situational*: `exif` (image metadata — handy with the P4's camera).
@@ -96,7 +95,7 @@ Plus one non-standard extension of ours: **`gpio`** (`gpio_mode`/`gpio_write`/`g
 | `random` | **Built-in** | Done | always on |
 | `readline` | Not available | Not possible | needs libreadline/editline (and there's no interactive TTY) |
 | `reflection` | **Built-in** | Done | always on |
-| `session` | Not available | Planned #1 | portable with a file save-handler — planned (framework enabler: stateful web apps) |
+| `session` | **Flag** | Done | `-DPHP_EXT_SESSION=ON` (~50 KB): `session_start()`/`$_SESSION`, the files save handler (point `session.save_path` at a writable dir like the microSD) and user handlers |
 | `shmop` | Not available | Not possible | no shared memory |
 | `simplexml` | Not available | Not planned | needs libxml2 |
 | `snmp` | Not available | Not planned | needs net-snmp |
@@ -110,7 +109,7 @@ Plus one non-standard extension of ours: **`gpio`** (`gpio_mode`/`gpio_write`/`g
 | `sysvsem` | Not available | Not possible | no System V IPC |
 | `sysvshm` | Not available | Not possible | no System V IPC |
 | `tidy` | Not available | Not planned | needs libtidy |
-| `tokenizer` | Not available | Planned #1 | portable (uses the PHP lexer) — planned (framework enabler: frameworks, static analysis) |
+| `tokenizer` | **Flag** | Done | `-DPHP_EXT_TOKENIZER=ON` (~13 KB): `token_get_all()`, `token_name()`, the `PhpToken` class and the `T_*` constants |
 | `xml` | Not available | Not planned | needs libxml2 |
 | `xmlreader` | Not available | Not planned | needs libxml2 |
 | `xmlwriter` | Not available | Not planned | needs libxml2 |
@@ -130,6 +129,8 @@ extensions, not real features.)
 | `-DPHP_EXT_FILTER=ON` | `ext/filter` | — |
 | `-DPHP_EXT_MBSTRING=ON` | `ext/mbstring` | `-DPHP_EXT_MBSTRING_NO_CJK=ON`, `-DPHP_EXT_MBSTRING_ONIG=ON` |
 | `-DPHP_EXT_OPENSSL=ON` | `ext/openssl` (mbedTLS subset) | `-DPHP_EXT_OPENSSL_FULL=ON` (real OpenSSL 3.0), `-DPHP_EXT_OPENSSL_NO_LOAD_CONFIG=ON`, `-DPHP_EXT_OPENSSL_TLS=ON` (HTTPS client) |
+| `-DPHP_EXT_TOKENIZER=ON` | `ext/tokenizer` | — |
+| `-DPHP_EXT_SESSION=ON` | `ext/session` | — |
 | `-DPHP_EXT_SQLITE=ON` | `ext/pdo` + `ext/pdo_sqlite` | — |
 
 `./flash.sh` asks about each of these interactively and fetches any extra sources on demand.

@@ -1,0 +1,5 @@
+# php-esp32 build artifacts (the Laravel app under project-src/ keeps its own .gitignore,
+# which already ignores vendor/, .env, storage caches, etc.)
+/build/
+/sdkconfig
+/php-esp32.config.local.toml

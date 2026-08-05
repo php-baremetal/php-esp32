@@ -1,5 +1,75 @@
 # Changelog
 
+## [0.9.0] — web-server SAPI; Laravel browsable over HTTP
+
+### Added
+- **A full per-request SAPI for the `web-server` project type.** The HTTP server in front of PHP now
+  turns each request into a complete CGI-style environment and turns the script's response back into
+  real HTTP — enough to drive a framework as a browsable app:
+  - **Request** — method, full request-URI, split query string, `Host`, `Cookie`, `Content-Type`,
+    `User-Agent`, `Accept`, `Referer`, `X-Requested-With`, `Authorization`, and the peer address feed
+    a complete `$_SERVER` (via `register_server_variables`); the `Cookie` header populates `$_COOKIE`
+    (`read_cookies`); the POST body populates `$_POST` / `php://input` (`read_post`).
+  - **Response** — the status code, headers, and cookies the script sets (`Content-Type`, `Location`,
+    `Set-Cookie`, …) are translated into the httpd response (`send_headers`), not a hardcoded
+    `200 text/html`. Every HTTP method is routed to PHP, which does the real routing.
+  - **Static files** — a `GET`/`HEAD` for an existing file under the document root (the entry
+    script's directory, e.g. `public/`) is served straight from the httpd task with a by-extension
+    `Content-Type` and no framework boot — like `try_files $uri /index.php`. On hardware
+    `GET /robots.txt` returns the raw file in ~5 ms, versus ~15–30 s to boot the framework for a
+    route. `.php` files and `..` are never served this way; a missing file falls through to PHP.
+- **Vanilla Laravel 13 runs as a browsable web app on the ESP32-P4**, verified on hardware over HTTP:
+  `GET /` returns `200` with the full welcome page plus Laravel's headers and session cookies
+  (`Set-Cookie: XSRF-TOKEN=…`, `laravel-session=…`), and an unknown route returns Laravel's own
+  `404`. The [`laravel-demo`](examples/laravel-demo/) example now uses `type = "web-server"`.
+- A [`laravel-demo-optimized`](examples/laravel-demo-optimized/) example — the same app tuned to boot
+  faster on the board without opcache: authoritative classmap autoloader (far fewer FATFS lookups),
+  `--no-dev`, and in-memory session/cache + null log drivers (no per-request card I/O). Deliberately
+  skips `config`/`route`/`view` caching, which bakes host-absolute paths and isn't portable from the
+  build PC to the card's `/sdcard`.
+
+## [0.8.0] — Laravel runs; FATFS path fixes
+
+### Added
+- **Vanilla Laravel** (unmodified `laravel/laravel`, Laravel 13) renders its welcome page on the
+  ESP32-P4 — the [`laravel-demo`](examples/laravel-demo/) example. The whole framework runs from the
+  microSD (`vendor/` and all), verified on hardware.
+- **Configurable entry script** — `[php] entry` / `-DPHP_ENTRY` (default `index.php`), so a framework
+  with a nested front controller runs (`public/index.php`). flash-tool passes it via `build.EntryArg`.
+- A **minimal `$_SERVER`** (a `GET /` request) is set for the run-once (init-loop) model, so a
+  framework front controller captures a sane request instead of guessing from empty globals.
+
+### Fixed
+- **FATFS paths with `.` / `..`.** The ESP-IDF FATFS VFS doesn't resolve `.`/`..` path components, so
+  code that builds relative paths — Laravel's `__DIR__."/../../../../config"` — failed `is_dir()`.
+  `main/fs_pathnorm.c` `--wrap`s the file syscalls (`stat`/`lstat`/`open`/`opendir`/`access`/`mkdir`/
+  `unlink`/`rmdir`/`rename`) and normalizes paths before the VFS sees them.
+- **`lstat()` / `realpath()` on FATFS.** FATFS's `lstat` is unimplemented, which made PHP's
+  `realpath()` (it `lstat`s every path component) return `false` for everything — breaking any code
+  that resolves paths. Since FAT has no symlinks, `lstat` is now routed to `stat`.
+
+## [0.7.0] — session and tokenizer extensions
+
+### Added
+- **`ext/tokenizer`** (`-DPHP_EXT_TOKENIZER=ON`, ~13 KB): `token_get_all()`, `token_name()`, the
+  `PhpToken` class and the `T_*` constants, over the engine's own lexer. Self-contained (no bundled
+  data). Verified on hardware — see the [`tokenizer-demo`](examples/tokenizer-demo/) example.
+- **`ext/session`** (`-DPHP_EXT_SESSION=ON`, ~50 KB): `session_start()`, `$_SESSION`, `session_id()`,
+  with the default **files** save handler (point `session.save_path` at a writable dir — the
+  microSD) and the user save handler (`session_set_save_handler`). Sessions persist across reboots
+  on the card. Verified on hardware — see the [`session-demo`](examples/session-demo/) example.
+- Patch `0005-session-files-no-cloexec-warn.patch`: the files handler's `fcntl(F_SETFD, FD_CLOEXEC)`
+  is meaningless on this target (no fork/exec) and the FATFS VFS rejects it with `EINVAL`; the patch
+  attempts it without warning, so `session_start()` stays quiet.
+
+### Changed
+- The firmware prints its boot banners (`PHP … on …`, `--- <script> ---`, `--- end ---`) with plain
+  `printf` instead of `php_printf`, and clears `SG(headers_sent)` before running the script in the
+  init-loop model. The embed SAPI marks headers sent at startup (it's a CLI-like, no-HTTP SAPI),
+  which otherwise makes `session_start()` / `setcookie()` / `header()` and the session ini settings
+  refuse with "headers already sent". Console output is unchanged. (The web-server model keeps the
+  flag — it sends real HTTP headers.)
+
 ## [0.6.0] — TLS client (HTTPS) and static DNS
 
 ### Added

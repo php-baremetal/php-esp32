@@ -120,6 +120,37 @@ if(PHP_EXT_FILTER)
     target_compile_definitions(${COMPONENT_LIB} PRIVATE PHP_EXT_FILTER_ENABLED)
 endif()
 
+# ext/tokenizer: token_get_all() / PhpToken over the Zend lexer (already in the engine).
+# Self-contained -- just its two source files (tokenizer_data.c ships pre-generated).
+# Enable with idf.py -DPHP_EXT_TOKENIZER=ON (or "y" in flash.sh).
+option(PHP_EXT_TOKENIZER "Build the ext/tokenizer extension" OFF)
+if(PHP_EXT_TOKENIZER)
+    target_sources(${COMPONENT_LIB} PRIVATE
+        ${PHP_SRC}/ext/tokenizer/tokenizer.c
+        ${PHP_SRC}/ext/tokenizer/tokenizer_data.c
+    )
+    target_include_directories(${COMPONENT_LIB} PRIVATE ${PHP_SRC}/ext/tokenizer)
+    target_compile_definitions(${COMPONENT_LIB} PRIVATE PHP_EXT_TOKENIZER_ENABLED)
+endif()
+
+# ext/session: session_start()/$_SESSION with the default "files" save handler (writes to a
+# writable dir -- the microSD; set session.save_path from PHP) plus the user save handler
+# (session_set_save_handler). mod_mm.c (shared-memory handler) is HAVE_LIBMM-gated and skipped.
+# Leans on ext/standard (url_scanner, flock_compat -- both always built) and ext/hash.
+# Enable with idf.py -DPHP_EXT_SESSION=ON (or "y" in flash.sh).
+option(PHP_EXT_SESSION "Build the ext/session extension" OFF)
+if(PHP_EXT_SESSION)
+    target_sources(${COMPONENT_LIB} PRIVATE
+        ${PHP_SRC}/ext/session/session.c
+        ${PHP_SRC}/ext/session/mod_files.c
+        ${PHP_SRC}/ext/session/mod_user.c
+        ${PHP_SRC}/ext/session/mod_user_class.c
+    )
+    target_include_directories(${COMPONENT_LIB} PRIVATE ${PHP_SRC}/ext/session)
+    # HAVE_PHP_SESSION is the "session is available" signal other code uses to integrate with it.
+    target_compile_definitions(${COMPONENT_LIB} PRIVATE PHP_EXT_SESSION_ENABLED HAVE_PHP_SESSION)
+endif()
+
 # ext/mbstring: the mb_*() multibyte-string functions plus the bundled libmbfl
 # charset library. Built WITHOUT oniguruma, so the mb_ereg* regex family is left
 # out (php_mbregex.c is not compiled and HAVE_MBREGEX stays undefined) -- the rest

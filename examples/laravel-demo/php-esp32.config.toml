@@ -1,0 +1,45 @@
+name = "laravel-demo"
+storage_type = "microsd"    # the whole Laravel app (incl. vendor/) lives on the card -- copied by you
+type = "web-server"         # HTTP server in front; public/index.php runs per request -> browsable app
+
+[board]
+target = "esp32-p4-eth"
+port   = ""
+
+[esp-idf]
+path    = ""
+version = ""
+
+[php-esp32]
+path    = ""
+version = ""
+
+# Laravel 13's required extensions -- all built into this firmware:
+[extensions.mbstring]
+enabled = true
+onig    = true              # native mb_split (Illuminate's Str needs it; no polyfill in vanilla Laravel)
+
+[extensions.ctype]
+enabled = true
+
+[extensions.filter]
+enabled = true
+
+[extensions.tokenizer]
+enabled = true
+
+[extensions.session]
+enabled = true
+
+[extensions.openssl]
+enabled = true              # subset (AES) -- enough for Laravel's Encrypter / cookie encryption
+
+[extensions.sqlite]
+enabled = true              # the default DB + database session/cache drivers
+
+[extensions.date]
+enabled = true              # Carbon timestamps
+
+[php]
+src   = "project-src"       # the Laravel app root (public/, app/, vendor/, ...)
+entry = "public/index.php"  # Laravel's front controller

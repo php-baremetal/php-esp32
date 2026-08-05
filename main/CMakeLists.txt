@@ -32,12 +32,18 @@ if("$ENV{PHP_ESP32_MICROSD}" STREQUAL "OFF")
 endif()
 
 idf_component_register(
-    SRCS "main.c" ${BOARD_SRCS}
+    SRCS "main.c" "fs_pathnorm.c" ${BOARD_SRCS}
     INCLUDE_DIRS "." ${BOARD_INCLUDE_DIRS}
     # esp_partition/fatfs/vfs: main.c mounts the optional read-only embedded source
     # partition itself (board-agnostic); the board adds its own storage drivers too.
     REQUIRES php php_ext_gpio esp_partition fatfs vfs ${WEB_SERVER_REQUIRES} ${BOARD_REQUIRES}
 )
+
+# fs_pathnorm.c: --wrap the file syscalls so "." / ".." in paths are collapsed before the FATFS VFS
+# (which can't resolve them). Global link options so the wrap applies to every caller (PHP included).
+foreach(_fn stat lstat open opendir access mkdir unlink rmdir rename)
+    idf_build_set_property(LINK_OPTIONS "-Wl,--wrap=${_fn}" APPEND)
+endforeach()
 
 if(_web_server)
     target_compile_definitions(${COMPONENT_LIB} PRIVATE PHP_PROJECT_WEB_SERVER=1)
@@ -74,4 +80,14 @@ if(NOT _tls_ca AND NOT "$ENV{PHP_TLS_CAFILE}" STREQUAL "")
 endif()
 if(_tls_ca)
     target_compile_definitions(${COMPONENT_LIB} PRIVATE "PHP_TLS_CAFILE=\"${_tls_ca}\"")
+endif()
+
+# Entry script within the source ([php] entry, default index.php), passed by flash-tool as
+# -DPHP_ENTRY. Lets a framework with a nested front controller run (Laravel: public/index.php).
+set(_php_entry "${PHP_ENTRY}")
+if(NOT _php_entry AND NOT "$ENV{PHP_ENTRY}" STREQUAL "")
+    set(_php_entry "$ENV{PHP_ENTRY}")
+endif()
+if(_php_entry)
+    target_compile_definitions(${COMPONENT_LIB} PRIVATE "PHP_ENTRY=\"${_php_entry}\"")
 endif()

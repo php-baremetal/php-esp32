@@ -428,3 +428,26 @@ touches worth recording:
   it). With no bundle the client connects but doesn't verify (and logs it). Static DNS servers
   (`[network] dns`) are applied to the netif after DHCP via `-DPHP_NET_DNS` (comma-separated — a
   semicolon would be split by CMake's list syntax). See the `https-client` example.
+
+## FATFS path resolution: `.`/`..` and `lstat` (running frameworks)
+
+Real frameworks lean on POSIX filesystem semantics the ESP-IDF FATFS VFS doesn't fully provide. Two
+gaps surfaced running unmodified Laravel (`examples/laravel-demo/`), fixed once and for all in
+`main/fs_pathnorm.c` — general fixes, not Laravel-specific.
+
+- **`.` and `..` aren't resolved.** FatFs takes the path verbatim, so `stat("/a/b/../c")` fails even
+  when `/a/c` exists. Frameworks build such paths constantly (Laravel's config loader uses
+  `__DIR__."/../../../../config"`). `fs_pathnorm.c` provides linker `--wrap` shims around the file
+  syscalls (`stat`, `lstat`, `open`, `opendir`, `access`, `mkdir`, `unlink`, `rmdir`, `rename`) that
+  collapse `.`/`..`/`//` lexically before the VFS sees the path. Clean paths pass straight through.
+  The `-Wl,--wrap=…` options are added globally (`idf_build_set_property(LINK_OPTIONS …)`), so every
+  caller — PHP included — is covered.
+- **`lstat` is unimplemented.** The FATFS VFS has `stat` but its `lstat` fails, and PHP's own
+  `realpath()` (`tsrm_realpath`) `lstat`s every path component — so `realpath()` returned `false` for
+  *everything*, and Symfony's `SplFileInfo::getRealPath()` (→ `realpath()`) went empty, ending in
+  `require("")` → `ValueError`. FAT has no symlinks, so `lstat` ≡ `stat`; the `lstat` wrap routes to
+  `stat`, and `realpath()` works.
+
+A dead end worth recording: PHP's own virtual-cwd (`VIRTUAL_DIR`) *would* normalize `.`/`..`, but it
+depends on a working `getcwd()`/cwd this target lacks — enabling it made `stat()` fail for every
+path (even the running script). Don't enable `VIRTUAL_DIR`; normalize at the syscall layer instead.

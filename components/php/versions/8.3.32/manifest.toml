@@ -157,6 +157,20 @@ flag = "PHP_EXT_FILTER=ON"
 flash_cost = "~27 KB"
 
 [[extension]]
+key = "tokenizer"
+description = "The PHP tokenizer: token_get_all(), token_name(), the PhpToken class and the T_* constants, over the engine's own lexer. Wanted by frameworks and static-analysis tools."
+required_for = []
+flag = "PHP_EXT_TOKENIZER=ON"
+flash_cost = "~13 KB"
+
+[[extension]]
+key = "session"
+description = "Sessions: session_start(), $_SESSION, session_id(), and save handlers -- the files handler (point session.save_path at a writable dir like the microSD) and user handlers (session_set_save_handler)."
+required_for = []
+flag = "PHP_EXT_SESSION=ON"
+flash_cost = "~50 KB"
+
+[[extension]]
 key = "mbstring"
 description = "Multibyte strings (mb_strlen/substr/convert/detect/...). Built without mb_ereg unless the onig setting is on."
 required_for = []

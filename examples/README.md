@@ -52,11 +52,15 @@ ones (the page in a browser).
 | [`mbstring-no-cjk/`](mbstring-no-cjk/) | The same, with the CJK encodings dropped (~755 KB smaller mbstring). | `mbstring` + `no_cjk` |
 | [`mbstring-regex/`](mbstring-regex/) | `mb_ereg*` / `mb_split` with Unicode patterns, on the real Oniguruma engine. | `mbstring` + `onig` |
 | [`filter-demo/`](filter-demo/) | `filter_var()` validation and sanitization (email, int, URL, IP…). | `filter` extension |
+| [`tokenizer-demo/`](tokenizer-demo/) | `token_get_all()` / `PhpToken` breaking PHP source into tokens with the engine's lexer. | `tokenizer` extension |
+| [`session-demo/`](session-demo/) | `session_start()` / `$_SESSION` persisting to the microSD, surviving reboots. | `session` extension + a microSD |
 | [`openssl-compat/`](openssl-compat/) | AES encryption via the mbedTLS-backed `openssl` subset (symmetric only, ~42 KB). | `openssl` extension |
 | [`openssl-full/`](openssl-full/) | Real OpenSSL: RSA sign/verify, encrypt, full digests, on-chip key generation (public-key crypto, ~2 MB). | `openssl` + `full` |
 | [`https-client/`](https-client/) | A certificate-verified HTTPS GET from PHP (`file_get_contents('https://…')`) over the esp-tls TLS client. | `esp32-p4-eth` board + network, `openssl` + `full` + `tls` |
 | [`eloquent-demo/`](eloquent-demo/) | Laravel's Eloquent ORM (standalone, no framework) on a SQLite database on the microSD — mbstring **without** oniguruma (`mb_split` polyfilled). | "everything" firmware + `vendor/` |
 | [`eloquent-onig/`](eloquent-onig/) | The same Eloquent demo, on a firmware with mbstring built **with** oniguruma (native `mb_split`, no polyfill). | "everything" firmware + `onig` + `vendor/` |
+| [`laravel-demo/`](laravel-demo/) | **Vanilla Laravel** (unmodified `laravel/laravel`) on the microSD, browsable over HTTP via the **`web-server`** mode — real routing, sessions, and static files from `public/`. | `esp32-p4-eth` board + network, Laravel's ext stack (session, tokenizer, mbstring+onig, openssl, sqlite, …) + a big microSD |
+| [`laravel-demo-optimized/`](laravel-demo-optimized/) | The same Laravel app tuned to boot faster on the board — authoritative autoloader, no dev deps, no-I/O session/cache/log drivers. Same firmware as `laravel-demo`. | as `laravel-demo` |
 | [`web-server-init-loop/`](web-server-init-loop/) | Serves a web page over Ethernet, with the whole HTTP server written in PHP (`setup()`/`loop()`). | `esp32-p4-eth` board + network |
 | [`web-server/`](web-server/) | The same page, using the firmware's **`web-server`** project type: a C HTTP server in front, PHP run fresh per request (like behind Apache). | `esp32-p4-eth` board + network |
 
@@ -83,6 +87,8 @@ The `[extensions.*]` block in each config:
 - [`mbstring-no-cjk`](mbstring-no-cjk/) — `[extensions.mbstring]` with `no_cjk = true`
 - [`mbstring-regex`](mbstring-regex/) — `[extensions.mbstring]` with `onig = true`
 - [`filter-demo`](filter-demo/) — `[extensions.filter]`
+- [`tokenizer-demo`](tokenizer-demo/) — `[extensions.tokenizer]`
+- [`session-demo`](session-demo/) — `[extensions.session]`
 - [`openssl-compat`](openssl-compat/) — `[extensions.openssl]` (mbedTLS subset)
 - [`openssl-full`](openssl-full/) — `[extensions.openssl]` with `full = true` (real OpenSSL, ~2 MB)
 

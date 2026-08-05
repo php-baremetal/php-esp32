@@ -60,6 +60,8 @@ OPTIONAL_EXTS=(
     "ctype|ext/ctype: character-class checks (ctype_*)|"
     "mbstring|ext/mbstring: multibyte strings (mb_*), no mb_ereg|"
     "filter|ext/filter: filter_var() validation and sanitization|"
+    "tokenizer|ext/tokenizer: token_get_all()/PhpToken over the PHP lexer|"
+    "session|ext/session: session_start()/\$_SESSION (files + user handlers)|"
     "openssl|ext/openssl: openssl_* (mbedTLS subset by default; symmetric AES)|"
     "sqlite|PDO + SQLite: read/write .db files on the microSD|scripts/fetch-sqlite.sh"
 )

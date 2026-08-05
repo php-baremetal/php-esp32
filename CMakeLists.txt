@@ -19,6 +19,7 @@ set(ENV{PHP_ESP32_MICROSD} "${PHP_STORAGE_MICROSD}")
 set(ENV{PHP_OPENSSL_CONF} "${PHP_OPENSSL_CONF}")
 set(ENV{PHP_NET_DNS} "${PHP_NET_DNS}")
 set(ENV{PHP_TLS_CAFILE} "${PHP_TLS_CAFILE}")
+set(ENV{PHP_ENTRY} "${PHP_ENTRY}")
 
 # Layer sdkconfig defaults: base (repo root) < family < board. Must be set before
 # project() so ESP-IDF reads them (the target and all board config come from here).
