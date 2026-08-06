@@ -28,6 +28,21 @@ set(SDKCONFIG_DEFAULTS
     "${FAMILY_DIR}/sdkconfig.family"
     "${BOARD_DIR}/sdkconfig.board")
 
+# Optional CPU frequency override, from the project config's [board] cpu_freq_mhz (flash-tool passes
+# -DPHP_CPU_FREQ_MHZ). Layered LAST so it wins over the board defaults. On the ESP32-P4 the choices
+# are 360 (default on rev < 3.0) and 400; 400 on a rev < 3.0 chip is EXPERIMENTAL and needs the force
+# flag (Espressif: only chips qualified for 400 MHz -- unqualified ones may be unstable).
+if(DEFINED PHP_CPU_FREQ_MHZ AND NOT "${PHP_CPU_FREQ_MHZ}" STREQUAL "")
+    set(_cpufreq_frag "${CMAKE_BINARY_DIR}/cpufreq.sdkconfig.defaults")
+    set(_cpufreq_body "CONFIG_ESP_DEFAULT_CPU_FREQ_MHZ_${PHP_CPU_FREQ_MHZ}=y\n")
+    if("${PHP_CPU_FREQ_MHZ}" STREQUAL "400")
+        string(APPEND _cpufreq_body "CONFIG_ESP_FORCE_400MHZ_ON_REV_LESS_V3=y\n")
+    endif()
+    file(WRITE "${_cpufreq_frag}" "${_cpufreq_body}")
+    list(APPEND SDKCONFIG_DEFAULTS "${_cpufreq_frag}")
+    message(STATUS "php-esp32: CPU frequency override -> ${PHP_CPU_FREQ_MHZ} MHz")
+endif()
+
 include($ENV{IDF_PATH}/tools/cmake/project.cmake)
 project(php-esp32)
 

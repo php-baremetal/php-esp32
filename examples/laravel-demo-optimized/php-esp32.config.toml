@@ -2,14 +2,15 @@ name = "laravel-demo-optimized"
 storage_type = "microsd"    # the whole Laravel app (incl. vendor/) lives on the card -- copied by you
 type = "web-server"         # HTTP server in front; public/index.php runs per request -> browsable app
 
-# NOTE: this firmware is identical to the `laravel-demo` example (same board, extensions and mode).
-# All the optimization is in the app under project-src/ (autoloader, drivers, caches) -- so if you
-# already have the laravel-demo firmware flashed, you only need to copy the new card contents; no
-# reflash is required.
+# NOTE: same board and mode as `laravel-demo`, but this build adds OPcache (below) -- the big speed
+# lever. The rest of the tuning is in the app under project-src/ (autoloader, drivers, caches). You do
+# need to flash this firmware (it differs from laravel-demo) and copy project-src/ to the card.
 
 [board]
 target = "esp32-p4-eth"
 port   = ""
+# cpu_freq_mhz = 400   # the knob works, but 400 MHz boot-loops this rev-1.3 chip (unqualified per
+#                      # Espressif); leave unset to use the P4 default (360 MHz).
 
 [esp-idf]
 path    = ""
@@ -44,6 +45,9 @@ enabled = true              # the default DB driver (unused at runtime here -- s
 
 [extensions.date]
 enabled = true              # Carbon timestamps
+
+[extensions.opcache]
+enabled = true              # bytecode cache on the microSD -- skips recompiling the framework each request
 
 [php]
 src   = "project-src"       # the Laravel app root (public/, app/, vendor/, ...)

@@ -3,16 +3,22 @@
 The [`laravel-demo`](../laravel-demo/) app, tuned to boot faster on the board. Same firmware, same
 `web-server` mode — the difference is entirely in the app under `project-src/`.
 
-## Why it's slow to begin with
+## Where the time goes
 
-There is **no opcache** on this port, so every HTTP request recompiles the framework from source:
-hundreds of PHP files tokenized and compiled each time. That, plus the microSD/FATFS filesystem
-being slow at `open()`/`stat()`, is where the ~20 s per request goes. Opcache would be the real fix,
-but it isn't ported — so this example attacks everything *around* the compile instead.
+Every HTTP request runs the framework from scratch: hundreds of PHP files opened off the (slow)
+microSD and, without a bytecode cache, tokenized and compiled each time. Vanilla Laravel starts at
+~20 s per request; this example gets it to **~8.4 s** by attacking both halves — the compile (with
+OPcache) and everything around it (autoloader, I/O).
 
 ## What's tuned
 
-Path-portable optimizations only — see "What's deliberately left out" for why that matters here.
+- **OPcache** (`[extensions.opcache] enabled = true`) — the biggest single lever. The compiled
+  bytecode is cached on the microSD, so after the first (warm-up) request each one skips the
+  tokenize/parse/compile/optimize entirely. This alone takes the page from ~12 s to ~8.4 s. The
+  cache stays on the card rather than in RAM because Laravel's bytecode plus its per-request heap
+  don't both fit in the 32 MB PSRAM — see [`docs/opcache.md`](../../docs/opcache.md).
+
+The rest are path-portable app-level tweaks (see "What's deliberately left out" for why that matters):
 
 - **Authoritative classmap autoloader** — `composer install --no-dev --optimize-autoloader
   --classmap-authoritative`. This is the big lever on this board: the default PSR-4 autoloader does a
@@ -60,17 +66,21 @@ php artisan event:cache
 
 ## Preparing the card and running
 
-Same as `laravel-demo`: copy the **contents** of `project-src/` to the **root of the microSD**
-(`/public/index.php`, `/vendor/`, `/bootstrap/`, `/storage/` writable, `.env`, …), insert the card,
-reset. `storage/` and `bootstrap/cache/` must stay writable (they are, on FAT).
-
-The firmware is byte-for-byte the same as `laravel-demo`, so **if that firmware is already flashed you
-don't need to reflash** — just swap the card contents. Otherwise:
+Copy the **contents** of `project-src/` to the **root of the microSD** (`/public/index.php`,
+`/vendor/`, `/bootstrap/`, `/storage/` writable, `.env`, …), insert the card, reset. `storage/` and
+`bootstrap/cache/` must stay writable (they are, on FAT). This build **adds OPcache** over
+`laravel-demo`, so flash it:
 
 ```sh
 phpflash build && phpflash flash && phpflash monitor
 ```
 
+The firmware creates `/sdcard/opcache` for the bytecode cache. The **first** request after a fresh
+card warms it (compiles + writes the cache) and is as slow as before; every request after that is
+~8.4 s. OPcache doesn't check file mtimes here, so **after you change the app code, delete
+`/sdcard/opcache`** (or the board keeps serving the old bytecode) — see
+[`docs/opcache.md`](../../docs/opcache.md).
+
 Then open `http://<board-ip>/` and compare the per-request time against `laravel-demo`. The welcome
-page still renders identically (verified on desktop: `GET /` → `200`, the full welcome page); the
-gain is in how long the board takes to produce it.
+page renders identically (`GET /` → `200`, the full welcome page); the gain is in how long the board
+takes to produce it — verified on hardware at ~8.4 s.

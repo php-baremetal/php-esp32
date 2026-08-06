@@ -60,7 +60,7 @@ ones (the page in a browser).
 | [`eloquent-demo/`](eloquent-demo/) | Laravel's Eloquent ORM (standalone, no framework) on a SQLite database on the microSD — mbstring **without** oniguruma (`mb_split` polyfilled). | "everything" firmware + `vendor/` |
 | [`eloquent-onig/`](eloquent-onig/) | The same Eloquent demo, on a firmware with mbstring built **with** oniguruma (native `mb_split`, no polyfill). | "everything" firmware + `onig` + `vendor/` |
 | [`laravel-demo/`](laravel-demo/) | **Vanilla Laravel** (unmodified `laravel/laravel`) on the microSD, browsable over HTTP via the **`web-server`** mode — real routing, sessions, and static files from `public/`. | `esp32-p4-eth` board + network, Laravel's ext stack (session, tokenizer, mbstring+onig, openssl, sqlite, …) + a big microSD |
-| [`laravel-demo-optimized/`](laravel-demo-optimized/) | The same Laravel app tuned to boot faster on the board — authoritative autoloader, no dev deps, no-I/O session/cache/log drivers. Same firmware as `laravel-demo`. | as `laravel-demo` |
+| [`laravel-demo-optimized/`](laravel-demo-optimized/) | The same Laravel app tuned to boot faster (~20 s → ~8.4 s/request) — **OPcache** bytecode cache, authoritative autoloader, no dev deps, no-I/O drivers. | as `laravel-demo` + `opcache` |
 | [`web-server-init-loop/`](web-server-init-loop/) | Serves a web page over Ethernet, with the whole HTTP server written in PHP (`setup()`/`loop()`). | `esp32-p4-eth` board + network |
 | [`web-server/`](web-server/) | The same page, using the firmware's **`web-server`** project type: a C HTTP server in front, PHP run fresh per request (like behind Apache). | `esp32-p4-eth` board + network |
 

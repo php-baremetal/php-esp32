@@ -305,3 +305,52 @@ if(PHP_EXT_OPENSSL)
     endif()
     target_compile_definitions(${COMPONENT_LIB} PRIVATE PHP_EXT_OPENSSL_ENABLED)
 endif()
+
+# --- opcache (optional) -------------------------------------------------------
+# Zend OPcache, statically linked (there is no opcache.so to dlopen on this target). Built WITHOUT
+# JIT (unsupported on RISC-V) and driven in `file_cache_only` mode: compiled bytecode is cached to
+# a directory (opcache.file_cache) instead of shared memory, so no SHM/mmap is needed. The firmware
+# (main.c) turns it on via the embed SAPI's ini_defaults hook, and patch 0006 registers its
+# zend_extension + teaches accel_find_sapi() the "embed" SAPI. See docs/opcache.md.
+option(PHP_EXT_OPCACHE "Build Zend OPcache (bytecode cache; no JIT)" OFF)
+# The `in_memory` setting: keep the cache in PSRAM (SHM) instead of the microSD file cache. The
+# backend (shared_alloc_malloc.c) is always compiled; main.c reads this flag to pick the ini mode.
+# Only meaningful with PHP_EXT_OPCACHE.
+option(PHP_EXT_OPCACHE_SHM "OPcache in_memory: keep the bytecode cache in PSRAM (SHM) not on the card" OFF)
+if(PHP_EXT_OPCACHE)
+    target_sources(${COMPONENT_LIB} PRIVATE
+        ${PHP_SRC}/ext/opcache/ZendAccelerator.c
+        ${PHP_SRC}/ext/opcache/zend_accelerator_blacklist.c
+        ${PHP_SRC}/ext/opcache/zend_accelerator_debug.c
+        ${PHP_SRC}/ext/opcache/zend_accelerator_hash.c
+        ${PHP_SRC}/ext/opcache/zend_accelerator_module.c
+        ${PHP_SRC}/ext/opcache/zend_persist.c
+        ${PHP_SRC}/ext/opcache/zend_persist_calc.c
+        ${PHP_SRC}/ext/opcache/zend_file_cache.c
+        ${PHP_SRC}/ext/opcache/zend_shared_alloc.c
+        ${PHP_SRC}/ext/opcache/zend_accelerator_util_funcs.c
+        ${PHP_SRC}/ext/opcache/shared_alloc_shm.c
+        ${PHP_SRC}/ext/opcache/shared_alloc_mmap.c
+        ${PHP_SRC}/ext/opcache/shared_alloc_posix.c
+        # Weak no-op POSIX symbols (mmap/shm*) the SHM backends reference but never call here.
+        ${PHP_COMPONENT_DIR}/compat/opcache_posix_stubs.c
+        # Heap-backed shared-memory backend (USE_MALLOC_SHM): keeps the bytecode cache in PSRAM
+        # across requests, instead of re-reading it from the file cache each time.
+        ${PHP_COMPONENT_DIR}/compat/shared_alloc_malloc.c
+    )
+    # opcache_stubs/ supplies sys/ipc.h, sys/shm.h, sys/mman.h -- headers picolibc lacks. They are
+    # missing system-wide and no other source includes them, so this only affects the opcache files.
+    target_include_directories(${COMPONENT_LIB} PRIVATE
+        ${PHP_SRC}/ext/opcache
+        ${PHP_COMPONENT_DIR}/compat/opcache_stubs
+    )
+    # PHP_EXT_OPCACHE_ENABLED: our marker (patch 0006 keys the zend_extension registration on it).
+    # ZEND_ENABLE_STATIC_TSRMLS_CACHE=1: opcache's required build flag. HAVE_JIT is left undefined
+    # (no JIT); the shared_alloc_*.c backends compile empty without USE_MMAP/USE_SHM* and are never
+    # used in file_cache_only mode.
+    target_compile_definitions(${COMPONENT_LIB} PRIVATE
+        PHP_EXT_OPCACHE_ENABLED
+        ZEND_ENABLE_STATIC_TSRMLS_CACHE=1
+        USE_MALLOC_SHM   # register the PSRAM shared-memory backend (shared_alloc_malloc.c)
+    )
+endif()

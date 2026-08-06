@@ -16,6 +16,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <sys/stat.h>   /* mkdir (opcache file-cache dir) */
 
 #include "esp_log.h"
 #include "esp_heap_caps.h"
@@ -754,6 +755,51 @@ static void run_web_server(const char *script)
 }
 #endif /* PHP_PROJECT_WEB_SERVER */
 
+#ifdef PHP_EXT_OPCACHE_ENABLED
+/* OPcache is compiled in (see docs/opcache.md). Its directives are PHP_INI_SYSTEM, so they can't be
+ * set at runtime; we seed them here through the embed SAPI's ini_defaults hook, before startup. */
+#ifndef PHP_OPCACHE_SHM_MODE
+static char s_opcache_dir[96];   /* the writable file-cache dir, set once the card is mounted */
+#endif
+
+static void opc_add_ini_default(HashTable *ht, const char *name, const char *val)
+{
+    zval z;
+    ZVAL_NEW_STR(&z, zend_string_init(val, strlen(val), 1));   /* persistent: freed by config dtor */
+    zend_hash_str_update(ht, name, strlen(name), &z);
+}
+
+static void opcache_ini_defaults(HashTable *ht)
+{
+    opc_add_ini_default(ht, "opcache.enable",                  "1");
+    opc_add_ini_default(ht, "opcache.enable_cli",             "1");   /* the embed SAPI is CLI-like */
+    opc_add_ini_default(ht, "opcache.validate_timestamps",    "0");   /* code is static on the card */
+    opc_add_ini_default(ht, "opcache.use_cwd",                "0");   /* all paths are absolute */
+    /* No RTC/NTP: the clock sits at 1970 while the card's files are dated in the "future", so
+     * OPcache's "file too new to cache" guard would skip every file. Disable it (validate_timestamps
+     * is off anyway, so mtime doesn't matter). */
+    opc_add_ini_default(ht, "opcache.file_update_protection", "0");
+#ifdef PHP_OPCACHE_SHM_MODE
+    /* In-RAM cache (opcache `in_memory` setting): the compiled bytecode stays in PSRAM (SHM backend,
+     * shared_alloc_malloc.c) between requests, so after warm-up there's neither a recompile nor an
+     * SD read. The catch: the whole bytecode plus the per-request heap must fit in the 32 MB PSRAM.
+     * Fine for a small app; a large framework (Laravel) doesn't fit -- use the file cache for those.
+     * memory_consumption is reserved up front, straight out of the per-request heap budget. */
+    opc_add_ini_default(ht, "opcache.memory_consumption",      "16");   /* MB of PSRAM for the cache */
+    opc_add_ini_default(ht, "opcache.interned_strings_buffer", "2");    /* MB, carved from the above */
+    opc_add_ini_default(ht, "opcache.max_accelerated_files",  "4000");
+    opc_add_ini_default(ht, "opcache.protect_memory",          "0");    /* mprotect is a no-op here */
+#else
+    /* File cache on the microSD (default): the bytecode lives on the card and is reloaded per request
+     * (skipping the recompile), so the request keeps the full PSRAM. The right choice for a large
+     * framework. */
+    opc_add_ini_default(ht, "opcache.file_cache",          s_opcache_dir);
+    opc_add_ini_default(ht, "opcache.file_cache_only",     "1");
+    opc_add_ini_default(ht, "opcache.max_accelerated_files", "20000");
+#endif
+}
+#endif /* PHP_EXT_OPCACHE_ENABLED */
+
 static void php_task(void *arg)
 {
     (void)arg;
@@ -852,6 +898,25 @@ static void php_task(void *arg)
 #endif
 
     php_embed_module.ub_write = esp_ub_write;
+
+#ifdef PHP_EXT_OPCACHE_ENABLED
+    /* Enable OPcache: install the ini_defaults hook (must be set before php_embed_init reads the
+     * ini). The mode is chosen at build time by the `in_memory` setting. */
+#ifdef PHP_OPCACHE_SHM_MODE
+    php_embed_module.ini_defaults = opcache_ini_defaults;   /* in-RAM (PSRAM) -- no card needed */
+    ESP_LOGI(TAG, "opcache: in-RAM (PSRAM SHM) bytecode cache");
+#elif defined(PHP_STORAGE_MICROSD)
+    /* File cache: point it at a writable dir on the card. */
+    if (have_sd) {
+        snprintf(s_opcache_dir, sizeof s_opcache_dir, "%s/opcache", SD_MOUNT_POINT);
+        mkdir(s_opcache_dir, 0777);   /* opcache requires the dir to exist; ok if it already does */
+        php_embed_module.ini_defaults = opcache_ini_defaults;
+        ESP_LOGI(TAG, "opcache: file cache at %s", s_opcache_dir);
+    } else {
+        ESP_LOGW(TAG, "opcache: no microSD, not enabled (needs a writable cache dir)");
+    }
+#endif
+#endif
 
     ESP_LOGI(TAG, "php_embed_init()...");
     if (php_embed_init(0, NULL) != SUCCESS) {

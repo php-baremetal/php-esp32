@@ -171,6 +171,18 @@ flag = "PHP_EXT_SESSION=ON"
 flash_cost = "~50 KB"
 
 [[extension]]
+key = "opcache"
+description = "Zend OPcache (no JIT): compiled bytecode is cached so each request skips re-tokenizing/compiling the sources -- a big win for frameworks where the per-request cost is compilation. Default is file-cache on the microSD (bytecode on the card, full PSRAM free for the request); see the in_memory setting."
+required_for = []
+flag = "PHP_EXT_OPCACHE=ON"
+flash_cost = "~500 KB"
+  [[extension.setting]]
+  key = "in_memory"
+  description = "Keep the bytecode cache in PSRAM (SHM) instead of on the microSD, so after warm-up there's no per-request SD read either -- fastest, but the whole bytecode plus the per-request heap must fit in the 32 MB PSRAM. Good for a small app; a large framework (Laravel) doesn't fit, so leave off for those."
+  flag = "PHP_EXT_OPCACHE_SHM=ON"
+  default = false
+
+[[extension]]
 key = "mbstring"
 description = "Multibyte strings (mb_strlen/substr/convert/detect/...). Built without mb_ereg unless the onig setting is on."
 required_for = []

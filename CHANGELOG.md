@@ -1,5 +1,28 @@
 # Changelog
 
+## [0.10.0] — OPcache; configurable CPU frequency
+
+### Added
+- **Zend OPcache**, a real port of the bundled extension (`-DPHP_EXT_OPCACHE=ON`), so a request no
+  longer recompiles the framework every time — it reuses cached bytecode. Built **without JIT**
+  (unsupported on RISC-V) and statically linked (no `opcache.so`/`dlopen` on this target). On the
+  ESP32-P4 it takes the [`laravel-demo-optimized`](examples/laravel-demo-optimized/) welcome page
+  from ~12 s to **~8.4 s** per request, verified on hardware. See [`docs/opcache.md`](docs/opcache.md).
+  - Default **file-cache** mode: bytecode is cached on the microSD, leaving the full PSRAM for the
+    per-request heap — the right choice for a large framework.
+  - Opt-in **in-memory** mode (`[extensions.opcache] in_memory = true`): the cache lives in PSRAM
+    (a heap-backed shared-memory segment) and is served straight from RAM. Faster, but only for a
+    **small** app — Laravel's bytecode plus its per-request heap exceed the 32 MB PSRAM, so it stays
+    on the file cache.
+  - Porting bits: run the `zend_extension` startup by hand (patch `0006`, since `dlopen` extensions
+    aren't supported), teach `accel_find_sapi()` the `embed` SAPI, `opcache.file_update_protection=0`
+    (the board has no RTC, so files look "from the future"), stub headers + weak POSIX symbols for
+    the parts picolibc lacks, and a PSRAM shared-memory backend with no-op locking (patch `0007`).
+- **Configurable CPU frequency** — `[board] cpu_freq_mhz` (flash-tool passes `-DPHP_CPU_FREQ_MHZ`,
+  layered last over the board's sdkconfig). Note: 400 MHz on an ESP32-P4 **rev < 3.0** is
+  experimental and can boot-loop unqualified chips (Espressif); the P4 default (360 MHz) stands
+  unless set.
+
 ## [0.9.0] — web-server SAPI; Laravel browsable over HTTP
 
 ### Added

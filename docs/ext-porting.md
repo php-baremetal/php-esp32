@@ -76,7 +76,7 @@ Plus one non-standard extension of ours: **`gpio`** (`gpio_mode`/`gpio_write`/`g
 | `mysqlnd` | Not available | Not planned | database client; networking exists now — not ported |
 | `oci8` | Not available | Not planned | needs the Oracle client |
 | `odbc` | Not available | Not planned | needs unixODBC |
-| `opcache` | Not available | Not possible | needs shared memory + writable-executable memory (also no JIT here) |
+| `opcache` | **Flag** | Done | `-DPHP_EXT_OPCACHE=ON` — bytecode cache, no JIT. File-cache on the microSD by default; in-RAM (PSRAM) with `in_memory`. Laravel ~12 s → ~8.4 s/request. See [opcache.md](opcache.md) |
 | `openssl` | **Flag** | Done | `-DPHP_EXT_OPENSSL=ON` (mbedTLS-backed subset — symmetric AES, ~42 KB); `-DPHP_EXT_OPENSSL_FULL=ON` builds the real OpenSSL 3.0 (RSA/EC/X.509/digests + on-chip keygen, ~2.1 MB); add `-DPHP_EXT_OPENSSL_TLS=ON` for an HTTPS client (esp-tls, needs a networked board). See [openssl.md](openssl.md) |
 | `pcntl` | Not available | Not possible | no processes (no `fork`) |
 | `pcre` | **Built-in** | Done | always on |

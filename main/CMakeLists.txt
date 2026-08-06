@@ -52,6 +52,20 @@ if(_microsd)
     target_compile_definitions(${COMPONENT_LIB} PRIVATE PHP_STORAGE_MICROSD=1)
 endif()
 
+# OPcache (-DPHP_EXT_OPCACHE=ON): main.c installs the embed SAPI ini_defaults hook that turns it on
+# and points its file cache at the card. The extension itself is built in the php component; here we
+# just let main.c know it's present. Recovered from the environment in the early phase like the flags
+# above (the top-level CMakeLists exports it).
+if(PHP_EXT_OPCACHE OR "$ENV{PHP_ESP32_OPCACHE}" STREQUAL "ON")
+    target_compile_definitions(${COMPONENT_LIB} PRIVATE PHP_EXT_OPCACHE_ENABLED=1)
+endif()
+# OPcache `in_memory` setting (-DPHP_EXT_OPCACHE_SHM=ON): main.c seeds the SHM (PSRAM) ini instead of
+# the microSD file cache. Read from the cache var flash-tool passes; not declared as an option() here
+# (that's reserved for project-type flags), only in the php component's extensions.cmake.
+if(PHP_EXT_OPCACHE_SHM)
+    target_compile_definitions(${COMPONENT_LIB} PRIVATE PHP_OPCACHE_SHM_MODE=1)
+endif()
+
 # Path of the openssl.cnf the full openssl build reads (see docs/openssl.md). flash-tool passes
 # -DPHP_OPENSSL_CONF from [extensions.openssl] config_path; main.c falls back to "openssl.cnf".
 set(_ossl_conf "${PHP_OPENSSL_CONF}")

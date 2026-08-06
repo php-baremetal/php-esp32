@@ -64,6 +64,7 @@ OPTIONAL_EXTS=(
     "session|ext/session: session_start()/\$_SESSION (files + user handlers)|"
     "openssl|ext/openssl: openssl_* (mbedTLS subset by default; symmetric AES)|"
     "sqlite|PDO + SQLite: read/write .db files on the microSD|scripts/fetch-sqlite.sh"
+    "opcache|Zend OPcache: file-cache bytecode cache (no JIT/SHM); needs a writable microSD|"
 )
 
 EXT_ARGS=()
