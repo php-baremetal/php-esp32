@@ -1,7 +1,10 @@
 # Porting notes
 
-The technical choices made to port PHP 8.3 to the ESP32-P4, with the reason behind each
-one. This is the place to look when something seems arbitrary: it almost never is.
+The technical choices behind running PHP 8.3 on the ESP32, with the reason for each one. This is the
+place to look when something seems arbitrary: it almost never is. The work started on the ESP32-P4
+(RISC-V) and now covers the ESP32-S3 (Xtensa) as well; most of it is target-independent by design, and
+the parts that are not are called out where they come up (the per-board storage and networking near
+the end, and the couple of arch notes below).
 
 ## The hand-written config
 
@@ -9,10 +12,11 @@ I don't use `./configure`. In its place there's a hand-written `php_config.h`, s
 from the `php_config.h` that `configure` generates on Linux and then corrected.
 
 The most important and least obvious correction is about type sizes. The reference file
-came from an x86-64, where `long`, `size_t` and pointers are 8 bytes; the ESP32-P4 is
-32-bit RISC-V, where they're 4. Wrong `SIZEOF_LONG`, `SIZEOF_SIZE_T`, `SIZEOF_OFF_T`,
-`SIZEOF_PTRDIFF_T` and `SIZEOF_SSIZE_T` caused subtle damage until I lined them up with the
-real values read from the compiler.
+came from an x86-64, where `long`, `size_t` and pointers are 8 bytes; both supported targets
+are 32-bit (RISC-V on the P4, Xtensa on the S3), where they are 4. Wrong `SIZEOF_LONG`,
+`SIZEOF_SIZE_T`, `SIZEOF_OFF_T`, `SIZEOF_PTRDIFF_T` and `SIZEOF_SSIZE_T` caused subtle damage
+until I lined them up with the real values read from the compiler. The values are the same for
+both chips, since both are 32-bit ILP32 with newlib, so this part is not architecture-specific.
 
 Then I turned off the dozens of `HAVE_*` that are true on glibc and false on newlib:
 dynamic loading (`dl`), `mmap`, `poll`, `fopencookie`, `statvfs`, the process and network
@@ -164,7 +168,10 @@ PHP has several virtual-machine variants. The fast one, "hybrid", uses computed-
 GCC's global registers, and on RISC-V it simply doesn't compile (a variable ends up out of
 scope). Turning off `HAVE_GCC_GLOBAL_REGS` switches to the "call" variant, which is plain C
 code: a loop that calls each opcode's function. It's a touch slower, but it's portable and
-it's the standard choice for embedded environments.
+it's the standard choice for embedded environments. This is what makes the port
+architecture-independent: the call VM has no target-specific assembly, so the same engine
+compiles unchanged on the S3's Xtensa core as on the P4's RISC-V. Bringing up the S3 needed no
+change to any PHP source, only its own board and toolchain.
 
 ## The disabled features
 
