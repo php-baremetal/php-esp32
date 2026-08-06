@@ -1,0 +1,19 @@
+# ESP32-S3-ETH board defaults (Waveshare). Layered last (over base + family), so
+# board-specific choices win.
+
+# 16 MB NOR flash on board (the IDF default is 2 MB, which the app blows past).
+CONFIG_ESPTOOLPY_FLASHSIZE_16MB=y
+CONFIG_ESPTOOLPY_FLASHSIZE="16MB"
+
+# Console over the chip's native USB Serial/JTAG: the USB-C port is wired straight to the
+# S3's USB pins (GPIO19/20), not through a UART bridge, and enumerates as /dev/ttyACM*.
+CONFIG_ESP_CONSOLE_USB_SERIAL_JTAG=y
+
+# Wired Ethernet is a W5500 (SPI). The S3 has no internal Ethernet MAC, so enable the SPI
+# Ethernet path and the W5500 driver (both off by default). board.c drives it.
+CONFIG_ETH_USE_SPI_ETHERNET=y
+CONFIG_ETH_SPI_ETHERNET_W5500=y
+
+# This board's partition layout (sized for the 16 MB flash). Path is relative to the
+# project root.
+CONFIG_PARTITION_TABLE_CUSTOM_FILENAME="boards/esp32-s3/esp32-s3-eth/partitions.csv"

@@ -43,6 +43,18 @@ if(DEFINED PHP_CPU_FREQ_MHZ AND NOT "${PHP_CPU_FREQ_MHZ}" STREQUAL "")
     message(STATUS "php-esp32: CPU frequency override -> ${PHP_CPU_FREQ_MHZ} MHz")
 endif()
 
+# Pin the ESP-IDF target from the selected family's sdkconfig.family, BEFORE project.cmake.
+# ESP-IDF only reads CONFIG_IDF_TARGET out of SDKCONFIG_DEFAULTS *after* it has already fixed
+# the target; if IDF_TARGET isn't set it "guesses" from a stray in-source sdkconfig (a leftover
+# from an earlier in-tree build), which silently builds the wrong architecture for a different
+# family. Setting IDF_TARGET here makes the family's sdkconfig.family the single source of truth
+# and stops the guess. FAMILY_DIR comes from resolve-board.cmake.
+file(STRINGS "${FAMILY_DIR}/sdkconfig.family" _idf_target_line REGEX "^CONFIG_IDF_TARGET=")
+if(_idf_target_line MATCHES "^CONFIG_IDF_TARGET=\"([^\"]+)\"")
+    set(IDF_TARGET "${CMAKE_MATCH_1}")
+    message(STATUS "php-esp32: IDF target pinned to '${IDF_TARGET}' (from ${FAMILY_DIR}/sdkconfig.family)")
+endif()
+
 include($ENV{IDF_PATH}/tools/cmake/project.cmake)
 project(php-esp32)
 

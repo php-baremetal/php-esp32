@@ -1,0 +1,12 @@
+# Partition layout -- 16 MB NOR flash (Waveshare ESP32-S3-ETH).
+# The microSD is the usual storage. `storage` is an optional read-only FAT image that
+# holds the PHP source for "embedded" builds (see the top-level CMakeLists PHP_EMBED_SRC);
+# it stays empty on microSD-only firmware, and the app then falls back to the card. It's
+# sized for the small embedded example projects -- a large framework (Symfony/Laravel)
+# lives on the microSD, not in flash.
+#
+# Name,     Type, SubType,  Offset,   Size
+nvs,        data, nvs,      ,         24K
+phy_init,   data, phy,      ,         4K
+factory,    app,  factory,  ,         10M
+storage,    data, fat,      ,         5M

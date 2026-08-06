@@ -1,0 +1,24 @@
+# ESP32-S3-ETH board descriptor -- capabilities for flash-tool (Waveshare ESP32-S3-ETH).
+#
+# name/family : identity.
+# storage_types / project_types : the modes this board's HARDWARE supports. flash-tool
+#   offers a mode only when it is BOTH listed here AND marked available (implemented) in
+#   the selected PHP version's manifest
+#   (components/php/versions/<version>/manifest.toml).
+#
+# This board has a wired Ethernet port via a W5500 (an SPI MAC+PHY, not the P4's internal
+# EMAC + RMII PHY), so it CAN do `web-server`.
+#
+# network : the board's network interface -- "ethernet" | "wifi" | absent (none). A
+#   board-level peripheral a chip probe can't see, so it's declared here; `phpflash
+#   discover` reports it. (The S3 also has a Wi-Fi radio, but this board's story is the
+#   wired port.)
+
+schema_version = 1
+
+name   = "ESP32-S3-ETH"
+family = "esp32-s3"
+
+storage_types = ["microsd", "embedded"]
+project_types = ["init-loop", "event-driven", "web-server"]
+network       = "ethernet"
