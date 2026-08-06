@@ -32,7 +32,7 @@ if("$ENV{PHP_ESP32_MICROSD}" STREQUAL "OFF")
 endif()
 
 idf_component_register(
-    SRCS "main.c" "fs_pathnorm.c" ${BOARD_SRCS}
+    SRCS "main.c" "fs_pathnorm.c" "fs_glob.c" ${BOARD_SRCS}
     INCLUDE_DIRS "." ${BOARD_INCLUDE_DIRS}
     # esp_partition/fatfs/vfs: main.c mounts the optional read-only embedded source
     # partition itself (board-agnostic); the board adds its own storage drivers too.
@@ -43,6 +43,14 @@ idf_component_register(
 # (which can't resolve them). Global link options so the wrap applies to every caller (PHP included).
 foreach(_fn stat lstat open opendir access mkdir unlink rmdir rename)
     idf_build_set_property(LINK_OPTIONS "-Wl,--wrap=${_fn}" APPEND)
+endforeach()
+
+# glob()/globfree() (fs_glob.c): the C library's glob() fails on the FATFS VFS, so we provide a
+# readdir()-based one. Symfony needs glob() to discover its service classes. The -u forces the linker
+# to pull fs_glob.o from libmain.a (few callers reference glob, so it isn't pulled on demand in time).
+foreach(_fn glob globfree)
+    idf_build_set_property(LINK_OPTIONS "-Wl,--wrap=${_fn}" APPEND)
+    idf_build_set_property(LINK_OPTIONS "-Wl,-u,__wrap_${_fn}" APPEND)
 endforeach()
 
 if(_web_server)

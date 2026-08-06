@@ -96,20 +96,49 @@ static const char *pn(const char *path, char *buf, size_t sz)
 
 /* --- linker --wrap shims: normalize the path, then call the real syscall ------------------ */
 
+/* ESP-IDF's FATFS VFS fails stat() on the bare mount-point root (e.g. "/sdcard", "/app") even though
+ * files *inside* it stat fine -- the VFS resolves the mount and hands FatFs an empty path. Code that
+ * checks the project/document root itself (Symfony's FileLocator does: file_exists("/sdcard")) then
+ * sees it "not existing". These are the firmware's mount points (see SD_MOUNT_POINT / APP_MOUNT_POINT
+ * in main.c); treat a stat of one as a directory. */
+static int is_mount_root(const char *path)
+{
+    return strcmp(path, "/sdcard") == 0 || strcmp(path, "/app") == 0;
+}
+
+static void fake_dir_stat(struct stat *st)
+{
+    memset(st, 0, sizeof *st);
+    st->st_mode = S_IFDIR | 0777;
+    st->st_nlink = 1;
+}
+
 extern int __real_stat(const char *path, struct stat *st);
 int __wrap_stat(const char *path, struct stat *st)
 {
     char b[PN_MAX];
-    return __real_stat(pn(path, b, sizeof b), st);
+    const char *p = pn(path, b, sizeof b);
+    int r = __real_stat(p, st);
+    if (r != 0 && is_mount_root(p)) {
+        fake_dir_stat(st);
+        return 0;
+    }
+    return r;
 }
 
 /* The FATFS VFS's lstat is unimplemented/unreliable (it fails, breaking PHP's realpath, which
  * lstat()s every path component -- so realpath() returned false for everything). FatFs has no
- * symlinks, so lstat is equivalent to stat: route it there. */
+ * symlinks, so lstat is equivalent to stat: route it there (with the same mount-root fallback). */
 int __wrap_lstat(const char *path, struct stat *st)
 {
     char b[PN_MAX];
-    return __real_stat(pn(path, b, sizeof b), st);
+    const char *p = pn(path, b, sizeof b);
+    int r = __real_stat(p, st);
+    if (r != 0 && is_mount_root(p)) {
+        fake_dir_stat(st);
+        return 0;
+    }
+    return r;
 }
 
 extern int __real_open(const char *path, int flags, ...);
@@ -137,7 +166,12 @@ extern int __real_access(const char *path, int mode);
 int __wrap_access(const char *path, int mode)
 {
     char b[PN_MAX];
-    return __real_access(pn(path, b, sizeof b), mode);
+    const char *p = pn(path, b, sizeof b);
+    int r = __real_access(p, mode);
+    if (r != 0 && is_mount_root(p)) {
+        return 0;   /* the mount root exists and is readable/writable (same quirk as stat) */
+    }
+    return r;
 }
 
 extern int __real_mkdir(const char *path, mode_t mode);
@@ -165,5 +199,19 @@ extern int __real_rename(const char *from, const char *to);
 int __wrap_rename(const char *from, const char *to)
 {
     char bf[PN_MAX], bt[PN_MAX];
-    return __real_rename(pn(from, bf, sizeof bf), pn(to, bt, sizeof bt));
+    const char *f = pn(from, bf, sizeof bf);
+    const char *t = pn(to, bt, sizeof bt);
+    int r = __real_rename(f, t);
+    if (r != 0) {
+        /* POSIX rename() atomically replaces an existing destination; FATFS's rename() instead fails
+         * if the target exists. Code relies on the POSIX behaviour for atomic file updates (Symfony
+         * dumps its compiled container to a temp file then renames it over the old one). If the
+         * destination exists, remove it and retry so the replace goes through. */
+        struct stat st;
+        if (__real_stat(t, &st) == 0) {
+            __real_unlink(t);
+            r = __real_rename(f, t);
+        }
+    }
+    return r;
 }

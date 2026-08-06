@@ -899,6 +899,16 @@ static void php_task(void *arg)
 
     php_embed_module.ub_write = esp_ub_write;
 
+#ifdef PHP_PROJECT_WEB_SERVER
+    /* Present a web-like SAPI name to the script. The embed SAPI is named "embed", which frameworks
+     * treat as a CLI process -- Symfony then picks its CLI error renderer (which writes to
+     * php://stdout, unavailable here) and Laravel's runningInConsole() returns true. In the
+     * web-server model each run really is an HTTP request, so report "cli-server" (PHP's built-in
+     * web server), which frameworks treat as web. Must be set before php_embed_init() so PHP_SAPI
+     * reflects it. */
+    php_embed_module.name = "cli-server";
+#endif
+
 #ifdef PHP_EXT_OPCACHE_ENABLED
     /* Enable OPcache: install the ini_defaults hook (must be set before php_embed_init reads the
      * ini). The mode is chosen at build time by the `in_memory` setting. */

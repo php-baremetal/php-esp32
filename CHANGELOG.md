@@ -18,6 +18,21 @@
     aren't supported), teach `accel_find_sapi()` the `embed` SAPI, `opcache.file_update_protection=0`
     (the board has no RTC, so files look "from the future"), stub headers + weak POSIX symbols for
     the parts picolibc lacks, and a PSRAM shared-memory backend with no-op locking (patch `0007`).
+- A [`symfony-demo`](examples/symfony-demo/) example — **Symfony 7.4** (skeleton + a controller),
+  browsable over HTTP, running the pre-compiled prod container from the microSD at **~2.1 s per
+  request** (OPcache file-cache warm), verified on the ESP32-P4. Symfony 8 needs PHP 8.4, so this pins
+  7.x (PHP 8.2+). It hard-requires `ext-ctype`/`ext-iconv`/`ext-xml`; `ctype` is ported, and a minimal
+  attribute-routed, prod-cached page never calls `iconv`/XML at runtime, so those two are bypassed with
+  composer platform overrides. A minimal, XML-free slice — anything using DOM/XML would need a
+  `libxml2` port.
+- **FATFS/POSIX fixes to run larger frameworks** (`main/fs_pathnorm.c`, new `main/fs_glob.c`),
+  surfaced by Symfony's bootstrap and shared by every web-server app: `stat()`/`access()` on a
+  mount-point root (`/sdcard`) now report the directory as existing; a `readdir`/`fnmatch`-based
+  `glob()` replaces picolibc's broken one (returning empty-success, not `GLOB_NOMATCH`, so PHP's
+  `glob()` yields `[]`); `rename()` now overwrites an existing destination (unlink-and-retry) for
+  atomic file replaces; and the `web-server` model presents a `cli-server` SAPI name so frameworks
+  take the HTTP path instead of a `php://stdout` console path. See
+  [`docs/porting-notes.md`](docs/porting-notes.md).
 - **Configurable CPU frequency** — `[board] cpu_freq_mhz` (flash-tool passes `-DPHP_CPU_FREQ_MHZ`,
   layered last over the board's sdkconfig). Note: 400 MHz on an ESP32-P4 **rev < 3.0** is
   experimental and can boot-loop unqualified chips (Espressif); the P4 default (360 MHz) stands

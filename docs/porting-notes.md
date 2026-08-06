@@ -137,6 +137,14 @@ filled by forcing that JIT auto-global to materialise and then `php_register_var
 in the main task, which has the big stack the compiler needs; the httpd task just parks the request
 and waits, so it can keep a small stack.
 
+One more subtlety for real frameworks: **the SAPI name.** `php_embed` calls its SAPI `embed`, and
+frameworks branch on `php_sapi_name()`. Symfony's front controller treats an unknown/CLI-like SAPI as
+a console context and reaches for `php://stdout`, which doesn't exist here — the request crashed
+before rendering. Under the `web-server` model the firmware therefore renames the SAPI to
+**`cli-server`** (`php_embed_module.name = "cli-server"`, set before `php_embed_init()`), the name
+PHP's own built-in web server uses. Frameworks recognise it as a web SAPI and take the HTTP path. This
+applies to every `web-server` app, not just Symfony.
+
 One fix this needed: **the CSPRNG.** `ext/random`'s `csprng.c` only reaches for `getrandom()` on
 Linux/BSD and otherwise opens `/dev/urandom`, which doesn't exist here — so `random_int()`,
 `random_bytes()` and anything built on them threw `Random\RandomException`. ESP-IDF's newlib
@@ -451,3 +459,24 @@ gaps surfaced running unmodified Laravel (`examples/laravel-demo/`), fixed once 
 A dead end worth recording: PHP's own virtual-cwd (`VIRTUAL_DIR`) *would* normalize `.`/`..`, but it
 depends on a working `getcwd()`/cwd this target lacks — enabling it made `stat()` fail for every
 path (even the running script). Don't enable `VIRTUAL_DIR`; normalize at the syscall layer instead.
+
+Three more FATFS/POSIX gaps surfaced running unmodified **Symfony 7.4** (`examples/symfony-demo/`) —
+its bootstrap exercises more of the filesystem than Laravel did. All fixed generically:
+
+- **`stat()` on a mount-point root fails.** `stat("/sdcard")` returns an error even though files
+  *inside* it stat fine — the VFS resolves the mount and hands FatFs an empty path. Symfony's
+  `FileLocator` does `file_exists("/sdcard")` on the document root and concluded it didn't exist.
+  The `stat`/`lstat`/`access` wraps in `fs_pathnorm.c` now treat a failing stat of a known mount root
+  (`/sdcard`, `/app`) as an existing directory (`is_mount_root()` → a synthetic `S_IFDIR` stat).
+- **`glob()` is missing/broken.** picolibc's `glob()` doesn't work on this VFS, and PHP leans on it
+  (Symfony's `GlobResource`, config globbing). `main/fs_glob.c` provides `__wrap_glob`/`__wrap_globfree`
+  built on `readdir` + `fnmatch` (handling `*?[` per component and one level of `{a,b}` braces). The
+  wrap is force-linked (`-Wl,-u,__wrap_glob`) since `glob` has too few callers to pull in otherwise.
+  One subtlety: on *no match* it returns empty-success (`gl_pathc = 0`), **not** `GLOB_NOMATCH` —
+  PHP's `dir.c` only treats `GLOB_NOMATCH` as "empty, not an error" behind an `#ifdef` that picolibc's
+  headers compile out, so returning the code would make PHP's `glob()` return `false` instead of `[]`.
+- **`rename()` won't overwrite an existing destination.** POSIX `rename()` atomically replaces the
+  target; FatFs's fails if the target exists. Symfony writes its compiled container to a temp file and
+  renames it over the previous one (`Cannot rename … : File exists`). The `rename` wrap now, on
+  failure, `stat`s the destination and — if it exists — `unlink`s it and retries, restoring the
+  atomic-replace behaviour callers expect.

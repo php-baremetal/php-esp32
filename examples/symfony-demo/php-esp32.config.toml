@@ -1,0 +1,44 @@
+name = "symfony-demo"
+storage_type = "microsd"    # the whole Symfony app (incl. vendor/) lives on the card -- copied by you
+type = "web-server"         # HTTP server in front; public/index.php runs per request -> browsable app
+
+[board]
+target = "esp32-p4-eth"
+port   = ""
+
+[esp-idf]
+path    = ""
+version = ""
+
+[php-esp32]
+path    = ""
+version = ""
+
+# Symfony 7.4's extension needs on this target. Symfony hard-requires ext-ctype/ext-iconv/ext-xml at
+# the composer level, but a minimal (attribute-routed, prod-cached) page doesn't actually call iconv
+# or XML at runtime -- verified -- so those two are bypassed with composer platform overrides (see the
+# README). ctype is native here. The rest below cover the framework's real runtime needs.
+[extensions.ctype]
+enabled = true
+
+[extensions.mbstring]
+enabled = true              # no oniguruma needed (Symfony doesn't use mb_ereg here)
+
+[extensions.filter]
+enabled = true
+
+[extensions.tokenizer]
+enabled = true
+
+[extensions.session]
+enabled = true
+
+[extensions.date]
+enabled = true
+
+[extensions.opcache]
+enabled = true              # bytecode cache on the microSD -- skips recompiling the framework each request
+
+[php]
+src   = "project-src"       # the Symfony app root (public/, src/, vendor/, ...)
+entry = "public/index.php"  # Symfony's front controller
