@@ -10,8 +10,8 @@ system underneath, and no interpreter of our own invention in the middle.
 
 ## Real PHP, not a reimplementation
 
-The engine is the unmodified release from [php.net](https://www.php.net/) (currently `php-8.3.33`,
-sha256 verified). The source tree is vendored exactly as it ships and is never edited in place; every
+The engine is the unmodified release from [php.net](https://www.php.net/) (the default is `php-8.4.24`,
+sha256 verified; 8.3 and 8.5 build too). The source tree is vendored exactly as it ships and is never edited in place; every
 adjustment the target needs is a separate patch applied at build time. The whole Zend Engine is
 compiled in: the lexer, the parser and the opcode compiler, the virtual machine and executor, the
 garbage collector and memory manager, and the object, class and exception model. `<?php echo 1 + 1;`
@@ -50,8 +50,8 @@ More of the ESP32 line will follow. Any part with PSRAM and a reasonable flash i
 new family is a directory under `boards/`, not a change to the engine. The parts without PSRAM (the C
 and H series) are out regardless of clock speed: the heap has nowhere to live.
 
-PHP **8.3** is the version built today. The tree keeps everything version-specific under
-`components/php/versions/<version>/`, so further releases slot in beside it as they are ported.
+PHP **8.3** (8.3.33), **8.4** (8.4.24) and **8.5** (8.5.9) are all built today, selectable per project (`-DPHP_VERSION=<ver>`). The tree keeps everything version-specific under
+`components/php/versions/<version>/`, so further releases slot in beside them as they are ported.
 
 ## Getting started
 
@@ -183,8 +183,8 @@ php-esp32/
 │   ├── php/
 │   │   ├── CMakeLists.txt     generic: builds the selected PHP version
 │   │   ├── compat/            shared POSIX stubs (posix_stubs, syslog, opcache backends)
-│   │   ├── versions/8.3.33/   per-version: sources.cmake, config headers, patches, manifest.toml
-│   │   └── php-8.3.33/        the PHP source (fetched, not committed)
+│   │   ├── versions/8.4.24/   per-version: sources.cmake, config headers, patches, manifest.toml
+│   │   └── php-8.4.24/        the PHP source (fetched, not committed)
 │   └── php_ext_gpio/          the gpio_* and delay extension
 ├── examples/                 example projects, one per folder
 ├── docs/                     architecture, porting notes, footprint, extensions, and more

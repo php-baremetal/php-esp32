@@ -1,0 +1,64 @@
+Add a heap-backed shared-memory backend for OPcache (USE_MALLOC_SHM), so the compiled-bytecode
+cache can live in RAM (PSRAM) across requests instead of being re-read from the file cache each time.
+
+This target has no mmap()/System V SHM, but it also doesn't need cross-process sharing: it's a single
+process with the PHP engine kept alive across HTTP requests, so a plain allocation persists the cache
+for the process lifetime (the actual segment is allocated in shared_alloc_malloc.c). This patch just
+registers that backend in the handler table and turns the file-lock based locking into a no-op --
+a single task serves one request at a time, and mkstemp()/fcntl() locks don't work on FATFS anyway.
+--- a/ext/opcache/zend_shared_alloc.c
++++ b/ext/opcache/zend_shared_alloc.c
+@@ -63,7 +63,14 @@
+ static char lockfile_name[MAXPATHLEN];
+ #endif
+ 
++#ifdef USE_MALLOC_SHM
++extern const zend_shared_memory_handlers zend_alloc_malloc_handlers;
++#endif
++
+ static const zend_shared_memory_handler_entry handler_table[] = {
++#ifdef USE_MALLOC_SHM
++	{ "malloc", &zend_alloc_malloc_handlers },
++#endif
+ #ifdef USE_MMAP
+ 	{ "mmap", &zend_alloc_mmap_handlers },
+ #endif
+@@ -84,6 +91,14 @@
+ {
+ 	int val;
+ 
++#ifdef USE_MALLOC_SHM
++	/* php-esp32: single process/task -> no cross-process lock needed, and mkstemp()/fcntl() file
++	 * locks don't work on this target's FATFS. Skip creating a lock file entirely. */
++	(void) lockfile_path;
++	(void) val;
++	return;
++#endif
++
+ #ifdef ZTS
+ 	zts_lock = tsrm_mutex_alloc();
+ #endif
+@@ -487,6 +502,11 @@
+ {
+ 	ZEND_ASSERT(!ZCG(locked));
+ 
++#ifdef USE_MALLOC_SHM
++	ZCG(locked) = 1;   /* single task -> no real lock (see zend_shared_alloc_create_lock) */
++	return;
++#endif
++
+ #ifndef ZEND_WIN32
+ 	struct flock mem_write_lock;
+ 
+@@ -526,6 +546,11 @@
+ {
+ 	ZEND_ASSERT(ZCG(locked));
+ 
++#ifdef USE_MALLOC_SHM
++	ZCG(locked) = 0;
++	return;
++#endif
++
+ #ifndef ZEND_WIN32
+ 	struct flock mem_write_unlock;
+ 

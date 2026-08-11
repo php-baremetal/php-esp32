@@ -1,0 +1,51 @@
+Statically link Zend OPcache into the embed build and start it by hand.
+
+There is no opcache.so to dlopen on the ESP32, and this build has ZEND_EXTENSIONS_SUPPORT == 0
+(no libdl), so the normal zend_extension load path never runs OPcache's startup. main/main.c calls
+OPcache's startup directly, just before zend_startup_extensions(), so it registers the module + ini
+and installs the compiler hooks via zend_post_startup_cb.
+
+PHP 8.5 note: OPcache's zend_extension struct was renamed (opcache_extension_entry) and made file-
+local, so main.c can no longer reach it directly (8.3/8.4 used the exported zend_extension_entry).
+ZendAccelerator.c here exposes a tiny ZEND_EXT_API hook, php_esp32_opcache_startup(), that main.c
+calls. (8.5 also dropped the accel_find_sapi() 'embed' tweak the older patch carried: 8.5 enables
+OPcache for any non-CLI SAPI when opcache.enable is set, and 'embed'/'cli-server' are not CLI.)
+--- a/main/main.c
++++ b/main/main.c
+@@ -2353,6 +2353,19 @@
+ 	zend_startup_modules();
+ 
+ 	/* start Zend extensions */
++#ifdef PHP_EXT_OPCACHE_ENABLED
++	/* php-esp32: OPcache is linked statically (no opcache.so to dlopen), and this build has
++	 * ZEND_EXTENSIONS_SUPPORT == 0 (no libdl), which makes zend_register_extension() a no-op -- so
++	 * the zend_extension mechanism won't start it. Run OPcache's zend_extension startup directly
++	 * via a hook defined in ZendAccelerator.c (its extension struct is file-local in PHP 8.5).
++	 * accel_startup() registers the OPcache module + ini and sets zend_post_startup_cb, so
++	 * accel_post_startup() installs the compiler hooks when php_module_startup() finishes. Must run
++	 * before zend_post_startup() (called at the end of php_module_startup). */
++	{
++		extern void php_esp32_opcache_startup(void);
++		php_esp32_opcache_startup();
++	}
++#endif
+ 	zend_startup_extensions();
+ 
+ 	zend_collect_module_handlers();
+--- a/ext/opcache/ZendAccelerator.c
++++ b/ext/opcache/ZendAccelerator.c
+@@ -5140,3 +5140,14 @@
+ 	NULL,									/* op_array dtor */
+ 	STANDARD_ZEND_EXTENSION_PROPERTIES
+ };
++
++/* php-esp32: OPcache is statically linked (no dlopen) and this build has ZEND_EXTENSIONS_SUPPORT
++ * == 0, so the zend_extension mechanism never runs OPcache's startup. main/main.c calls this hook
++ * directly instead. opcache_extension_entry is file-local in PHP 8.5, hence this wrapper. */
++ZEND_EXT_API void php_esp32_opcache_startup(void)
++{
++	if (opcache_extension_entry.startup) {
++		opcache_extension_entry.startup(&opcache_extension_entry);
++	}
++}
++

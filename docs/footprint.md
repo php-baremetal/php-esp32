@@ -26,12 +26,36 @@ the linker drops unused code, but they show where the mass sits:
 The Zend engine, the language itself, is the single biggest piece. Everything else is the standard
 library and the always-on extensions.
 
+## The baseline per PHP version
+
+The engine grows from one PHP release to the next, so the starting image does too. These are the same
+build (the `hello` init-loop, every optional extension off, ESP32-P4) compiled against each supported
+version, changing nothing but `-DPHP_VERSION`:
+
+| Version | Image (`.bin`) | vs 8.3.33 | Static internal RAM |
+|---|---|---|---|
+| 8.3.33 | ~3.09 MB | baseline | ~109 KB |
+| 8.4.24 | ~3.20 MB | +105 KB | ~108 KB |
+| 8.5.9 | ~3.29 MB | +198 KB (+93 KB over 8.4) | ~109 KB |
+
+The cost is almost entirely flash (code and read-only data). 8.4 brings the new Zend machinery
+(frameless functions, lazy objects, property hooks) on top of 8.3. 8.5 adds more of the same plus
+`ext/uri`, which 8.5 makes a core dependency and this port therefore builds into the baseline: the
+RFC 3986 parser (uriparser) and the legacy `parse_url()` parser. The WHATWG backend (lexbor) is
+dropped, so its ~370 KB of tables are not in these figures; see
+[the versions README](../components/php/versions/README.md).
+
+The static internal-RAM footprint does not move with the version (the three are within about 1 KB of
+each other), and the PSRAM heap is unaffected. On the P4 the extra flash is immaterial against a 12 MB
+app partition; on the S3's 16 MB flash it is still comfortable. The per-extension deltas in the rest of
+this document were measured on 8.3.33 and carry over to 8.4 and 8.5 within a few KB.
+
 ## Optional extensions
 
 Off by default, enabled per project (phpflash does this from the manifest; by hand it is a
 `-DPHP_EXT_*=ON` flag, see [ext-porting.md](ext-porting.md)). The cost is the extra flash each one
 adds. All figures are measured image deltas: the `.bin` size with the extension on, minus the baseline
-with every optional extension off (around 3.08 MB).
+with every optional extension off (around 3.08 MB on 8.3.33; see the per-version baseline above).
 
 | Extension | Adds to flash | Notes |
 |---|---|---|

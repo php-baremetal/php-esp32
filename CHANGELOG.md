@@ -1,5 +1,43 @@
 # Changelog
 
+## [0.11.0] — Multiple PHP versions (8.3, 8.4, 8.5)
+
+### Added
+- **PHP 8.4 (8.4.24) and PHP 8.5 (8.5.9) now build alongside 8.3**, selectable per project with
+  `-DPHP_VERSION=<ver>` (or `default_version` in [`php-esp32.toml`](php-esp32.toml); phpflash reads it).
+  Every version is a self-contained directory under `components/php/versions/<ver>/` — its own
+  `sources.cmake`, config headers, patches and `manifest.toml` — so the three coexist without touching
+  the shared engine glue or the boards. All three are verified on the ESP32-P4 with the
+  [`patch-test`](examples/patch-test/) suite (all patches PASS on each). See
+  [`components/php/versions/README.md`](components/php/versions/README.md).
+  - **8.4.24** porting bits: the `SETJMP` selection in `zend_portability.h` switched to
+    `#ifndef ZEND_WIN32` upstream (assumes `sigsetjmp`, which picolibc lacks), restored behind
+    `HAVE_SIGSETJMP` (new patch `0008`); new Zend sources wired in (`zend_frameless_function.c`,
+    `zend_lazy_objects.c`, `zend_property_hooks.c`), `ext/random/zend_utils.c` now feeds the core RNG,
+    and `ext/pcre/pcre2lib/pcre2_chkdint.c` is required; a weak `getppid` stub (used in random's
+    fallback seed); `mbstring` CJK/mobile codec tables reorganised upstream, patch `0003` regenerated.
+  - **8.5.9** porting bits: **`ext/uri` is now a core dependency** (the standard library requires it),
+    so it is built in — the RFC 3986 parser (bundled uriparser) and the legacy `parse_url()` parser
+    that the stream layer uses. Its **WHATWG backend (lexbor) is dropped**: ~370 KB of static tables
+    overflow the ESP32's internal RAM. `parse_url()`, `FILTER_VALIDATE_URL` and `Uri\Rfc3986\Uri` all
+    work; `Uri\WhatWg\Url` registers but raises on construction (patch `0009` drops the lexbor module
+    dependency, a stub replaces the parser). OPcache's startup was reworked for 8.5 (the extension
+    struct went `static`, and `accel_startup` no longer registers the module — done in
+    `internal_functions.c` now, patch `0006` updated); the bundled `main/php_glob.c` is compiled with
+    `HAVE_REALLOCARRAY` plus weak `getpwuid_r`/`getpwnam_r` stubs.
+- **8.3.32 → 8.3.33** — tracked the upstream security release; all seven patches still apply, image and
+  behaviour unchanged.
+- A [`patch-test`](examples/patch-test/) example: an embedded suite that exercises every port patch at
+  runtime (closure runtime-cache arena, `ext/date` timezones, mbstring CJK codecs, the hardware
+  CSPRNG, the session files handler, and — with OPcache on — the static-embed and PSRAM-SHM paths) and
+  prints PASS/FAIL/SKIP to the serial log. It is the check run against each version bump on hardware.
+
+### Notes
+- The baseline image grows with the release, almost entirely in flash: **~3.09 MB** (8.3.33),
+  **~3.20 MB** (8.4.24, +105 KB), **~3.29 MB** (8.5.9, +198 KB) for the same all-optional-off build on
+  the P4. Static internal RAM is unchanged across the three. See
+  [`docs/footprint.md`](docs/footprint.md).
+
 ## [0.10.0] — OPcache; configurable CPU frequency
 
 ### Added

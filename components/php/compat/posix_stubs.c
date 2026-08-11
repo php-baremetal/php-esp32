@@ -58,9 +58,14 @@ WEAK int posix_spawn_file_actions_addchdir_np(void *fa,const char *p)    { (void
 WEAK uid_t getuid(void)  { return 0; }
 WEAK uid_t geteuid(void) { return 0; }
 WEAK gid_t getgid(void)  { return 0; }
+WEAK pid_t getppid(void) { return 1; }   /* PHP 8.4 ext/random fallback-seed mixes it in; picolibc lacks it */
 WEAK gid_t getegid(void) { return 0; }
 WEAK int   getgroups(int n, gid_t *g) { (void)n;(void)g; return 0; }
 WEAK void *getpwuid(uid_t uid)    { (void)uid; return NULL; }
+/* PHP 8.5's bundled glob (main/php_glob.c) does ~user expansion with getpw*_r; picolibc lacks
+ * them. Report "no such user" (return 0, *result = NULL) so tilde expansion is simply a no-op. */
+WEAK int getpwuid_r(uid_t uid, void *pwd, char *buf, size_t buflen, void **result) { (void)uid;(void)pwd;(void)buf;(void)buflen; if (result) *result = NULL; return 0; }
+WEAK int getpwnam_r(const char *name, void *pwd, char *buf, size_t buflen, void **result) { (void)name;(void)pwd;(void)buf;(void)buflen; if (result) *result = NULL; return 0; }
 WEAK void *getpwnam(const char *n){ (void)n;   return NULL; }
 WEAK void *getgrnam(const char *n){ (void)n;   return NULL; }
 

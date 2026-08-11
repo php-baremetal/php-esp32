@@ -1,0 +1,44 @@
+Statically link Zend OPcache into the embed build and make it usable on this target.
+
+There is no opcache.so to dlopen on the ESP32, and this build has ZEND_EXTENSIONS_SUPPORT == 0
+(no libdl), so the normal zend_extension load path is unavailable. Two source changes:
+
+  * main/main.c: run OPcache's zend_extension startup directly (accel_startup()) just before
+    zend_startup_extensions(), so it registers the OPcache module + ini and installs the compiler
+    hooks via zend_post_startup_cb. zend_register_extension() is a no-op here, so we can't use it.
+  * ext/opcache/ZendAccelerator.c: accel_find_sapi() only enables OPcache for a fixed set of SAPIs
+    (plus "cli"/"phpdbg" when opcache.enable_cli is set). Accept the "embed" SAPI too, so
+    opcache.enable_cli=1 turns it on for this firmware.
+--- a/main/main.c
++++ b/main/main.c
+@@ -2289,6 +2289,20 @@
+ 	zend_startup_modules();
+ 
+ 	/* start Zend extensions */
++#ifdef PHP_EXT_OPCACHE_ENABLED
++	/* php-esp32: OPcache is linked statically (no opcache.so to dlopen), and this build has
++	 * ZEND_EXTENSIONS_SUPPORT == 0 (no libdl), which makes zend_register_extension() a no-op -- so
++	 * the zend_extension mechanism won't start it. Run OPcache's zend_extension startup directly:
++	 * accel_startup() registers the OPcache module + ini and sets zend_post_startup_cb, so
++	 * accel_post_startup() installs the compiler hooks when php_module_startup() finishes. Must run
++	 * before zend_post_startup() (called at the end of php_module_startup). */
++	{
++		extern zend_extension zend_extension_entry;
++		if (zend_extension_entry.startup) {
++			zend_extension_entry.startup(&zend_extension_entry);
++		}
++	}
++#endif
+ 	zend_startup_extensions();
+ 
+ 	zend_collect_module_handlers();
+--- a/ext/opcache/ZendAccelerator.c
++++ b/ext/opcache/ZendAccelerator.c
+@@ -2854,6 +2854,7 @@
+ 		}
+ 		if (ZCG(accel_directives).enable_cli && (
+ 		    strcmp(sapi_module.name, "cli") == 0
++		  || strcmp(sapi_module.name, "embed") == 0
+ 		  || strcmp(sapi_module.name, "phpdbg") == 0)) {
+ 			return SUCCESS;
+ 		}
