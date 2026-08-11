@@ -1,0 +1,23 @@
+Optionally swap the full timezone database for a UTC-only one in ext/date.
+
+When built with -DPHP_EXT_DATE_MINIMAL_TZ, parse_tz.c includes
+timezonedb_minimal.h (UTC only, ~2.7 KB) instead of the full timezonedb.h
+(~350 KB). DateTime then works in UTC only. No effect unless that macro is set.
+
+--- a/ext/date/lib/parse_tz.c
++++ b/ext/date/lib/parse_tz.c
+@@ -28,7 +28,13 @@
+ 
+ #define TIMELIB_SUPPORTS_V2DATA
+ #define TIMELIB_SUPPORT_SLIM_FILE
+-#include "timezonedb.h"
++/* ESP32-P4 PORT: with -DPHP_EXT_DATE_MINIMAL_TZ, use a UTC-only timezone database
++ * (compat/timezonedb_minimal.h) instead of the full ~350 KB one. */
++#ifdef PHP_EXT_DATE_MINIMAL_TZ
++# include "timezonedb_minimal.h"
++#else
++# include "timezonedb.h"
++#endif
+ 
+ #if (defined(__APPLE__) || defined(__APPLE_CC__)) && (defined(__BIG_ENDIAN__) || defined(__LITTLE_ENDIAN__))
+ # if defined(__LITTLE_ENDIAN__)

@@ -1,0 +1,40 @@
+name         = "patch-test"
+storage_type = "embedded"     # the test source is baked into the firmware image
+type         = "init-loop"    # a linear script: run the checks, print the result, done
+
+[board]
+target = "esp32-p4-pico"
+port   = ""
+
+[esp-idf]
+path    = ""
+version = ""
+
+[php-esp32]
+path    = ""
+version = ""
+
+# Sessions need a writable filesystem for the files save handler (patch 0005); mount a
+# microSD alongside the embedded source. If no card is present, that one check is skipped.
+[storage]
+microsd = true
+
+# The extensions whose port patches this exercises. OPcache is intentionally left OFF in the
+# shipped config so patch 0001 (the closures run-time-cache arena, which only runs when opcache
+# is off) is tested on its real path. To also test patches 0006/0007, enable it:
+#   [extensions.opcache]
+#   enabled   = true
+#   in_memory = true
+[extensions.date]
+enabled = true
+
+[extensions.mbstring]
+enabled = true
+onig    = true                # also exercise mb_ereg (oniguruma)
+
+[extensions.session]
+enabled = true
+
+[php]
+src   = "project-src"
+entry = "index.php"

@@ -3,7 +3,7 @@
 Every extension that ships in the PHP 8.3 source tree, and where it stands on this port. There is a
 machine-readable version of the optional extensions, per PHP version, in
 `components/php/versions/<version>/manifest.toml` (for the current default,
-[8.3.32](../components/php/versions/8.3.32/manifest.toml)). That manifest is the contract phpflash
+[8.3.33](../components/php/versions/8.3.33/manifest.toml)). That manifest is the contract phpflash
 reads: the flags, settings, dependencies, fetch scripts and per-mode rules. phpflash's `init` offers
 the optional extensions from it, and enabling one in the project config compiles it in. By hand it is
 a `-DPHP_EXT_*=ON` flag.

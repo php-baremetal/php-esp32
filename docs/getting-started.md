@@ -198,7 +198,7 @@ Build, selecting the board and PHP version (`./scripts/info.sh` lists what is av
 comes from the board, so there is no `set-target`:
 
 ```sh
-idf.py -DBOARD=esp32-s3-eth -DPHP_VERSION=8.3.32 build
+idf.py -DBOARD=esp32-s3-eth -DPHP_VERSION=8.3.33 build
 ```
 
 Optional extensions are off by default; turn them on with their flags (`-DPHP_EXT_MBSTRING=ON`, and so

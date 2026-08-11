@@ -10,7 +10,7 @@ system underneath, and no interpreter of our own invention in the middle.
 
 ## Real PHP, not a reimplementation
 
-The engine is the unmodified release from [php.net](https://www.php.net/) (currently `php-8.3.32`,
+The engine is the unmodified release from [php.net](https://www.php.net/) (currently `php-8.3.33`,
 sha256 verified). The source tree is vendored exactly as it ships and is never edited in place; every
 adjustment the target needs is a separate patch applied at build time. The whole Zend Engine is
 compiled in: the lexer, the parser and the opcode compiler, the virtual machine and executor, the
@@ -183,8 +183,8 @@ php-esp32/
 │   ├── php/
 │   │   ├── CMakeLists.txt     generic: builds the selected PHP version
 │   │   ├── compat/            shared POSIX stubs (posix_stubs, syslog, opcache backends)
-│   │   ├── versions/8.3.32/   per-version: sources.cmake, config headers, patches, manifest.toml
-│   │   └── php-8.3.32/        the PHP source (fetched, not committed)
+│   │   ├── versions/8.3.33/   per-version: sources.cmake, config headers, patches, manifest.toml
+│   │   └── php-8.3.33/        the PHP source (fetched, not committed)
 │   └── php_ext_gpio/          the gpio_* and delay extension
 ├── examples/                 example projects, one per folder
 ├── docs/                     architecture, porting notes, footprint, extensions, and more

@@ -4,7 +4,7 @@ Each supported PHP version is a self-contained directory, `components/php/versio
 one with `-DPHP_VERSION=<ver>`; the default is `default_version` in the repo-root
 [`php-esp32.toml`](../../../php-esp32.toml). `./scripts/info.sh` lists them.
 
-PHP **8.3** (currently 8.3.32) is the version built today. The layout keeps everything
+PHP **8.3** (currently 8.3.33) is the version built today. The layout keeps everything
 version-specific in one directory so further releases slot in beside it as they are ported, without
 touching the shared engine glue or the boards.
 
@@ -27,7 +27,7 @@ oniguruma, which track their own upstreams).
 
 ## Add a version
 
-1. `mkdir components/php/versions/<newver>/` and populate it by copying `8.3.32/` and adjusting.
+1. `mkdir components/php/versions/<newver>/` and populate it by copying `8.3.33/` and adjusting.
    Regenerate `sources.cmake` from the new tarball's file list, re-check the hand-written headers, and
    confirm the patches still apply against the new source (or update them).
 2. Put the version and sha256 in `version.env`, and write its `manifest.toml`.

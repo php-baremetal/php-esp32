@@ -9,7 +9,7 @@
 # -DPHP_VERSION=<ver>); scripts/fetch-php.sh downloads that version's source; and
 # flash-tool reads versions/<version>/manifest.toml for the extension contract.
 
-default_version = "8.3.32"
+default_version = "8.3.33"
 
 # Which board to build for by default (override with -DBOARD=<board>). A board is a
 # "family/board" directory under boards/ (chip family, then the specific board); it

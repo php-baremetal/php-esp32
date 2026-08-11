@@ -1,0 +1,20 @@
+Session's files save handler sets FD_CLOEXEC on the session file with fcntl(F_SETFD).
+FD_CLOEXEC is meaningless on this target (no fork/exec), and the ESP-IDF FATFS VFS rejects
+F_SETFD with EINVAL, so every session_start() printed a bogus warning. Attempt it but ignore
+the result.
+
+--- a/ext/session/mod_files.c
++++ b/ext/session/mod_files.c
+@@ -214,9 +214,9 @@
+ # ifndef FD_CLOEXEC
+ #  define FD_CLOEXEC 1
+ # endif
+-			if (fcntl(data->fd, F_SETFD, FD_CLOEXEC)) {
+-				php_error_docref(NULL, E_WARNING, "fcntl(%d, F_SETFD, FD_CLOEXEC) failed: %s (%d)", data->fd, strerror(errno), errno);
+-			}
++			/* php-esp32: FD_CLOEXEC is meaningless on this target (no fork/exec) and the FATFS
++			 * VFS rejects F_SETFD with EINVAL; attempt it but don't warn on failure. */
++			(void) fcntl(data->fd, F_SETFD, FD_CLOEXEC);
+ #endif
+ 		} else {
+ 			php_error_docref(NULL, E_WARNING, "open(%s, O_RDWR) failed: %s (%d)", buf, strerror(errno), errno);

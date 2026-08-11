@@ -28,3 +28,5 @@ components/php/openssl-build/
 # discovery firmware build artifacts (phpflash discover --all)
 /tools/discover-fw/build/
 /tools/discover-fw/sdkconfig
+
+examples/patch-test/build/
