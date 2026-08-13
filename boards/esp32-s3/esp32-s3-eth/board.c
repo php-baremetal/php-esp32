@@ -120,6 +120,28 @@ void board_unmount_storage(const char *mount_point)
 #define ETH_SPI_CLOCK_MHZ 20
 /* How long to wait for a DHCP lease before giving up (link-up + negotiation). */
 #define NET_DHCP_TIMEOUT_MS 15000
+/* How long to wait for the PHY link before deciding there is no cable. Ethernet is a
+ * board feature, not a requirement: a sketch that doesn't touch the network should not
+ * pay the full DHCP timeout at boot just because the port is unplugged. */
+#define NET_LINK_TIMEOUT_MS 2000
+
+/* Set from the Ethernet driver's events so board_network_up() can tell "no cable" (the
+ * link never comes up) from "link up, DHCP still negotiating". */
+static volatile bool s_eth_link_up = false;
+
+static void eth_link_event(void *arg, esp_event_base_t base, int32_t id, void *data)
+{
+    (void) arg;
+    (void) data;
+    if (base != ETH_EVENT) {
+        return;
+    }
+    if (id == ETHERNET_EVENT_CONNECTED) {
+        s_eth_link_up = true;
+    } else if (id == ETHERNET_EVENT_DISCONNECTED) {
+        s_eth_link_up = false;
+    }
+}
 
 bool board_network_up(char *ip_out, size_t ip_len)
 {
@@ -135,6 +157,8 @@ bool board_network_up(char *ip_out, size_t ip_len)
         ESP_LOGE(TAG, "event loop: %s", esp_err_to_name(err));
         return false;
     }
+    /* Track link up/down (harmless if already registered on a second call). */
+    esp_event_handler_register(ETH_EVENT, ESP_EVENT_ANY_ID, eth_link_event, NULL);
 
     esp_netif_config_t netif_cfg = ESP_NETIF_DEFAULT_ETH();
     esp_netif_t *netif = esp_netif_new(&netif_cfg);
@@ -202,6 +226,22 @@ bool board_network_up(char *ip_out, size_t ip_len)
     }
     if ((err = esp_eth_start(eth)) != ESP_OK) {
         ESP_LOGE(TAG, "eth start: %s", esp_err_to_name(err));
+        return false;
+    }
+
+    /* Wait briefly for the PHY link. With no cable it never comes up, so return quickly
+     * instead of blocking the whole DHCP timeout -- the sketch then runs right away. */
+    const int link_steps = NET_LINK_TIMEOUT_MS / 100;
+    bool linked = false;
+    for (int i = 0; i < link_steps; i++) {
+        if (s_eth_link_up) {
+            linked = true;
+            break;
+        }
+        vTaskDelay(pdMS_TO_TICKS(100));
+    }
+    if (!linked) {
+        ESP_LOGW(TAG, "ethernet: no link (cable unplugged?) -- skipping DHCP wait");
         return false;
     }
 

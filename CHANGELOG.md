@@ -1,5 +1,39 @@
 # Changelog
 
+## [0.12.0] — SSD1306 OLED examples and per-project C extensions; Ethernet optional at boot
+
+### Added
+- An [`oled-ssd1306-fps`](examples/oled-ssd1306-fps/) example: a 0.91" SSD1306 128x32 OLED driven
+  entirely from PHP. The I2C link is bit-banged over two GPIO pins with the `gpio` extension -- no
+  C-side I2C driver, every START, clock edge and byte is a PHP call. It benchmarks full-frame
+  throughput (the 512-byte framebuffer, flushed in one transaction) and shows the rate both on the
+  panel and on the serial log. On the ESP32-P4-ETH the pure-PHP driver holds **~41 FPS**, verified on
+  hardware. The driver is a reusable `SSD1306` class in its own file (`project-src/SSD1306.php`).
+- **Custom C extensions per project.** A project can drop PHP extensions written in C under
+  `./firmware/exts/<name>/` and phpflash compiles them into the firmware -- no forking the base
+  firmware. Each directory is one extension and must define `zend_module_entry <name>_module_entry`
+  (the same shape as the built-in `gpio`); its sources are compiled with the engine headers, and the
+  firmware registers it at startup via `zend_startup_module()` so its functions are available to the
+  script. Extensions are statically linked (there is no `dlopen` on this target). Extra ESP-IDF
+  component dependencies go in `firmware/exts/<name>/idf_requires.txt`. See
+  [docs/custom-extensions.md](docs/custom-extensions.md).
+  - New firmware component `php_project_exts` (globs the project's extension dirs, generates the
+    registration table, links `WHOLE_ARCHIVE`); a single weak-symbol hook in `main.c`; and phpflash
+    passes `-DPHP_PROJECT_EXTS_DIR` when `./firmware/exts` exists. A firmware built without any
+    project extensions is unchanged.
+- An [`oled-ssd1306-ext`](examples/oled-ssd1306-ext/) example: the same SSD1306 panel driven by a
+  **native C extension** (hardware I2C, framebuffer and text in C) instead of the pure-PHP bit-banged
+  driver, built with the per-project extension mechanism above. On the ESP32-P4-ETH it runs full
+  frames at **~82 FPS** -- twice the pure-PHP driver, now bound by the 400 kHz I2C bus rather than the
+  interpreter. Verified on hardware.
+
+### Changed
+- **Ethernet is no longer required to boot.** On the networked boards (ESP32-P4-ETH, ESP32-S3-ETH),
+  `board_network_up()` now watches the PHY link and, when there is no link (cable unplugged), returns
+  at once instead of blocking the full 15 s DHCP timeout before the script runs. A sketch that doesn't
+  use the network -- like the OLED demos -- now boots straight into `setup()`/`loop()`. With a cable the
+  behaviour is unchanged: link comes up, then it waits for the DHCP lease as before.
+
 ## [0.11.0] — Multiple PHP versions (8.3, 8.4, 8.5)
 
 ### Added

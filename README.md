@@ -110,8 +110,10 @@ function loop(int $tick): void {
 
 `gpio_mode`, `gpio_write`, `gpio_read` and `delay` come from a small built-in extension. `delay`
 yields the core through `vTaskDelay` instead of busy-waiting, so the watchdog stays satisfied, and
-`echo` goes to the serial console. Here is that sketch on real hardware, three lines of PHP driving a
-physical pin:
+`echo` goes to the serial console. A project can add its own native functions the same way, by
+dropping a C extension under `./firmware/exts/` -- see
+[docs/custom-extensions.md](docs/custom-extensions.md). Here is that sketch on real hardware, three
+lines of PHP driving a physical pin:
 
 ![An LED blinking, driven from PHP](examples/led-blink/display.gif)
 

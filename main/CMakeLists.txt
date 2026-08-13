@@ -36,7 +36,7 @@ idf_component_register(
     INCLUDE_DIRS "." ${BOARD_INCLUDE_DIRS}
     # esp_partition/fatfs/vfs: main.c mounts the optional read-only embedded source
     # partition itself (board-agnostic); the board adds its own storage drivers too.
-    REQUIRES php php_ext_gpio esp_partition fatfs vfs ${WEB_SERVER_REQUIRES} ${BOARD_REQUIRES}
+    REQUIRES php php_ext_gpio php_project_exts esp_partition fatfs vfs ${WEB_SERVER_REQUIRES} ${BOARD_REQUIRES}
 )
 
 # fs_pathnorm.c: --wrap the file syscalls so "." / ".." in paths are collapsed before the FATFS VFS

@@ -29,4 +29,4 @@ components/php/openssl-build/
 /tools/discover-fw/build/
 /tools/discover-fw/sdkconfig
 
-examples/patch-test/build/
+examples/*/build/

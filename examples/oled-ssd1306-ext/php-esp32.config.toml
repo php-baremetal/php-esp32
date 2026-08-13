@@ -1,0 +1,23 @@
+name = "oled-ssd1306-ext"
+storage_type = "embedded"   # baked into flash; the demo needs no microSD
+type = "init-loop"          # setup()/loop() sketch, Arduino-style
+
+[board]
+target = "esp32-p4-eth"
+port   = ""          # empty = autodetect at flash time
+
+[esp-idf]
+path    = ""
+version = ""
+
+[php-esp32]
+path    = ""
+version = ""
+
+[storage]
+microsd = false   # pure flash: the SD stack isn't compiled in
+
+[php]
+src     = "project-src"      # PHP source folder (baked into the image)
+entry   = "index.php"    # entry file within src
+version = ""             # empty = repo default PHP version

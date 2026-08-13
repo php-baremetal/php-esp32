@@ -202,6 +202,32 @@ static void run_setup_loop(void)
     }
 }
 
+/*
+ * Per-project C extensions. A project can drop custom extensions in ./firmware/exts/<name>/;
+ * the php_project_exts component compiles them and generates this table (linked with
+ * WHOLE_ARCHIVE). The symbols are weak so a firmware built without any still links -- the count
+ * then resolves to 0. Each entry is registered after php_embed_init(), so its functions, classes
+ * and constants are available to the script (MINIT runs; there is no per-request RINIT for a
+ * module added this late, which a hardware-driver extension doesn't need).
+ */
+extern zend_module_entry * const php_esp32_project_extensions[] __attribute__((weak));
+extern const int php_esp32_project_extension_count __attribute__((weak));
+
+static void register_project_extensions(void)
+{
+    if (&php_esp32_project_extension_count == NULL || php_esp32_project_extension_count == 0) {
+        return;
+    }
+    for (int i = 0; i < php_esp32_project_extension_count; i++) {
+        zend_module_entry *m = php_esp32_project_extensions[i];
+        if (zend_startup_module(m) == SUCCESS) {
+            ESP_LOGI(TAG, "project ext '%s' registered", m->name);
+        } else {
+            ESP_LOGW(TAG, "project ext '%s' failed to register", m->name);
+        }
+    }
+}
+
 /* Mount the optional embedded PHP source: a read-only FAT image in the internal
  * 'storage' partition. Absent on microSD-only firmware (the partition may not exist, or
  * exist but hold no image) -- in which case this returns false and we run from the SD. */
@@ -934,6 +960,9 @@ static void php_task(void *arg)
         vTaskDelete(NULL);
         return;
     }
+
+    /* Register any per-project C extensions (from ./firmware/exts) before the script runs. */
+    register_project_extensions();
 
     /* Firmware banners go straight to stdout, NOT through php_printf: php_printf runs PHP's output
      * layer, which marks SG(headers_sent), and that breaks anything the script does before its own
