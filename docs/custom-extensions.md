@@ -9,6 +9,18 @@ pure PHP.
 Extensions are **statically linked** -- there is no `dlopen` on this target, so there are no `.so`
 files. Everything is compiled in and registered at startup.
 
+## Quick start
+
+From the project directory, scaffold one:
+
+```sh
+phpflash ext new myext      # creates firmware/exts/myext/myext.c with a working skeleton
+phpflash build              # compiles it into the firmware
+```
+
+The skeleton defines the module entry and two example functions (`myext_hello()` and
+`myext_add($a, $b)`) to replace with your own. The rest of this document is the contract behind it.
+
 ## Layout
 
 Put each extension in its own directory under `firmware/exts/` next to your project config:
