@@ -1,3 +1,19 @@
+<div align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="assets/logo-dark.svg">
+    <source media="(prefers-color-scheme: light)" srcset="assets/logo-light.svg">
+    <img alt="php-esp32" src="assets/logo-light.svg" width="440">
+  </picture>
+</div>
+
+<p align="center">
+  <a href="LICENSE"><img alt="License" src="https://img.shields.io/github/license/php-baremetal/php-esp32?style=flat-square&color=475569"></a>
+  <img alt="PHP 8.3 | 8.4 | 8.5" src="https://img.shields.io/badge/PHP-8.3%20%7C%208.4%20%7C%208.5-777BB4?style=flat-square&logo=php&logoColor=white">
+  <img alt="ESP-IDF v5.5.5" src="https://img.shields.io/badge/ESP--IDF-v5.5.5-E7352C?style=flat-square&logo=espressif&logoColor=white">
+  <img alt="Targets: ESP32-P4 | S3" src="https://img.shields.io/badge/targets-ESP32--P4%20%7C%20S3-475569?style=flat-square&logo=espressif&logoColor=white">
+  <a href="https://github.com/php-baremetal/php-esp32/stargazers"><img alt="Stars" src="https://img.shields.io/github/stars/php-baremetal/php-esp32?style=flat-square&color=475569"></a>
+</p>
+
 # PHP on ESP32
 
 Run the real PHP interpreter on a microcontroller. Not a lookalike, not a language subset, not a

@@ -7,11 +7,11 @@ board you choose. `./scripts/info.sh` lists what the checkout can build.
 
 ## Boards in this repo
 
-| Board | Family | Notes |
-|---|---|---|
-| `esp32-p4-pico` | `esp32-p4` | Waveshare ESP32-P4-Pico. 4-bit SDMMC microSD, 32 MB flash, no network. The default board. |
-| `esp32-p4-eth` | `esp32-p4` | Waveshare ESP32-P4-ETH. The same P4 SD design as the Pico (plus a GPIO45 card-power switch) and a wired Ethernet PHY (IP101GRI over RMII), so it runs the `web-server` model. |
-| `esp32-s3-eth` | `esp32-s3` | Waveshare ESP32-S3-ETH. Xtensa LX7, 8 MB PSRAM, 16 MB flash. microSD over SPI and a W5500 Ethernet controller over SPI. Runs plain apps and a live web server. |
+| Board | Family | Notes                                                                                                                                                                         |
+|---|---|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `esp32-p4-pico` | `esp32-p4` | Waveshare/generic ESP32-P4-Pico. 4-bit SDMMC microSD, 32 MB flash, no network. The default board.                                                                             |
+| `esp32-p4-eth` | `esp32-p4` | Waveshare/generic  ESP32-P4-ETH. The same P4 SD design as the Pico (plus a GPIO45 card-power switch) and a wired Ethernet PHY (IP101GRI over RMII), so it runs the `web-server` model. |
+| `esp32-s3-eth` | `esp32-s3` | Waveshare/generic  ESP32-S3-ETH. Xtensa LX7, 8 MB PSRAM, 16 MB flash. microSD over SPI and a W5500 Ethernet controller over SPI. Runs plain apps and a live web server.                |
 
 Two families are supported today, `esp32-p4` (RISC-V) and `esp32-s3` (Xtensa). Others in the ESP32
 line with PSRAM and enough flash are candidates, and a new one is a directory here, not a change to
