@@ -55,6 +55,11 @@ if(_idf_target_line MATCHES "^CONFIG_IDF_TARGET=\"([^\"]+)\"")
     message(STATUS "php-esp32: IDF target pinned to '${IDF_TARGET}' (from ${FAMILY_DIR}/sdkconfig.family)")
 endif()
 
+# Dynamic partition table: the `storage` partition is generated from PHP_EMBED_SRC (present and
+# sized to the source for an embedded build, absent for a microSD one) into <project>/build/. Must
+# run after SDKCONFIG_DEFAULTS is set and before project(); it appends its own fragment last.
+include("${REPO_ROOT}/cmake/gen-partitions.cmake")
+
 include($ENV{IDF_PATH}/tools/cmake/project.cmake)
 project(php-esp32)
 

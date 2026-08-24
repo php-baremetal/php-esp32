@@ -44,6 +44,8 @@ in a browser).
 | [`hello/`](hello/) | A linear script: prints and stops. The bare minimum to see the engine alive. | nothing |
 | [`language-tour/`](language-tour/) | A tour through closures, generators, classes, `match`, exceptions and the standard library, timing each step. Proof it is real PHP. | nothing |
 | [`require-demo/`](require-demo/) | A program split across several files with `require` and `require_once`. | nothing |
+| [`env-demo/`](env-demo/) | Reads configuration from a project `.env` baked into the firmware, as `$_ENV` / `getenv()`. | nothing |
+| [`store-demo/`](store-demo/) | A boot counter that survives resets, kept in the reboot-persistent `store_*` key-value store (NVS). | nothing |
 | [`composer-collections/`](composer-collections/) | Composer autoloading with the Illuminate Collections package. | `vendor/` |
 | [`led-blink/`](led-blink/) | The setup/loop model: blinks an LED forever. | LED + ~330 ohm between GPIO2 and GND |
 | [`blink-sos/`](blink-sos/) | Blinks "SOS" in Morse code on the LED. | same as above |
@@ -69,6 +71,9 @@ in a browser).
 | [`symfony-demo/`](symfony-demo/) | Symfony 7.4 (skeleton + a controller) on the microSD, browsable over HTTP at ~2.1 s per request (prod, OPcache warm). A minimal, XML-free slice: Symfony's `ext-iconv` and `ext-xml` requirements are bypassed. | P4-ETH + network, `ctype`/`mbstring`/`tokenizer`/`session`/`date`/`opcache` + microSD |
 | [`web-server-init-loop/`](web-server-init-loop/) | Serves a web page over Ethernet, with the whole HTTP server written in PHP (setup/loop). | networked board |
 | [`web-server/`](web-server/) | The same page, using the firmware's `web-server` project type: a C HTTP server in front, PHP run fresh per request. | networked board |
+| [`oled-ssd1306-fps/`](oled-ssd1306-fps/) | A 128x32 SSD1306 OLED driven from pure PHP, I2C bit-banged over two GPIO pins; benchmarks full-frame throughput (~41 FPS). | a 0.91" SSD1306 OLED |
+| [`oled-ssd1306-ext/`](oled-ssd1306-ext/) | The same panel driven by a native C extension (hardware I2C) shipped as a per-project extension: ~82 FPS, twice the pure-PHP driver. | a 0.91" SSD1306 OLED |
+| [`patch-test/`](patch-test/) | Exercises every port patch (closures, date, mbstring, CSPRNG, session, OPcache) and reports PASS/FAIL on the serial log. | a microSD |
 
 The linear examples run once and finish; the hardware ones (`led-blink`, `blink-sos`, `button-led`)
 use the setup/loop model and keep going as long as the board is powered. The `web-server` examples

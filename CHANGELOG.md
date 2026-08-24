@@ -1,5 +1,43 @@
 # Changelog
 
+## [0.13.0] — Dynamic partitions, build-time environment (`.env`), and a persistent store
+
+### Added
+- **A reboot-persistent key-value store for PHP (`store_*`), backed by NVS.** A new built-in
+  extension: `store_set()` writes a value that survives a reset and comes back with `store_get()` on
+  the next boot; also `store_has`, `store_delete`, `store_clear`, `store_keys` and `store_available`.
+  It is off until the project gives it flash with `[store] size_kb`, which the dynamic partition
+  generator turns into a dedicated `phpstore` NVS partition. Keys are ≤15 chars, values are strings
+  (auto-committed). Verified on the ESP32-P4 with the [`store-demo`](examples/store-demo/) boot
+  counter. See [docs/store.md](docs/store.md).
+- **A project `.env` is baked into the firmware and exposed to PHP as `$_ENV` and `getenv()`.** Drop a
+  `.env` next to `php-esp32.config.toml` (`KEY=VALUE`, `#` comments, optional quotes) and its values
+  are compiled in; `main.c` applies them with `setenv()` before the engine starts, so PHP's normal
+  environment import fills `$_ENV` (the build's `variables_order` carries `E`) and `getenv()` returns
+  them. Works in both the init-loop and web-server models. Configurable from the project config
+  (`[env] enabled` / `file`); on by default when a `.env` exists, and `phpflash init` adds `.env` to
+  the project `.gitignore`. Verified on the ESP32-P4 with the [`env-demo`](examples/env-demo/)
+  example. See [docs/environment.md](docs/environment.md).
+  - The values live in the app image in internal flash, **not** on the removable microSD and not in
+    the PHP source tree. They are not secret or encrypted (a flash dump recovers them), but they are
+    not readable by pulling the card and are harder to extract than a file on it.
+
+### Changed
+- **The flash partition layout is now generated per build** (`cmake/gen-partitions.cmake`) instead of
+  a fixed CSV. A board's `partitions.csv` keeps only the constant partitions (`nvs`, `phy_init`,
+  `factory`); the `storage` partition -- the read-only FAT image that holds an embedded project's PHP
+  source -- is generated:
+  - **`embedded` project**: `storage` is sized to the source (cluster-rounded occupancy + FAT
+    overhead + the configurable `[storage] reserve_kb`, aligned to 64 KB, 128 KB floor) rather than a
+    fixed multi-megabyte block. A tiny sketch now gets a 128 KB partition instead of 8 MB.
+  - **`microsd` project**: no `storage` partition at all -- the source runs from the card, and that
+    flash stays free (about 20 MB of the P4's 32 MB is left unpartitioned). `main.c` already falls
+    back to the card when the partition is absent, so no runtime change was needed.
+  - The generated table (`partitions.gen.csv`) is written into the project's `build/` and selected via
+    a sdkconfig fragment layered last; it is never committed. Verified on the ESP32-P4-ETH for both an
+    embedded build (128 KB storage, source mounts and runs) and a microSD build (no storage
+    partition). See [docs/footprint.md](docs/footprint.md).
+
 ## [0.12.0] — SSD1306 OLED examples and per-project C extensions; Ethernet optional at boot
 
 ### Added

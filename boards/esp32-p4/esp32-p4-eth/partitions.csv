@@ -1,10 +1,10 @@
-# Partition layout -- 32 MB NOR flash (GD25Q256).
-# The microSD is the usual storage. `storage` is an optional read-only FAT image that
-# holds the PHP source for "embedded" builds (see the top-level CMakeLists PHP_EMBED_SRC);
-# it stays empty on microSD-only firmware, and the app then falls back to the card.
+# Fixed partitions -- 32 MB NOR flash (GD25Q256).
+# The `storage` partition (the read-only FAT image that holds the PHP source for an "embedded"
+# build) is NOT listed here: cmake/gen-partitions.cmake adds it per build, sized to the source, and
+# omits it entirely for a microSD project (the app then runs from the card). Only the fixed
+# partitions are below.
 #
 # Name,     Type, SubType,  Offset,   Size
 nvs,        data, nvs,      ,         24K
 phy_init,   data, phy,      ,         4K
 factory,    app,  factory,  ,         12M
-storage,    data, fat,      ,         8M

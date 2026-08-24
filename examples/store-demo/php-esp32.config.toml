@@ -1,0 +1,27 @@
+name = "store-demo"
+storage_type = "embedded"
+type = "init-loop"
+
+[board]
+target = "esp32-p4-pico"
+port   = ""
+
+[esp-idf]
+path    = ""
+version = ""
+
+[php-esp32]
+path    = ""
+version = ""
+
+[storage]
+microsd = false
+
+[php]
+src     = "project-src"
+entry   = "index.php"
+version = ""
+
+# Reboot-persistent key-value store (store_set/store_get, NVS-backed). Give it 32 KB of flash.
+[store]
+size_kb = 32

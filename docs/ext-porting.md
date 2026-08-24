@@ -32,8 +32,10 @@ The language itself (the Zend engine) plus these extensions are compiled uncondi
 
 `Core` · `standard` · `pcre` · `hash` · `json` · `spl` · `reflection` · `random`
 
-Plus one non-standard extension of ours: **`gpio`** (`gpio_mode`, `gpio_write`, `gpio_read`, `delay`
-and the `GPIO_*` constants), covered in [porting-notes.md](porting-notes.md).
+Plus two non-standard extensions of ours: **`gpio`** (`gpio_mode`, `gpio_write`, `gpio_read`, `delay`
+and the `GPIO_*` constants), covered in [porting-notes.md](porting-notes.md); and **`store`**, a
+reboot-persistent key-value store (`store_set`, `store_get`, ...) backed by NVS, which needs
+`[store] size_kb` in the project config to have any flash to use -- see [store.md](store.md).
 
 ## Full list
 

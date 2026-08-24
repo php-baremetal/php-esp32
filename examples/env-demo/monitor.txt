@@ -1,0 +1,92 @@
+I (25) boot: ESP-IDF v5.5.5 2nd stage bootloader
+I (26) boot: compile time Aug 24 2026 09:46:50
+I (26) boot: Multicore bootloader
+I (27) boot: chip revision: v1.3
+I (29) boot: efuse block revision: v0.3
+I (32) boot.esp32p4: SPI Speed      : 80MHz
+I (36) boot.esp32p4: SPI Mode       : DIO
+I (40) boot.esp32p4: SPI Flash Size : 32MB
+I (44) boot: Enabling RNG early entropy source...
+I (48) boot: Partition Table:
+I (51) boot: ## Label            Usage          Type ST Offset   Length
+I (57) boot:  0 nvs              WiFi data        01 02 00009000 00006000
+I (64) boot:  1 phy_init         RF data          01 01 0000f000 00001000
+I (70) boot:  2 factory          factory app      00 00 00010000 00c00000
+I (77) boot:  3 storage          Unknown data     01 81 00c10000 00020000
+I (84) boot: End of partition table
+I (87) esp_image: segment 0: paddr=00010020 vaddr=40230020 size=bee24h (781860) map
+I (225) esp_image: segment 1: paddr=000cee4c vaddr=30100000 size=0007ch (   124) load
+I (226) esp_image: segment 2: paddr=000ceed0 vaddr=4ff00000 size=01148h (  4424) load
+I (231) esp_image: segment 3: paddr=000d0020 vaddr=40000020 size=22b1f4h (2273780) map
+I (614) esp_image: segment 4: paddr=002fb21c vaddr=4ff01148 size=106e4h ( 67300) load
+I (628) esp_image: segment 5: paddr=0030b908 vaddr=4ff11880 size=03514h ( 13588) load
+I (636) boot: Loaded app from partition at offset 0x10000
+I (637) boot: Disabling RNG early entropy source...
+I (648) hex_psram: vendor id    : 0x0d (AP)
+I (649) hex_psram: Latency      : 0x01 (Fixed)
+I (649) hex_psram: DriveStr.    : 0x00 (25 Ohm)
+I (650) hex_psram: dev id       : 0x03 (generation 4)
+I (654) hex_psram: density      : 0x07 (256 Mbit)
+I (659) hex_psram: good-die     : 0x06 (Pass)
+I (663) hex_psram: SRF          : 0x02 (Slow Refresh)
+I (668) hex_psram: BurstType    : 0x00 ( Wrap)
+I (672) hex_psram: BurstLen     : 0x03 (2048 Byte)
+I (676) hex_psram: BitMode      : 0x01 (X16 Mode)
+I (681) hex_psram: Readlatency  : 0x04 (14 cycles@Fixed)
+I (686) hex_psram: DriveStrength: 0x00 (1/1)
+I (690) MSPI Timing: Enter psram timing tuning
+I (867) esp_psram: Found 32MB PSRAM device
+I (868) esp_psram: Speed: 200MHz
+I (868) hex_psram: psram CS IO is dedicated
+I (869) cpu_start: Multicore app
+I (1820) esp_psram: SPI SRAM memory test OK
+I (1829) cpu_start: GPIO 38 and 37 are used as console UART I/O pins
+I (1830) cpu_start: Pro cpu start user code
+I (1830) cpu_start: cpu freq: 360000000 Hz
+I (1832) app_init: Application information:
+I (1836) app_init: Project name:     php-esp32
+I (1840) app_init: App version:      62dbfe9-dirty
+I (1845) app_init: Compile time:     Aug 24 2026 09:46:37
+I (1850) app_init: ELF file SHA256:  a6a048670...
+I (1854) app_init: ESP-IDF:          v5.5.5
+I (1858) efuse_init: Min chip rev:     v1.0
+I (1862) efuse_init: Max chip rev:     v1.99 
+I (1866) efuse_init: Chip rev:         v1.3
+I (1870) heap_init: Initializing. RAM available for dynamic allocation:
+I (1876) heap_init: At 4FF27DA0 len 00013220 (76 KiB): RETENT_RAM
+I (1882) heap_init: At 4FF3AFC0 len 00004BF0 (18 KiB): RAM
+I (1887) heap_init: At 4FF45780 len 0005A880 (362 KiB): RAM
+I (1893) heap_init: At 50108080 len 00007F80 (31 KiB): RTCRAM
+I (1898) heap_init: At 3010007C len 00001F84 (7 KiB): SPM
+I (1903) esp_psram: Adding pool of 32768K of PSRAM memory to heap allocator
+I (1911) spi_flash: detected chip: gd
+I (1913) spi_flash: flash io: dio
+I (1916) sleep_gpio: Configure to isolate all GPIO pins in sleep state
+I (1923) sleep_gpio: Enable automatic switching of GPIO sleep configuration
+I (1930) main_task: Started on CPU0
+I (1950) esp_psram: Reserving pool of 32K of internal memory for DMA/internal allocations
+I (1950) main_task: Calling app_main()
+I (1950) php-esp32: starting PHP runtime
+I (1960) php-esp32: embedded source mounted at /app
+I (1960) php-esp32: applied 5 env var(s) from .env
+I (1970) php-esp32: php_embed_init()...
+PHP 8.4.24 on ESP32-P4
+--- /app/index.php ---
+
+=== env-demo :: configuration from .env ===
+  device name : p4-lab-01
+  API base    : https://api.example.test/v1
+  sample rate : 5 Hz  (cast from the "5" string)
+  debug       : on
+  greeting    : hello from flash  (via getenv())
+  edit .env and re-run `phpflash build` to change these
+===========================================
+I (2070) php-esp32: entering loop()
+[p4-lab-01] heartbeat #0
+I (2080) main_task: Returned from app_main()
+I (4080) php-esp32: tick 0 -- heap free: 32660327 bytes
+[p4-lab-01] heartbeat #1
+[p4-lab-01] heartbeat #2
+[p4-lab-01] heartbeat #3
+[p4-lab-01] heartbeat #4
+[p4-lab-01] heartbeat #5

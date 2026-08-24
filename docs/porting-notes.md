@@ -88,9 +88,10 @@ at once. The default is the **microSD**: the card is mounted read-write at `/sdc
 runs `/sdcard/index.php`. Editing the code is just swapping the file on the card — no rebuild.
 
 **Embedded** puts the source inside the chip instead, for a board that ships without a card. The
-partition table carries a fourth partition, `storage` (8 MB, type `fat`), and the top-level
-`CMakeLists.txt` builds a **read-only FAT image** from a source directory when you pass
-`-DPHP_EMBED_SRC=<dir>`:
+partition table gains a `storage` partition (type `fat`), sized to the source by
+`cmake/gen-partitions.cmake` — a `microsd` project has none at all (see
+[footprint.md](footprint.md)). The top-level `CMakeLists.txt` builds a **read-only FAT image** from a
+source directory when you pass `-DPHP_EMBED_SRC=<dir>`:
 
 ```cmake
 fatfs_create_rawflash_image(storage "${PHP_EMBED_SRC}" FLASH_IN_PROJECT)

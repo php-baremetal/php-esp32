@@ -128,6 +128,11 @@ key = "gpio"
 description = "GPIO pins: gpio_mode/gpio_write/gpio_read/delay and the GPIO_* constants."
 required_for = ["init-loop", "event-driven"]
 
+[[extension]]
+key = "store"
+description = "Reboot-persistent key-value store (store_set/store_get/keys, NVS-backed). Always built in; add [store] size_kb to the project config to give it flash, otherwise store_available() is false."
+required_for = ["init-loop", "web-server", "event-driven"]
+
 # --- Optional extensions: off by default, enabled by a build flag ------------
 
 [[extension]]

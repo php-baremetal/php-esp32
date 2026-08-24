@@ -228,6 +228,25 @@ static void register_project_extensions(void)
     }
 }
 
+/*
+ * Build-time environment. phpflash bakes the project's .env into this table (a flat array of
+ * alternating key, value; see main/CMakeLists.txt and docs/environment.md). Applying it with
+ * setenv() *before* php_embed_init() means PHP exposes it both as $_ENV[...] (variables_order carries
+ * 'E') and via getenv(). An empty table (no .env) is a no-op.
+ */
+extern const char *const php_esp32_env[];
+extern const int php_esp32_env_count;
+
+static void apply_project_env(void)
+{
+    for (int i = 0; i < php_esp32_env_count; i++) {
+        setenv(php_esp32_env[2 * i], php_esp32_env[2 * i + 1], 1);
+    }
+    if (php_esp32_env_count > 0) {
+        ESP_LOGI(TAG, "applied %d env var(s) from .env", php_esp32_env_count);
+    }
+}
+
 /* Mount the optional embedded PHP source: a read-only FAT image in the internal
  * 'storage' partition. Absent on microSD-only firmware (the partition may not exist, or
  * exist but hold no image) -- in which case this returns false and we run from the SD. */
@@ -953,6 +972,9 @@ static void php_task(void *arg)
     }
 #endif
 #endif
+
+    /* Apply the baked .env before the engine starts, so it lands in $_ENV / getenv(). */
+    apply_project_env();
 
     ESP_LOGI(TAG, "php_embed_init()...");
     if (php_embed_init(0, NULL) != SUCCESS) {

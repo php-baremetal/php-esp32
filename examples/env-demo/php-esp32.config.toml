@@ -1,0 +1,29 @@
+name = "env-demo"
+storage_type = "embedded"   # baked into flash; the .env is compiled in too
+type = "init-loop"          # setup()/loop() sketch
+
+[board]
+target = "esp32-p4-pico"
+port   = ""          # empty = autodetect at flash time
+
+[esp-idf]
+path    = ""
+version = ""
+
+[php-esp32]
+path    = ""
+version = ""
+
+[storage]
+microsd = false   # pure flash: no card needed
+
+[php]
+src     = "project-src"
+entry   = "index.php"
+version = ""
+
+# The ./.env next to this file is baked into the firmware and exposed as $_ENV / getenv().
+# It is on by default when .env exists; this block just shows the knobs:
+[env]
+enabled = true
+file    = ".env"

@@ -101,6 +101,25 @@ internal flash can drop it (`[storage] microsd = false`, the default for embedde
 stay either way, since the embedded image is FAT too. Dropping the SD stack also lets a board with no
 card slot build cleanly.
 
+## Partitions
+
+The flash layout is generated per build (`cmake/gen-partitions.cmake`), not fixed. A board's
+`partitions.csv` only pins the constant partitions -- `nvs` (24 KB), `phy_init` (4 KB) and the
+`factory` app (12 MB on the P4, 10 MB on the S3). The `storage` partition -- the read-only FAT image
+that holds an embedded project's PHP source -- is dynamic:
+
+- **`embedded` project**: a `storage` partition is added, sized to the source rather than a fixed
+  block. The size is the source's cluster-rounded occupancy (4 KB FAT clusters) plus FAT overhead and
+  the optional `[storage] reserve_kb`, aligned up to 64 KB with a 128 KB floor. A tiny sketch gets a
+  128 KB partition instead of the old fixed multi-megabyte one.
+- **`microsd` project**: no `storage` partition at all. The source lives on the card; the firmware
+  looks the partition up by name and falls back to the card when it is absent, so that flash stays
+  free.
+
+So a microSD firmware on the P4 leaves roughly 20 MB of the 32 MB flash unpartitioned, and an
+embedded one only spends what the source needs. The generated table lands in the project's `build/`
+(`partitions.gen.csv`) and is never committed.
+
 ## RAM
 
 Two very different pools.

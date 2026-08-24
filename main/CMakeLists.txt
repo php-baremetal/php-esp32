@@ -31,12 +31,23 @@ if("$ENV{PHP_ESP32_MICROSD}" STREQUAL "OFF")
     set(_microsd OFF)
 endif()
 
+# Build-time environment: phpflash bakes the project's .env into a generated C file and passes it as
+# -DPHP_ENV_SRC; main.c applies it with setenv() so PHP sees it as $_ENV / getenv(). A raw idf.py
+# build (no phpflash) gets an empty table so main.c still links.
+if(DEFINED PHP_ENV_SRC AND NOT PHP_ENV_SRC STREQUAL "")
+    set(_env_src "${PHP_ENV_SRC}")
+else()
+    set(_env_src "${CMAKE_CURRENT_BINARY_DIR}/php_env.empty.c")
+    file(WRITE "${_env_src}"
+        "const char *const php_esp32_env[] = {(const char *)0};\nconst int php_esp32_env_count = 0;\n")
+endif()
+
 idf_component_register(
-    SRCS "main.c" "fs_pathnorm.c" "fs_glob.c" ${BOARD_SRCS}
+    SRCS "main.c" "fs_pathnorm.c" "fs_glob.c" "${_env_src}" ${BOARD_SRCS}
     INCLUDE_DIRS "." ${BOARD_INCLUDE_DIRS}
     # esp_partition/fatfs/vfs: main.c mounts the optional read-only embedded source
     # partition itself (board-agnostic); the board adds its own storage drivers too.
-    REQUIRES php php_ext_gpio php_project_exts esp_partition fatfs vfs ${WEB_SERVER_REQUIRES} ${BOARD_REQUIRES}
+    REQUIRES php php_ext_gpio php_ext_store php_project_exts esp_partition fatfs vfs ${WEB_SERVER_REQUIRES} ${BOARD_REQUIRES}
 )
 
 # fs_pathnorm.c: --wrap the file syscalls so "." / ".." in paths are collapsed before the FATFS VFS

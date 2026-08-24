@@ -126,7 +126,9 @@ and Symfony both serve pages this way.
 **Where the code lives.** Also per project. A `microsd` project reads its source from a FAT card, so
 to change what runs you pull the card, edit the files from your PC, put it back and reset, with no
 rebuild. An `embedded` project bakes a read-only copy of the source into the firmware image, so the
-board needs no card at all; a microSD can still be mounted alongside it for writable data.
+board needs no card at all; a microSD can still be mounted alongside it for writable data. The flash
+partition layout follows this choice, generated per build: an embedded image is sized to its source,
+a microSD project carries none of it, leaving that flash free.
 
 Ready-made sketches live in [`examples/`](examples/), one per folder.
 
@@ -141,7 +143,12 @@ extension from the firmware's manifest and pulls any extra sources it needs.
   `tokenizer`, and PDO SQLite for an on-card or in-memory database.
 - **Time.** `date` brings the `DateTime` family and timezone support; a minimal UTC stub covers the
   few core call sites when the full extension is off.
-- **State.** `session` for per-visitor state on the web-server model.
+- **State.** `session` for per-visitor state on the web-server model, and a reboot-persistent
+  key-value store (`store_set` / `store_get`, backed by the chip's NVS) for values that must survive
+  a reset, like a boot counter or a device identity. See [docs/store.md](docs/store.md).
+- **Configuration.** A project `.env` next to the config is baked into the firmware and read as
+  `$_ENV` / `getenv()`, so endpoints, flags and device names live in configuration rather than in the
+  script -- and not on the removable card. See [docs/environment.md](docs/environment.md).
 - **OPcache.** The bundled Zend OPcache is ported (no JIT, statically linked). It caches compiled
   bytecode to the card or into PSRAM, so a request stops recompiling the framework every time.
 - **TLS.** The `openssl` extension has two builds: a compact one backed by the chip's mbedTLS, and the
@@ -187,7 +194,9 @@ php-esp32/
 │   │   ├── compat/            shared POSIX stubs (posix_stubs, syslog, opcache backends)
 │   │   ├── versions/8.4.24/   per-version: sources.cmake, config headers, patches, manifest.toml
 │   │   └── php-8.4.24/        the PHP source (fetched, not committed)
-│   └── php_ext_gpio/          the gpio_* and delay extension
+│   ├── php_ext_gpio/          the gpio_* and delay extension
+│   ├── php_ext_store/         the store_* reboot-persistent key-value store (NVS)
+│   └── php_project_exts/      compiles a project's own C extensions from ./firmware/exts/
 ├── examples/                 example projects, one per folder
 ├── docs/                     architecture, porting notes, footprint, extensions, and more
 └── resources/                board datasheets and pinouts
@@ -219,6 +228,10 @@ is the full account, with each decision and the reason for it.
 - [docs/porting-notes.md](docs/porting-notes.md): every technical choice and why, including the
   per-chip and per-board work.
 - [docs/ext-porting.md](docs/ext-porting.md): each extension, marked built-in, optional, or not ported.
+- [docs/custom-extensions.md](docs/custom-extensions.md): write your own C extension for a project,
+  under `./firmware/exts/`.
+- [docs/environment.md](docs/environment.md) and [docs/store.md](docs/store.md): a project `.env`
+  baked in as `$_ENV`, and the reboot-persistent `store_*` key-value store.
 - [docs/footprint.md](docs/footprint.md): flash and RAM cost, by area and by extension.
 - [docs/opcache.md](docs/opcache.md) and [docs/openssl.md](docs/openssl.md): the two extensions with a
   story of their own.

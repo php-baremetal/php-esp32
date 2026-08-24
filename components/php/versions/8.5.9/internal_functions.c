@@ -28,6 +28,7 @@
  * directly to avoid a circular component dependency; the symbol is resolved at
  * the final link. */
 extern zend_module_entry gpio_module_entry;
+extern zend_module_entry store_module_entry;
 
 /* Optional real ext/date (DateTime), gated by PHP_EXT_DATE_ENABLED. When off, the
  * core uses compat/date_stub.c instead and no date module is registered. */
@@ -111,6 +112,7 @@ static zend_module_entry * const php_builtin_extensions[] = {
 	&pdo_sqlite_module_entry,
 #endif
 	&gpio_module_entry,
+	&store_module_entry,
 };
 
 #define EXTCOUNT (sizeof(php_builtin_extensions)/sizeof(zend_module_entry *))
