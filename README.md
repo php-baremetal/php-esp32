@@ -59,8 +59,11 @@ Two chip families are supported today:
 
 | Family | Core | Boards | Networking | Notes |
 |---|---|---|---|---|
-| **ESP32-P4** | dual-core RISC-V, up to 400 MHz | P4-Pico, P4-ETH | Ethernet on P4-ETH (RMII + IP101 PHY) | up to 32 MB PSRAM; enough headroom to run full frameworks |
-| **ESP32-S3** | dual-core Xtensa LX7, 240 MHz | S3-ETH | Ethernet on S3-ETH (W5500 over SPI) | 8 MB PSRAM; runs plain apps and a live web server |
+| **ESP32-P4** | dual-core RISC-V, up to 400 MHz | P4-Zero, P4-Pico, P4-ETH | Ethernet on P4-ETH (RMII + IP101 PHY); Pico/Zero have none | up to 32 MB PSRAM; enough headroom to run full frameworks |
+| **ESP32-S3** | dual-core Xtensa LX7, 240 MHz | S3-Zero, S3-Pico, S3-ETH | Ethernet on S3-ETH (W5500 over SPI); Pico/Zero have none | 8 MB PSRAM; runs plain apps, and a live web server on S3-ETH |
+
+Within each family, `-ETH` adds a wired network, `-Pico` is the same board without it (microSD +
+embedded), and `-Zero` is the minimal variant: embedded-only, no microSD slot.
 
 More of the ESP32 line will follow. Any part with PSRAM and a reasonable flash is a candidate, and a
 new family is a directory under `boards/`, not a change to the engine. The parts without PSRAM (the C
@@ -199,9 +202,12 @@ php-esp32/
 │   └── info.sh               what this checkout can build (versions, boards, modes)
 ├── boards/                   one directory per chip family, then per board
 │   ├── esp32-p4/             family: target and PSRAM (sdkconfig.family, family.toml)
+│   │   ├── esp32-p4-zero/    board: embedded-only, no microSD, no network
 │   │   ├── esp32-p4-pico/    board: pins and mount code (board.c/.h), sdkconfig, partitions
 │   │   └── esp32-p4-eth/     board: adds the wired Ethernet
 │   └── esp32-s3/
+│       ├── esp32-s3-zero/    board: embedded-only, no microSD, no network
+│       ├── esp32-s3-pico/    board: SD over SPI, no network
 │       └── esp32-s3-eth/     board: SD over SPI, Ethernet over a W5500
 ├── main/                     boot: mounts storage and network via the board, starts the engine
 ├── components/

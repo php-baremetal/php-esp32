@@ -1,0 +1,9 @@
+# Fixed partitions -- 16 MB NOR flash (ESP32-S3-Zero).
+# This board is embedded-only: cmake/gen-partitions.cmake adds the `storage` partition (the
+# read-only FAT image that holds the PHP source) per build, sized to the source. Only the
+# fixed partitions are below.
+#
+# Name,     Type, SubType,  Offset,   Size
+nvs,        data, nvs,      ,         24K
+phy_init,   data, phy,      ,         4K
+factory,    app,  factory,  ,         10M

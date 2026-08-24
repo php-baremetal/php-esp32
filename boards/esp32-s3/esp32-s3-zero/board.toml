@@ -1,0 +1,22 @@
+# ESP32-S3-Zero board descriptor -- capabilities for flash-tool (a minimal ESP32-S3 with
+# no microSD slot and no wired network).
+#
+# name/family : identity.
+# storage_types / project_types : the modes this board's HARDWARE supports. flash-tool
+#   offers a mode only when it is BOTH listed here AND marked available (implemented) in
+#   the selected PHP version's manifest
+#   (components/php/versions/<version>/manifest.toml).
+#
+# This is the S3-Pico stripped further: no card slot, so it supports ONLY `embedded`
+# storage (the PHP source is packed into a read-only FAT image in flash). With no network
+# either, it runs the `init-loop` and `event-driven` sketch models.
+#
+# network : omitted entirely -- this board has no network interface.
+
+schema_version = 1
+
+name   = "ESP32-S3-Zero"
+family = "esp32-s3"
+
+storage_types = ["embedded"]
+project_types = ["init-loop", "event-driven"]

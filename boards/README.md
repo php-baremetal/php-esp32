@@ -9,8 +9,11 @@ board you choose. `./scripts/info.sh` lists what the checkout can build.
 
 | Board | Family | Notes                                                                                                                                                                         |
 |---|---|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `esp32-p4-zero` | `esp32-p4` | Minimal ESP32-P4: **embedded storage only**, no microSD slot and no network. The P4-Pico without the SD hardware. 32 MB flash. `init-loop` and `event-driven` only.                        |
 | `esp32-p4-pico` | `esp32-p4` | Waveshare/generic ESP32-P4-Pico. 4-bit SDMMC microSD, 32 MB flash, no network. The default board.                                                                             |
 | `esp32-p4-eth` | `esp32-p4` | Waveshare/generic  ESP32-P4-ETH. The same P4 SD design as the Pico (plus a GPIO45 card-power switch) and a wired Ethernet PHY (IP101GRI over RMII), so it runs the `web-server` model. |
+| `esp32-s3-zero` | `esp32-s3` | Minimal ESP32-S3: **embedded storage only**, no microSD slot and no network. The S3-Pico without the SD hardware. 8 MB PSRAM, 16 MB flash. `init-loop` and `event-driven` only.                     |
+| `esp32-s3-pico` | `esp32-s3` | Generic ESP32-S3 with a microSD slot and no network. Xtensa LX7, 8 MB PSRAM, 16 MB flash. microSD over SPI (same wiring as the S3-ETH). The S3-ETH without the W5500, so `init-loop` and `event-driven` only. |
 | `esp32-s3-eth` | `esp32-s3` | Waveshare/generic  ESP32-S3-ETH. Xtensa LX7, 8 MB PSRAM, 16 MB flash. microSD over SPI and a W5500 Ethernet controller over SPI. Runs plain apps and a live web server.                |
 
 Two families are supported today, `esp32-p4` (RISC-V) and `esp32-s3` (Xtensa). Others in the ESP32
@@ -49,7 +52,7 @@ different family cannot make ESP-IDF guess the wrong architecture.
    `partitions.csv` and `board.toml`. Copy an existing board and adapt the pins, the mount and network
    code, the flash and console config, and the supported storage and project types. Pick the closest
    starting point: a P4 board for SDMMC and an internal MAC, the S3-ETH for SPI storage and an SPI
-   Ethernet controller.
+   Ethernet controller, or the S3-Pico for SPI storage with no network at all.
 2. Build with phpflash (set the board in the project config) or `idf.py -DBOARD=<newboard>`. Changing
    the board in place needs `rm sdkconfig` first, since defaults do not merge into an existing one.
 3. `./scripts/check-manifest.py` validates the new `board.toml`.

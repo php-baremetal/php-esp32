@@ -1,0 +1,10 @@
+# Fixed partitions -- 16 MB NOR flash (ESP32-S3-Pico).
+# The `storage` partition (the read-only FAT image that holds the PHP source for an "embedded"
+# build) is NOT listed here: cmake/gen-partitions.cmake adds it per build, sized to the source, and
+# omits it entirely for a microSD project (the app then runs from the card). A large framework
+# (Symfony/Laravel) lives on the microSD, not in flash. Only the fixed partitions are below.
+#
+# Name,     Type, SubType,  Offset,   Size
+nvs,        data, nvs,      ,         24K
+phy_init,   data, phy,      ,         4K
+factory,    app,  factory,  ,         10M

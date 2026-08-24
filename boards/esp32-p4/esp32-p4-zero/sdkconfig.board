@@ -1,0 +1,20 @@
+# ESP32-P4-Zero board defaults. Layered last (over base + family), so board-specific
+# choices win.
+
+# Early ESP32-P4 boards carry a rev v1.3 chip; IDF 5.5.5 defaults to a minimum of v3.01
+# and refuses to flash. The <3.0 and >=3.0 revisions differ a lot in hardware:
+# SELECTS_REV_LESS_V3 unlocks the <3.0 family, then REV_MIN_100 (v1.00) covers this chip.
+CONFIG_ESP32P4_SELECTS_REV_LESS_V3=y
+CONFIG_ESP32P4_REV_MIN_100=y
+
+# 32 MB NOR flash on board (the IDF default is 2 MB, which the app blows past).
+CONFIG_ESPTOOLPY_FLASHSIZE_32MB=y
+CONFIG_ESPTOOLPY_FLASHSIZE="32MB"
+
+# Console on UART0. On this board the USB-C port is an onboard USB-UART bridge (CH343P)
+# wired to UART0, so a single USB-C cable carries flashing and console.
+CONFIG_ESP_CONSOLE_UART_DEFAULT=y
+
+# This board's partition layout (sized for the 32 MB flash). Path is relative to the
+# project root.
+CONFIG_PARTITION_TABLE_CUSTOM_FILENAME="boards/esp32-p4/esp32-p4-zero/partitions.csv"

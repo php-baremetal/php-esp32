@@ -27,6 +27,14 @@
 
 #include "board.h"   /* board_mount_storage()/board_unmount_storage(), BOARD_NAME, BOARD_HAS_NETWORK */
 
+/* microSD support was requested for a build, but the selected board has no card slot
+ * (it does not define BOARD_HAS_MICROSD). Fail here with a clear message instead of later
+ * with an undefined board_mount_storage(). Reachable via `[storage] microsd = true` on an
+ * embedded-only board like esp32-*-zero. */
+#if defined(PHP_STORAGE_MICROSD) && !defined(BOARD_HAS_MICROSD)
+#error "microSD requested but this board has no card slot: build an embedded project without [storage] microsd = true, or pick a board with a microSD slot."
+#endif
+
 #ifdef BOARD_HAS_NETWORK
 #include "esp_netif.h"   /* after board.h: BOARD_HAS_NETWORK is defined there */
 #endif

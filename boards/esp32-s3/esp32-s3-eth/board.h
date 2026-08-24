@@ -24,6 +24,10 @@
  * boot for any board that defines BOARD_HAS_NETWORK, and logs the address. */
 #define BOARD_HAS_NETWORK 1
 
+/* This board has a microSD slot: it provides board_mount_storage(). Boards without a slot
+ * (the `-zero` variants) leave this undefined, so the SD path is never built or probed. */
+#define BOARD_HAS_MICROSD 1
+
 /* Bring up Ethernet and wait (a bounded time) for a DHCP lease. On success writes the
  * dotted-decimal IPv4 address into ip_out (needs >= 16 bytes) and returns true; returns
  * false if the link stays down or no lease arrives in time. */

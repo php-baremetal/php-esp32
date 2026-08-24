@@ -72,6 +72,7 @@ void app_main(void)
     printf("ethernet=n/a\n");   /* this board defines no network hardware */
 #endif
 
+#ifdef BOARD_HAS_MICROSD
     if (board_mount_storage("/sd")) {
         uint64_t total = 0, freeb = 0;
         if (esp_vfs_fat_info("/sd", &total, &freeb) == ESP_OK) {
@@ -80,8 +81,11 @@ void app_main(void)
             printf("microsd=yes\n");
         }
     } else {
-        printf("microsd=nocard\n");   /* empty slot vs no slot is indistinguishable */
+        printf("microsd=nocard\n");   /* empty slot vs no card is indistinguishable */
     }
+#else
+    printf("microsd=n/a\n");   /* this board has no card slot */
+#endif
 
     printf("DISCOVER-FW-END\n");
 

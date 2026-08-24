@@ -1,5 +1,26 @@
 # Changelog
 
+## [0.14.0] — Slimmer board variants: network-less (`-pico`) and embedded-only (`-zero`)
+
+### Added
+- **A new board: `esp32-s3-pico`** -- a plain ESP32-S3 with a microSD slot and no wired network. It
+  is the S3-ETH without the W5500: the same microSD-over-SPI wiring (MOSI=6, MISO=5, CLK=7, CS=4), 8
+  MB PSRAM and 16 MB flash, but no Ethernet stack and no `web-server` model (`init-loop` and
+  `event-driven` only). Verified running PHP 8.4.24 from an embedded image on ESP32-S3 hardware, and
+  the microSD path builds clean.
+- **Two embedded-only boards: `esp32-s3-zero` and `esp32-p4-zero`.** Each is the family's `-pico`
+  stripped further -- no microSD slot at all -- so they advertise only `embedded` storage: the PHP
+  source is packed into a read-only FAT image in flash. No network, so `init-loop` and `event-driven`
+  only. "No microSD" is a build-time contract: forcing the card path on (`[storage] microsd = true`)
+  stops the build with a clear message rather than compiling SD code for pins that aren't wired.
+  Both verified running PHP 8.4.24 from flash -- `esp32-s3-zero` on ESP32-S3 hardware and
+  `esp32-p4-zero` on ESP32-P4 hardware.
+- **A board capability macro `BOARD_HAS_MICROSD`** (mirroring `BOARD_HAS_NETWORK`). Boards with a
+  card slot define it in `board.h`; the embedded-only `-zero` boards leave it undefined. `main.c`
+  centralises the "no card slot" contract on it (one guard for every board), and the `discover --all`
+  probe firmware skips the microSD probe (reporting `microsd=n/a`) on boards without a slot instead
+  of failing to build.
+
 ## [0.13.0] — Dynamic partitions, build-time environment (`.env`), and a persistent store
 
 ### Added
