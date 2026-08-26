@@ -1,0 +1,133 @@
+name: Publish docs
+
+on:
+  push:
+    branches: [main, master, 'v*.x']
+    tags: ['v*']
+    paths:
+      - 'docs/**'
+      - 'CHANGELOG.md'
+      - '.github/workflows/publish-docs.yml'
+
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version slug (e.g. master, v4.3.1)'
+        required: true
+        default: 'master'
+
+concurrency:
+  group: publish-docs-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Resolve version slug
+        id: ver
+        run: |
+          set -euo pipefail
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            RAW="${{ inputs.version }}"
+          elif [[ "${GITHUB_REF}" == refs/tags/* ]]; then
+            RAW="${GITHUB_REF#refs/tags/}"
+          elif [[ "${GITHUB_REF}" == refs/heads/v*.x ]]; then
+            RAW="${GITHUB_REF#refs/heads/}"
+          else
+            RAW="master"
+          fi
+
+          # Fold semver-shaped inputs (`v4.3.2`, `v4.3.0-rc1`, `v10.20.30`) to
+          # their minor branch (`v4.3.x`, `v4.3.x`, `v10.20.x`). `master` and
+          # anything that doesn't start with `vMAJOR.MINOR.PATCH` is forwarded
+          # untouched — including already-normalised `v4.3.x`.
+          if [[ "${RAW}" =~ ^v([0-9]+)\.([0-9]+)\.[0-9] ]]; then
+            VERSION="v${BASH_REMATCH[1]}.${BASH_REMATCH[2]}.x"
+          else
+            VERSION="${RAW}"
+          fi
+
+          echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
+          echo "Raw input: ${RAW}"
+          echo "Resolved version: ${VERSION}"
+
+      - name: Validate repo layout
+        run: |
+          set -euo pipefail
+          if [ ! -d docs ]; then
+            echo "::error::Required directory 'docs/' is missing at the repo root."
+            exit 1
+          fi
+          echo "::notice::Found docs/ tree with $(find docs -type f | wc -l) files."
+
+      - name: Build artifact
+        run: |
+          set -euo pipefail
+          INCLUDE=(docs)
+          if [ -f CHANGELOG.md ]; then
+            INCLUDE+=(CHANGELOG.md)
+          else
+            echo "::warning::CHANGELOG.md not found — uploading docs/ only."
+          fi
+          if [ -d assets ]; then
+            INCLUDE+=(assets)
+            echo "::notice::Found assets/ tree with $(find assets -type f | wc -l) files."
+          else
+            echo "::notice::No assets/ folder — skipping brand assets."
+          fi
+          tar -czf docs-artifact.tar.gz "${INCLUDE[@]}"
+          ls -lh docs-artifact.tar.gz
+
+      - name: Upload to docs hub
+        env:
+          DOCS_HUB_URL: ${{ secrets.DOCS_HUB_URL }}
+          DOCS_INGEST_TOKEN: ${{ secrets.DOCS_INGEST_TOKEN }}
+          PACKAGE_CODE: ${{ vars.PACKAGE_CODE }}
+          VERSION: ${{ steps.ver.outputs.version }}
+        run: |
+          set -euo pipefail
+          if [ -z "${DOCS_HUB_URL:-}" ] || [ -z "${DOCS_INGEST_TOKEN:-}" ] || [ -z "${PACKAGE_CODE:-}" ]; then
+            echo "::error::DOCS_HUB_URL, DOCS_INGEST_TOKEN, and PACKAGE_CODE must be set."
+            exit 1
+          fi
+
+          URL="${DOCS_HUB_URL%/}/api/v1/packages/${PACKAGE_CODE}/docs"
+          echo "POST ${URL} (version=${VERSION})"
+
+          # `--fail-with-body` is intentionally NOT used: it makes curl exit
+          # non-zero on 4xx/5xx, which `set -e` would catch BEFORE we get to
+          # print the response body. We capture the HTTP status via
+          # `--write-out` and inspect it ourselves.
+          HTTP_STATUS=$(curl --silent --show-error \
+            --output response.json \
+            --write-out '%{http_code}' \
+            -H "Authorization: Bearer ${DOCS_INGEST_TOKEN}" \
+            -H "Accept: application/json" \
+            -F "version=${VERSION}" \
+            -F "archive=@docs-artifact.tar.gz;type=application/gzip" \
+            "${URL}")
+
+          echo "HTTP ${HTTP_STATUS}"
+          echo "::group::Response body"
+          cat response.json || true
+          echo
+          echo "::endgroup::"
+
+          if [ "${HTTP_STATUS}" != "201" ]; then
+            echo "::error::Upload failed with HTTP ${HTTP_STATUS}. See the 'Response body' group above."
+            exit 1
+          fi
+
+      - name: Upload artifact for inspection
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: docs-artifact-${{ steps.ver.outputs.version }}
+          path: docs-artifact.tar.gz
+          retention-days: 7
