@@ -135,6 +135,12 @@ static void net_apply_static_dns(const char *list)
 #define SD_SCRIPT       SD_MOUNT_POINT "/" PHP_ENTRY
 #define APP_SCRIPT      APP_MOUNT_POINT "/" PHP_ENTRY
 
+/* Optional one-time init script for the web-server model, from [web-server] init (flash-tool passes
+ * it as -DPHP_WEB_INIT, relative to the source root). It runs once after php_embed_init() and before
+ * the HTTP server starts (output to the console), so a project can do one-time setup -- bring
+ * hardware up via a C extension, seed the mem_ or store_ KV -- whose effects live below PHP and are
+ * shared by every later request. Resolved against the source mount at runtime, like OPENSSL_CONF. */
+
 /*
  * Output sink for the engine: echo, print, printf, var_dump and php_printf() all
  * funnel through here. Write straight to the console and always report the full
@@ -754,7 +760,7 @@ static void ws_serve_one(void)
 /* Start the HTTP server, then loop in php_task serving one request at a time. php_embed_init()
  * has already brought the engine up and opened one request; we close that so each HTTP request
  * owns a clean cycle. Never returns. */
-static void run_web_server(const char *script)
+static void run_web_server(const char *script, const char *init_script)
 {
     s_ws_script = script;
     /* Document root = the directory the entry script lives in (public/ for Laravel) -- where static
@@ -764,6 +770,24 @@ static void run_web_server(const char *script)
     if (sl && sl != s_docroot) {
         *sl = '\0';
     }
+
+    /* One-time init script: run it once, here, in the request php_embed_init() already opened -- so
+     * its output goes to the console (we have not redirected output to the HTTP response yet). Its
+     * effects that live below PHP (C-extension state, mem_ or store_ values) are then shared by every
+     * request. A failure is logged but not fatal: the server still comes up. */
+    if (init_script) {
+        printf("--- web-server init: %s ---\n", init_script);
+        fflush(stdout);
+        SG(headers_sent) = 0;   /* let the init script use session/header ops like the run-once model */
+        zend_try {
+            run_php_file(init_script);
+        } zend_catch {
+            ESP_LOGE(TAG, "web-server init script bailed out (fatal error) -- continuing");
+        } zend_end_try();
+        printf("--- web-server init done ---\n");
+        fflush(stdout);
+    }
+
     /* Redirect output and wire the request/response hooks. sapi_startup() copied php_embed_module
      * into the live `sapi_module` at php_embed_init() time, so we set that copy. */
     sapi_module.ub_write                  = ws_ub_write;
@@ -1005,7 +1029,21 @@ static void php_task(void *arg)
 #ifdef PHP_PROJECT_WEB_SERVER
         /* web-server model: hand the script to the HTTP server, which runs it per request.
          * Never returns. */
-        run_web_server(script);
+        const char *init_script = NULL;
+#ifdef PHP_WEB_INIT
+        /* Resolve the one-time init script against the same source mount as the entry, and only
+         * pass it on if it is actually there. */
+        static char init_path[160];
+        if (src_dir) {
+            snprintf(init_path, sizeof init_path, "%s/%s", src_dir, PHP_WEB_INIT);
+            if (access(init_path, R_OK) == 0) {
+                init_script = init_path;
+            } else {
+                ESP_LOGW(TAG, "web-server init '%s' configured but not found at %s", PHP_WEB_INIT, init_path);
+            }
+        }
+#endif
+        run_web_server(script, init_script);
 #else
         printf("--- %s ---\n", script);
         fflush(stdout);

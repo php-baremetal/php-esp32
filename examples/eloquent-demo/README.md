@@ -42,7 +42,7 @@ requires PHP 8.4. `composer.lock` is committed so you get exactly that resolutio
 
 `mbstring` on this board is built without the oniguruma regex engine (it's a separate external
 library PHP doesn't bundle), so the `mb_ereg*` / `mb_split` family isn't compiled in — see
-[`docs/footprint.md`](../../docs/footprint.md) and the porting notes. Eloquent's `Str` helpers
+[`docs/reference/footprint.md`](../../docs/reference/footprint.md) and the porting notes. Eloquent's `Str` helpers
 call `mb_split('\s+', …)` in a few places, so `index.php` defines a tiny `mb_split()` polyfill
 backed by PCRE (which is always in). It's guarded by `function_exists`, so on a PC with native
 `mb_split` it does nothing. For the simple whitespace patterns Eloquent uses, PCRE is exact.

@@ -47,7 +47,7 @@ file    = ".env"    # env file path, relative to the project
 They are compiled into the app image in internal flash -- not on the removable microSD, not in the
 PHP source. That means they cannot be read by pulling the card, and are harder to extract than a file
 on it. They are **not** secret or encrypted, though: a flash dump recovers them. See
-[docs/environment.md](../../docs/environment.md) for the full story and the format rules.
+[docs/storage/environment.md](../../docs/storage/environment.md) for the full story and the format rules.
 
 No wiring, no card, no network: `storage_type` is `embedded`, so the script and its `.env` run
 straight from flash on reset.

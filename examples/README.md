@@ -46,6 +46,7 @@ in a browser).
 | [`require-demo/`](require-demo/) | A program split across several files with `require` and `require_once`. | nothing |
 | [`env-demo/`](env-demo/) | Reads configuration from a project `.env` baked into the firmware, as `$_ENV` / `getenv()`. | nothing |
 | [`store-demo/`](store-demo/) | A boot counter that survives resets, kept in the reboot-persistent `store_*` key-value store (NVS). | nothing |
+| [`web-init-mem/`](web-init-mem/) | The web-server model: a one-time `server_init` script seeds the in-RAM `mem_*` store, and each request reads it and bumps a RAM counter. | a networked board |
 | [`composer-collections/`](composer-collections/) | Composer autoloading with the Illuminate Collections package. | `vendor/` |
 | [`led-blink/`](led-blink/) | The setup/loop model: blinks an LED forever. | LED + ~330 ohm between GPIO2 and GND |
 | [`blink-sos/`](blink-sos/) | Blinks "SOS" in Morse code on the LED. | same as above |

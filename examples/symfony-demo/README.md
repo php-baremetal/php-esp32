@@ -75,5 +75,5 @@ that fits the ported extensions.
 
 Getting there needed a handful of generic FATFS/POSIX fixes in the firmware (mount-root `stat`, a
 `readdir`-based `glob`, `rename`-overwrite, and presenting a `cli-server` SAPI name) — all in
-[`docs/porting-notes.md`](../../docs/porting-notes.md), and all shared with the other web-server
+[`docs/reference/porting-notes.md`](../../docs/reference/porting-notes.md), and all shared with the other web-server
 examples.

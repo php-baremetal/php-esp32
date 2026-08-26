@@ -47,7 +47,7 @@ idf_component_register(
     INCLUDE_DIRS "." ${BOARD_INCLUDE_DIRS}
     # esp_partition/fatfs/vfs: main.c mounts the optional read-only embedded source
     # partition itself (board-agnostic); the board adds its own storage drivers too.
-    REQUIRES php php_ext_gpio php_ext_store php_project_exts esp_partition fatfs vfs ${WEB_SERVER_REQUIRES} ${BOARD_REQUIRES}
+    REQUIRES php php_ext_gpio php_ext_store php_ext_mem php_project_exts esp_partition fatfs vfs ${WEB_SERVER_REQUIRES} ${BOARD_REQUIRES}
 )
 
 # fs_pathnorm.c: --wrap the file syscalls so "." / ".." in paths are collapsed before the FATFS VFS
@@ -123,4 +123,14 @@ if(NOT _php_entry AND NOT "$ENV{PHP_ENTRY}" STREQUAL "")
 endif()
 if(_php_entry)
     target_compile_definitions(${COMPONENT_LIB} PRIVATE "PHP_ENTRY=\"${_php_entry}\"")
+endif()
+
+# -DPHP_WEB_INIT from [web-server] init: a one-time script the web-server model runs once before the
+# HTTP server starts (main.c resolves it against the source mount). Only meaningful for web-server.
+set(_web_init "${PHP_WEB_INIT}")
+if(NOT _web_init AND NOT "$ENV{PHP_WEB_INIT}" STREQUAL "")
+    set(_web_init "$ENV{PHP_WEB_INIT}")
+endif()
+if(_web_init)
+    target_compile_definitions(${COMPONENT_LIB} PRIVATE "PHP_WEB_INIT=\"${_web_init}\"")
 endif()

@@ -7,7 +7,7 @@ PHP's normal stream layer reaches HTTPS (DNS + TCP + TLS in one go).
 
 > Needs a **networked board** (this uses `esp32-p4-eth`) with a cable on a network that has DHCP and
 > internet. The crypto is real OpenSSL 3.0 (libcrypto); the TLS transport rides mbedTLS. See
-> [`docs/openssl.md`](../../docs/openssl.md) → *TLS client (HTTPS)*.
+> [`docs/extensions/openssl.md`](../../docs/extensions/openssl.md) → *TLS client (HTTPS)*.
 
 ## What it does
 

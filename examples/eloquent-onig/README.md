@@ -18,7 +18,7 @@ Build with the whole stack **and** the mbstring regex engine:
 - `idf.py -DPHP_EXT_SQLITE=ON -DPHP_EXT_MBSTRING=ON -DPHP_EXT_MBSTRING_ONIG=ON -DPHP_EXT_CTYPE=ON -DPHP_EXT_FILTER=ON -DPHP_EXT_DATE=ON ...`
   (run `./scripts/fetch-oniguruma.sh` first).
 
-The oniguruma engine adds ~445 KB over plain mbstring (see [`docs/footprint.md`](../../docs/footprint.md)).
+The oniguruma engine adds ~445 KB over plain mbstring (see [`docs/reference/footprint.md`](../../docs/reference/footprint.md)).
 If you'd rather not pay that, use [`eloquent-demo`](../eloquent-demo/) instead — same ORM, with a
 tiny `mb_split` polyfill.
 

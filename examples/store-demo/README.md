@@ -32,7 +32,7 @@ size_kb = 32     # size of the persistent NVS partition; 0 or absent = no persis
 ```
 
 Without it, `store_available()` returns `false` and the other functions do nothing. See
-[docs/store.md](../../docs/store.md) for the full API, the key/value limits, and how it differs from
+[docs/storage/persistent-store.md](../../docs/storage/persistent-store.md) for the full API, the key/value limits, and how it differs from
 the build-time [`.env`](../env-demo/).
 
 No wiring, no card, no network: `storage_type` is `embedded`, so the script runs from flash and the

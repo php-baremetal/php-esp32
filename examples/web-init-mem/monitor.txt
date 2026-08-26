@@ -1,0 +1,31 @@
+Serial console at boot (ESP32-P4-ETH). The server_init script runs once, before the HTTP
+server starts, and its output goes here:
+
+I (1985) php-esp32: embedded source mounted at /app
+I (6125) php-esp32: network up -- http://10.42.0.224/
+PHP 8.4.24 on ESP32-P4
+--- web-server init: /app/init.php ---
+[init] seeding mem_*
+--- web-server init done ---
+I (6205) php-esp32: web-server model: serving /app/index.php over HTTP on :80
+
+Then each HTTP request reads what init seeded (boot_msg) and bumps a counter kept in RAM
+(mem_*), which climbs across separate requests:
+
+$ curl http://10.42.0.224/
+initialised once at boot
+request #1 since boot
+mem keys: boot_msg, hits
+
+$ curl http://10.42.0.224/
+initialised once at boot
+request #2 since boot
+mem keys: boot_msg, hits
+
+$ curl http://10.42.0.224/
+initialised once at boot
+request #3 since boot
+mem keys: boot_msg, hits
+
+boot_msg is written once by init.php and read by every request; hits lives in RAM (no
+flash wear). Resetting the board wipes mem_* and the counter starts over at #1.

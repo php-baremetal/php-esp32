@@ -9,7 +9,7 @@ character properties) work on UTF-8 text.
 `mb_ereg*` / `mb_split` need a regex engine, which PHP doesn't bundle. This project's
 `php-esp32.config.toml` enables mbstring with Oniguruma (`[extensions.mbstring]` with
 `onig = true`), so `phpflash build` fetches the library and builds it in — no flags to pass. It
-adds ~445 KB on top of mbstring — see [`docs/footprint.md`](../../docs/footprint.md). If you only
+adds ~445 KB on top of mbstring — see [`docs/reference/footprint.md`](../../docs/reference/footprint.md). If you only
 need `mb_split` with simple patterns, a PCRE polyfill (see `eloquent-demo`) avoids this cost; the
 difference is the Unicode-property support shown below.
 

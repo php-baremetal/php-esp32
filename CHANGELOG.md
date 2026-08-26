@@ -1,5 +1,27 @@
 # Changelog
 
+## [0.15.0] — Sharing state across web-server requests: `mem_*` and a server-init script
+
+### Added
+- **A volatile in-RAM key-value store for PHP (`mem_*`).** The RAM twin of `store_*`: `mem_set()` in
+  one request comes back with `mem_get()` in the next, shared across the requests of one boot. It
+  lives in persistent (non-request) memory so it survives `php_request_shutdown()`, is wiped on
+  reboot, and touches no flash -- so, unlike the NVS-backed `store_*`, it is fine to write on every
+  request (a hit counter, a small cache). Values are stored with PHP's serializer, so scalars,
+  arrays and serializable objects work; each `mem_get()` returns an independent copy. Always built
+  in, no configuration. `mem_set/get/has/delete/clear/keys`. Verified on ESP32-P4 hardware (scalars,
+  nested arrays and a serializable object round-trip), and end-to-end over HTTP on the ESP32-P4-ETH:
+  a counter kept in `mem_*` climbs across separate requests. See [docs/storage/in-ram-store.md](docs/storage/in-ram-store.md).
+- **A one-time init script for the web-server model (`[web-server] init`).** A project names a PHP
+  file that the firmware runs **once**, after the engine starts and before the HTTP server accepts
+  connections, for setup shared across the (otherwise shared-nothing) requests -- bringing hardware
+  up through a C extension, or seeding `mem_*` / `store_*`. Its output goes to the console; a fatal
+  in it is logged but does not stop the server. flash-tool passes it as `-DPHP_WEB_INIT`; the
+  firmware resolves it against the source mount and runs it in the embed request before redirecting
+  output to the HTTP response. Verified end-to-end on the ESP32-P4-ETH: the init script runs once at
+  boot and the value it seeds is read by every subsequent HTTP request. New
+  [`web-init-mem`](examples/web-init-mem/) example. See [docs/storage/in-ram-store.md](docs/storage/in-ram-store.md).
+
 ## [0.14.0] — Slimmer board variants: network-less (`-pico`) and embedded-only (`-zero`)
 
 ### Added
@@ -30,7 +52,7 @@
   It is off until the project gives it flash with `[store] size_kb`, which the dynamic partition
   generator turns into a dedicated `phpstore` NVS partition. Keys are ≤15 chars, values are strings
   (auto-committed). Verified on the ESP32-P4 with the [`store-demo`](examples/store-demo/) boot
-  counter. See [docs/store.md](docs/store.md).
+  counter. See [docs/storage/persistent-store.md](docs/storage/persistent-store.md).
 - **A project `.env` is baked into the firmware and exposed to PHP as `$_ENV` and `getenv()`.** Drop a
   `.env` next to `php-esp32.config.toml` (`KEY=VALUE`, `#` comments, optional quotes) and its values
   are compiled in; `main.c` applies them with `setenv()` before the engine starts, so PHP's normal
@@ -38,7 +60,7 @@
   them. Works in both the init-loop and web-server models. Configurable from the project config
   (`[env] enabled` / `file`); on by default when a `.env` exists, and `phpflash init` adds `.env` to
   the project `.gitignore`. Verified on the ESP32-P4 with the [`env-demo`](examples/env-demo/)
-  example. See [docs/environment.md](docs/environment.md).
+  example. See [docs/storage/environment.md](docs/storage/environment.md).
   - The values live in the app image in internal flash, **not** on the removable microSD and not in
     the PHP source tree. They are not secret or encrypted (a flash dump recovers them), but they are
     not readable by pulling the card and are harder to extract than a file on it.
@@ -57,7 +79,7 @@
   - The generated table (`partitions.gen.csv`) is written into the project's `build/` and selected via
     a sdkconfig fragment layered last; it is never committed. Verified on the ESP32-P4-ETH for both an
     embedded build (128 KB storage, source mounts and runs) and a microSD build (no storage
-    partition). See [docs/footprint.md](docs/footprint.md).
+    partition). See [docs/reference/footprint.md](docs/reference/footprint.md).
 
 ## [0.12.0] — SSD1306 OLED examples and per-project C extensions; Ethernet optional at boot
 
@@ -75,7 +97,7 @@
   firmware registers it at startup via `zend_startup_module()` so its functions are available to the
   script. Extensions are statically linked (there is no `dlopen` on this target). Extra ESP-IDF
   component dependencies go in `firmware/exts/<name>/idf_requires.txt`. See
-  [docs/custom-extensions.md](docs/custom-extensions.md).
+  [docs/extensions/custom-extensions.md](docs/extensions/custom-extensions.md).
   - New firmware component `php_project_exts` (globs the project's extension dirs, generates the
     registration table, links `WHOLE_ARCHIVE`); a single weak-symbol hook in `main.c`; and phpflash
     passes `-DPHP_PROJECT_EXTS_DIR` when `./firmware/exts` exists. A firmware built without any
@@ -129,7 +151,7 @@
 - The baseline image grows with the release, almost entirely in flash: **~3.09 MB** (8.3.33),
   **~3.20 MB** (8.4.24, +105 KB), **~3.29 MB** (8.5.9, +198 KB) for the same all-optional-off build on
   the P4. Static internal RAM is unchanged across the three. See
-  [`docs/footprint.md`](docs/footprint.md).
+  [`docs/reference/footprint.md`](docs/reference/footprint.md).
 
 ## [0.10.0] — OPcache; configurable CPU frequency
 
@@ -138,7 +160,7 @@
   longer recompiles the framework every time — it reuses cached bytecode. Built **without JIT**
   (unsupported on RISC-V) and statically linked (no `opcache.so`/`dlopen` on this target). On the
   ESP32-P4 it takes the [`laravel-demo-optimized`](examples/laravel-demo-optimized/) welcome page
-  from ~12 s to **~8.4 s** per request, verified on hardware. See [`docs/opcache.md`](docs/opcache.md).
+  from ~12 s to **~8.4 s** per request, verified on hardware. See [`docs/extensions/opcache.md`](docs/extensions/opcache.md).
   - Default **file-cache** mode: bytecode is cached on the microSD, leaving the full PSRAM for the
     per-request heap — the right choice for a large framework.
   - Opt-in **in-memory** mode (`[extensions.opcache] in_memory = true`): the cache lives in PSRAM
@@ -163,7 +185,7 @@
   `glob()` yields `[]`); `rename()` now overwrites an existing destination (unlink-and-retry) for
   atomic file replaces; and the `web-server` model presents a `cli-server` SAPI name so frameworks
   take the HTTP path instead of a `php://stdout` console path. See
-  [`docs/porting-notes.md`](docs/porting-notes.md).
+  [`docs/reference/porting-notes.md`](docs/reference/porting-notes.md).
 - **Configurable CPU frequency** — `[board] cpu_freq_mhz` (flash-tool passes `-DPHP_CPU_FREQ_MHZ`,
   layered last over the board's sdkconfig). Note: 400 MHz on an ESP32-P4 **rev < 3.0** is
   experimental and can boot-loop unqualified chips (Espressif); the P4 default (360 MHz) stands
@@ -251,7 +273,7 @@
   `stream_socket_client('tls://host:443')`. The crypto stays real OpenSSL 3.0 (libcrypto); only the
   TLS record layer rides mbedTLS. **Client only**, needs a networked board. Verified on real
   ESP32-P4-ETH: a certificate-verified GET of `https://example.com/`. See the
-  [`https-client`](examples/https-client/) example and `docs/openssl.md`.
+  [`https-client`](examples/https-client/) example and `docs/extensions/openssl.md`.
 - **Certificate provisioning.** When a project builds the TLS client, `phpflash build` copies the
   **host's** root-CA bundle into the project (`project-src/certs/ca-bundle.crt` by default) so it
   ships to the device, and the firmware verifies TLS peers against it. Configurable with
@@ -288,7 +310,7 @@
     (SHA-2/3, RIPEMD, …), X.509/PKCS parsing. Crypto only — no TLS stream transport (`ssl://`), which
     would need `libssl`. Both flavours verified on real ESP32-P4 hardware.
   - Choose via the config (`[extensions.openssl] full = true|false`); `phpflash` and `flash.sh` pass
-    the flags and run the fetch. `docs/openssl.md` explains when to use which.
+    the flags and run the fetch. `docs/extensions/openssl.md` explains when to use which.
   - **On-chip RSA key generation** (`openssl_pkey_new`) works in the full build. OpenSSL 3.0 needs a
     config file to bring its providers up, so the firmware reads an `openssl.cnf` shipped with the
     source (`phpflash build` writes a minimal one into `project-src/`, and the firmware sets
@@ -404,7 +426,7 @@
   (build flags, settings, dependencies, fetch scripts, per-project-type rules) — with
   `scripts/check-manifest.py` verifying it stays in sync with that version's `extensions.cmake`
   and `flash.sh`.
-- `docs/ext-porting.md`: the status of every PHP 8.3 bundled extension — built-in, behind a
+- `docs/extensions/porting-status.md`: the status of every PHP 8.3 bundled extension — built-in, behind a
   build flag, or not ported (with the reason).
 - `scripts/info.sh`: prints what a checkout can build — the default version/board, the available
   PHP versions and boards, and per board the modes it offers (implemented ∩ board-supported).
@@ -423,7 +445,7 @@
 - **`ext/ctype`**, **`ext/mbstring`** and **`ext/filter`** as optional extensions (off by
   default): three more of PHP's bundled extensions ported to the target — character-class
   checks, multibyte strings and `filter_var()` validation/sanitization. Measured flash cost:
-  ctype ~2.5 KB, filter ~27 KB, mbstring ~965 KB (see `docs/footprint.md`).
+  ctype ~2.5 KB, filter ~27 KB, mbstring ~965 KB (see `docs/reference/footprint.md`).
 - `mbstring` is built without oniguruma by default, so the `mb_ereg*`/`mb_split` regex family is
   left out; everything else (length, case, `substr`, `convert_encoding`, `detect_encoding`,
   `str_split`, …) is in.
@@ -478,7 +500,7 @@
   git-ignored), fetched automatically by `flash.sh` when the extension is enabled.
 - `examples/sqlite-notes/`: PDO opens a SQLite database on the microSD and appends a row on
   every boot; the file is created on first run and reused after.
-- `docs/footprint.md`: flash and RAM usage, per area and per optional extension.
+- `docs/reference/footprint.md`: flash and RAM usage, per area and per optional extension.
 
 ## [0.1.0] - 2026-07-29
 
@@ -510,7 +532,7 @@ First working version: the real PHP engine runs on the microcontroller.
 - Automation scripts: `setup.sh`, `flash.sh`, `monitor.sh`, and `scripts/fetch-php.sh`.
 - Examples: `hello`, `language-tour`, `require-demo`, `composer-collections`, `led-blink`,
   `blink-sos`, `button-led`.
-- Documentation: README, plus `docs/architecture.md`, `docs/porting-notes.md`,
+- Documentation: README, plus `docs/getting-started/architecture.md`, `docs/reference/porting-notes.md`,
   `docs/flash.md`.
 - MIT license.
 

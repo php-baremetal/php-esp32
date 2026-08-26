@@ -7,7 +7,7 @@ the OpenSSL crypto API. It costs ~2 MB of flash.
 
 > There are two openssl examples. This one uses the ported real OpenSSL (public-key, ~2 MB). The
 > sibling [`openssl-compat`](../openssl-compat/) uses the tiny mbedTLS subset (symmetric AES only).
-> See [`docs/openssl.md`](../../docs/openssl.md) for when to pick which.
+> See [`docs/extensions/openssl.md`](../../docs/extensions/openssl.md) for when to pick which.
 
 ## Firmware
 
@@ -33,7 +33,7 @@ $new = openssl_pkey_new(['private_key_bits' => 2048, 'private_key_type' => OPENS
 
 The last line works because this build ships an `openssl.cnf` and the firmware points
 `OPENSSL_CONF` at it (that's what OpenSSL 3.0 needs to bring up its providers — see
-[`docs/openssl.md`](../../docs/openssl.md), *Configuration*). `phpflash build` writes that
+[`docs/extensions/openssl.md`](../../docs/extensions/openssl.md), *Configuration*). `phpflash build` writes that
 `openssl.cnf` into `project-src/` for you.
 
 ## Building and running
@@ -67,7 +67,7 @@ Real RSA and SHA-3 — including generating a key from scratch — on a 32-bit m
   takes tens of seconds (~20-45 s, and it varies) hunting for primes. The base config widens the
   task-watchdog timeout so this doesn't print watchdog warnings. If you only ever *use* provisioned
   keys, you don't need it — and the leaner `no_load_config` setting skips the `openssl.cnf`
-  altogether. See [`docs/openssl.md`](../../docs/openssl.md), *Configuration*.
+  altogether. See [`docs/extensions/openssl.md`](../../docs/extensions/openssl.md), *Configuration*.
 - **EC keygen** needs curve defaults the minimal `openssl.cnf` doesn't set, and `openssl_csr_sign` /
   X.509 issuing are untested on this port — stick to RSA on-device, or provision EC keys off-device.
 - The `key.pem` here is a throwaway generated for the example; use your own for anything real.

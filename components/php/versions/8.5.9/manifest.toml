@@ -138,6 +138,11 @@ key = "store"
 description = "Reboot-persistent key-value store (store_set/store_get/keys, NVS-backed). Always built in; add [store] size_kb to the project config to give it flash, otherwise store_available() is false."
 required_for = ["init-loop", "web-server", "event-driven"]
 
+[[extension]]
+key = "mem"
+description = "Volatile in-RAM key-value store (mem_set/mem_get/keys), shared across the requests of one boot. The RAM twin of store_*: not persistent across reboots, but cheap to write every request. Always built in."
+required_for = ["init-loop", "web-server", "event-driven"]
+
 # --- Optional extensions: off by default, enabled by a build flag ------------
 
 [[extension]]

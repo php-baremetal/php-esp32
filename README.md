@@ -96,7 +96,7 @@ phpflash monitor                # watch the serial output
 `init` is interactive with a sensible default at every step. Its board and extension prompts are read
 live from the firmware, so a networked board offers the web-server model and each board offers exactly
 the extensions its build supports. The full walkthrough, covering both storage layouts and both
-execution models, is in [docs/getting-started.md](docs/getting-started.md).
+execution models, is in [docs/getting-started/quick-start.md](docs/getting-started/quick-start.md).
 
 Not sure which board is plugged in? `phpflash discover` identifies the chip and lists the boards that
 match it; `phpflash discover --all` flashes a probe firmware that brings up the Ethernet link and
@@ -131,7 +131,7 @@ function loop(int $tick): void {
 yields the core through `vTaskDelay` instead of busy-waiting, so the watchdog stays satisfied, and
 `echo` goes to the serial console. A project can add its own native functions the same way, by
 dropping a C extension under `./firmware/exts/` -- see
-[docs/custom-extensions.md](docs/custom-extensions.md). Here is that sketch on real hardware, three
+[docs/extensions/custom-extensions.md](docs/extensions/custom-extensions.md). Here is that sketch on real hardware, three
 lines of PHP driving a physical pin:
 
 ![An LED blinking, driven from PHP](examples/led-blink/display.gif)
@@ -162,12 +162,15 @@ extension from the firmware's manifest and pulls any extra sources it needs.
   `tokenizer`, and PDO SQLite for an on-card or in-memory database.
 - **Time.** `date` brings the `DateTime` family and timezone support; a minimal UTC stub covers the
   few core call sites when the full extension is off.
-- **State.** `session` for per-visitor state on the web-server model, and a reboot-persistent
-  key-value store (`store_set` / `store_get`, backed by the chip's NVS) for values that must survive
-  a reset, like a boot counter or a device identity. See [docs/store.md](docs/store.md).
+- **State.** `session` for per-visitor state on the web-server model; a reboot-persistent key-value
+  store (`store_set` / `store_get`, backed by the chip's NVS) for values that must survive a reset,
+  like a boot counter or a device identity; and a volatile in-RAM twin (`mem_set` / `mem_get`) for
+  data shared across the requests of one boot without touching flash. On the web-server model a
+  one-time `[web-server] init` script does setup once, before serving. See [docs/storage/persistent-store.md](docs/storage/persistent-store.md)
+  and [docs/storage/in-ram-store.md](docs/storage/in-ram-store.md).
 - **Configuration.** A project `.env` next to the config is baked into the firmware and read as
   `$_ENV` / `getenv()`, so endpoints, flags and device names live in configuration rather than in the
-  script -- and not on the removable card. See [docs/environment.md](docs/environment.md).
+  script -- and not on the removable card. See [docs/storage/environment.md](docs/storage/environment.md).
 - **OPcache.** The bundled Zend OPcache is ported (no JIT, statically linked). It caches compiled
   bytecode to the card or into PSRAM, so a request stops recompiling the framework every time.
 - **TLS.** The `openssl` extension has two builds: a compact one backed by the chip's mbedTLS, and the
@@ -180,7 +183,7 @@ extension from the firmware's manifest and pulls any extra sources it needs.
   not exist for these targets). Both follow from the hardware.
 
 The per-extension status, with the build flag and any settings for each, is in
-[docs/ext-porting.md](docs/ext-porting.md).
+[docs/extensions/porting-status.md](docs/extensions/porting-status.md).
 
 ## How it is built
 
@@ -218,6 +221,7 @@ php-esp32/
 │   │   └── php-8.4.24/        the PHP source (fetched, not committed)
 │   ├── php_ext_gpio/          the gpio_* and delay extension
 │   ├── php_ext_store/         the store_* reboot-persistent key-value store (NVS)
+│   ├── php_ext_mem/           the mem_* volatile in-RAM key-value store
 │   └── php_project_exts/      compiles a project's own C extensions from ./firmware/exts/
 ├── examples/                 example projects, one per folder
 ├── docs/                     architecture, porting notes, footprint, extensions, and more
@@ -239,24 +243,26 @@ and applies the patches.
 The hard part was never "compiling PHP". It was convincing an engine full of operating-system
 assumptions that it is at home on a chip that has no operating system: the hand-written config header,
 the portable VM, the stubs standing in for missing POSIX symbols, and a set of filesystem and
-networking quirks that only surfaced with hardware in hand. [docs/porting-notes.md](docs/porting-notes.md)
+networking quirks that only surfaced with hardware in hand. [docs/reference/porting-notes.md](docs/reference/porting-notes.md)
 is the full account, with each decision and the reason for it.
 
 ## Documentation
 
-- [docs/getting-started.md](docs/getting-started.md): install, scaffold, build, flash, and the
+- [docs/getting-started/quick-start.md](docs/getting-started/quick-start.md): install, scaffold, build, flash, and the
   storage and execution models, from phpflash down to the raw ESP-IDF commands.
-- [docs/architecture.md](docs/architecture.md): the memory map and the execution flow, with diagrams.
-- [docs/porting-notes.md](docs/porting-notes.md): every technical choice and why, including the
+- [docs/getting-started/architecture.md](docs/getting-started/architecture.md): the memory map and the execution flow, with diagrams.
+- [docs/reference/porting-notes.md](docs/reference/porting-notes.md): every technical choice and why, including the
   per-chip and per-board work.
-- [docs/ext-porting.md](docs/ext-porting.md): each extension, marked built-in, optional, or not ported.
-- [docs/custom-extensions.md](docs/custom-extensions.md): write your own C extension for a project,
+- [docs/extensions/porting-status.md](docs/extensions/porting-status.md): each extension, marked built-in, optional, or not ported.
+- [docs/extensions/custom-extensions.md](docs/extensions/custom-extensions.md): write your own C extension for a project,
   under `./firmware/exts/`.
-- [docs/environment.md](docs/environment.md) and [docs/store.md](docs/store.md): a project `.env`
+- [docs/storage/environment.md](docs/storage/environment.md) and [docs/storage/persistent-store.md](docs/storage/persistent-store.md): a project `.env`
   baked in as `$_ENV`, and the reboot-persistent `store_*` key-value store.
-- [docs/footprint.md](docs/footprint.md): flash and RAM cost, by area and by extension.
-- [docs/opcache.md](docs/opcache.md) and [docs/openssl.md](docs/openssl.md): the two extensions with a
-  story of their own.
+- [docs/storage/in-ram-store.md](docs/storage/in-ram-store.md): the volatile in-RAM `mem_*` store and the web-server `server_init`
+  script, for sharing setup and data across requests.
+- [docs/reference/footprint.md](docs/reference/footprint.md): flash and RAM cost, by area and by extension.
+- [docs/extensions/opcache.md](docs/extensions/opcache.md): usage of opcache
+- [docs/extensions/openssl.md](docs/extensions/openssl.md): openssl
 - [boards/README.md](boards/README.md) and
   [components/php/versions/README.md](components/php/versions/README.md): how to add a board or a PHP
   version.

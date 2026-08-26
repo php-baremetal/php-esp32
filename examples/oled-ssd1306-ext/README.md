@@ -46,7 +46,7 @@ sources, and registers each module after `php_embed_init()` so its functions are
 script. An extension that needs extra ESP-IDF components lists them in
 `firmware/exts/<name>/idf_requires.txt` (one per line); this one needs none beyond the common set.
 
-See [docs/custom-extensions.md](../../docs/custom-extensions.md) for the full contract.
+See [docs/extensions/custom-extensions.md](../../docs/extensions/custom-extensions.md) for the full contract.
 
 ## Functions
 

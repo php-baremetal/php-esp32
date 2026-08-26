@@ -12,7 +12,7 @@ already enables it (`[extensions.mbstring]`), so you don't pass any build flags.
 **without** the `mb_ereg*` regex family (that needs oniguruma — see
 [`mbstring-regex`](../mbstring-regex/)); everything else works. This is the heavy extension —
 the bundled libmbfl carries the CJK conversion tables — see
-[`docs/footprint.md`](../../docs/footprint.md).
+[`docs/reference/footprint.md`](../../docs/reference/footprint.md).
 
 ## Building and running
 

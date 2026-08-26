@@ -15,7 +15,7 @@ Laravel 13's framework requires exactly these PHP extensions — and this firmwa
 
 `ctype` · `filter` · `hash` · `mbstring` · `openssl` · **`session`** · **`tokenizer`**
 
-(`session` and `tokenizer` were the last pieces; see [`docs/ext-porting.md`](../../docs/ext-porting.md).)
+(`session` and `tokenizer` were the last pieces; see [`docs/extensions/porting-status.md`](../../docs/extensions/porting-status.md).)
 The example also builds `sqlite` (Laravel's default database + database session/cache drivers),
 `date` (Carbon), and `mbstring` **with oniguruma** (`onig`) so `mb_split` is native — Laravel calls
 it and there's no polyfill in a vanilla app.

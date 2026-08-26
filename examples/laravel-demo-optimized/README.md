@@ -16,7 +16,7 @@ OPcache) and everything around it (autoloader, I/O).
   bytecode is cached on the microSD, so after the first (warm-up) request each one skips the
   tokenize/parse/compile/optimize entirely. This alone takes the page from ~12 s to ~8.4 s. The
   cache stays on the card rather than in RAM because Laravel's bytecode plus its per-request heap
-  don't both fit in the 32 MB PSRAM — see [`docs/opcache.md`](../../docs/opcache.md).
+  don't both fit in the 32 MB PSRAM — see [`docs/extensions/opcache.md`](../../docs/extensions/opcache.md).
 
 The rest are path-portable app-level tweaks (see "What's deliberately left out" for why that matters):
 
@@ -79,7 +79,7 @@ The firmware creates `/sdcard/opcache` for the bytecode cache. The **first** req
 card warms it (compiles + writes the cache) and is as slow as before; every request after that is
 ~8.4 s. OPcache doesn't check file mtimes here, so **after you change the app code, delete
 `/sdcard/opcache`** (or the board keeps serving the old bytecode) — see
-[`docs/opcache.md`](../../docs/opcache.md).
+[`docs/extensions/opcache.md`](../../docs/extensions/opcache.md).
 
 Then open `http://<board-ip>/` and compare the per-request time against `laravel-demo`. The welcome
 page renders identically (`GET /` → `200`, the full welcome page); the gain is in how long the board

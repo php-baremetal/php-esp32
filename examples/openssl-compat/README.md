@@ -8,7 +8,7 @@ case — including a framework's encrypter (e.g. Laravel's).
 
 > There are two openssl examples. This one uses the mbedTLS **subset** (symmetric AES, tiny). The
 > sibling [`openssl-full`](../openssl-full/) uses the real ported OpenSSL (public-key crypto,
-> ~2 MB). See [`docs/openssl.md`](../../docs/openssl.md) for when to pick which.
+> ~2 MB). See [`docs/extensions/openssl.md`](../../docs/extensions/openssl.md) for when to pick which.
 
 ## Firmware
 
