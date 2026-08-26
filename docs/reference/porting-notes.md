@@ -7,7 +7,7 @@ see_also:
   - { href: '../extensions/openssl.md', meta: '5 min' }
   - { href: 'https://github.com/php-baremetal/php-esp32', meta: 'external', label: 'php-esp32 on GitHub' }
 prev: { label: 'Footprint', href: './footprint.md' }
-next: { label: 'No next page', href: '#' }
+next: { label: 'Partitions and the flash layout', href: './partitions.md' }
 ---
 
 # Porting notes

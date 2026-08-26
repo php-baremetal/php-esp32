@@ -1,5 +1,25 @@
 # Changelog
 
+## [0.16.0] — The real ESP32-S3-Zero (4 MB / Quad PSRAM) and per-project partition tables
+
+### Added
+- **Per-project partition table.** A project can now ship its own `partitions.csv` next to
+  `php-esp32.config.toml`; for that build it replaces the board's committed fixed spec.
+  `cmake/gen-partitions.cmake` takes it via a new `PHP_PARTITIONS_CSV` input (flash-tool passes it
+  when the file is present) and still appends the generated `storage`/`phpstore` partitions. This lets
+  one project resize `factory` or add a partition on a tight-flash board without forking the firmware.
+  New [`custom-partitions`](examples/custom-partitions/) example and a new reference page,
+  [docs/reference/partitions.md](docs/reference/partitions.md).
+
+### Fixed
+- **`esp32-s3-zero` corrected to the real hardware.** Its definition inherited the S3-ETH module's
+  assumptions (16 MB flash, Octal 8 MB PSRAM), but the actual Waveshare ESP32-S3-Zero (ESP32-S3FH4R2)
+  carries **4 MB flash and 2 MB Quad PSRAM**. `sdkconfig.board` now pins 4 MB flash and overrides PSRAM
+  to **Quad** (the family default is Octal -- in Octal mode a Quad module never initialises, and with
+  `USE_ZEND_ALLOC=0` the whole runtime heap lives in PSRAM, so the engine would have no memory to run
+  in), and `partitions.csv` caps `factory` at 3456K so the ~2.8 MB firmware plus its embedded FAT fit
+  in 4 MB. Verified on ESP32-S3-Zero hardware: `hello` runs from an embedded image.
+
 ## [0.15.0] — Sharing state across web-server requests: `mem_*` and a server-init script
 
 ### Added

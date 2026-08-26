@@ -25,3 +25,4 @@
 - Reference
   - [Footprint](./reference/footprint.md)
   - [Porting notes](./reference/porting-notes.md)
+  - [Partitions and the flash layout](./reference/partitions.md)

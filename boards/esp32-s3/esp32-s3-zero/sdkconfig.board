@@ -1,9 +1,17 @@
 # ESP32-S3-Zero board defaults. Layered last (over base + family), so board-specific
 # choices win.
 
-# 16 MB NOR flash on board (the IDF default is 2 MB, which the app blows past).
-CONFIG_ESPTOOLPY_FLASHSIZE_16MB=y
-CONFIG_ESPTOOLPY_FLASHSIZE="16MB"
+# The Waveshare ESP32-S3-Zero carries an ESP32-S3FH4R2: 4 MB in-package NOR flash
+# (the IDF default is 2 MB, which the app blows past).
+CONFIG_ESPTOOLPY_FLASHSIZE_4MB=y
+CONFIG_ESPTOOLPY_FLASHSIZE="4MB"
+
+# ...and 2 MB of QUAD PSRAM (AP Memory, 3.3 V) embedded in the same package -- NOT the
+# Octal PSRAM the S3-ETH/S3-Pico modules carry. The family default is Octal
+# (sdkconfig.family); override to Quad here, or PSRAM never initialises on this module
+# and -- with USE_ZEND_ALLOC=0, where the whole runtime heap lives in PSRAM -- the engine
+# has no memory to run in.
+CONFIG_SPIRAM_MODE_QUAD=y
 
 # Console over the chip's native USB Serial/JTAG: the USB-C port is wired straight to the
 # S3's USB pins (GPIO19/20), not through a UART bridge, and enumerates as /dev/ttyACM*.
@@ -12,6 +20,6 @@ CONFIG_ESP_CONSOLE_USB_SERIAL_JTAG=y
 # No microSD and no wired Ethernet on this board: none of the SD / SPI-Ethernet driver
 # options are enabled.
 
-# This board's partition layout (sized for the 16 MB flash). Path is relative to the
+# This board's partition layout (sized for the 4 MB flash). Path is relative to the
 # project root.
 CONFIG_PARTITION_TABLE_CUSTOM_FILENAME="boards/esp32-s3/esp32-s3-zero/partitions.csv"

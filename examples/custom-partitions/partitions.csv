@@ -1,0 +1,30 @@
+# Project partition table -- published by `phpflash partitions publish` from board "esp32-s3-zero".
+#
+# It overrides the board's committed table for THIS project only; `phpflash build` picks it up
+# automatically just by being here (delete it to fall back to the board default).
+#
+# You may change:
+#   - factory (the app partition): resize it. It must hold the ~3 MB firmware AND leave room
+#     for the auto-generated storage/phpstore partitions within 4MB flash. App partitions
+#     start on a 64 KB boundary. See the size table below.
+#   - nvs: 16K-64K is plenty (Wi-Fi calibration + IDF NVS).
+#   - add your own `data` partitions if you need them.
+#
+# Sensible `factory` sizes for esp32-s3-zero (4000K usable of 4096K flash):
+#   factory   free       note
+#   3072K     ~928K      roomier embedded source / store
+#   3456K     ~544K      board default
+#   3712K     ~288K      tighter -- small source only
+#   3840K     ~160K      max embedded (little room for source/store)
+#
+# Do NOT add these here -- they are generated per build and appended automatically:
+#   - storage  (embedded PHP source FAT)  -> size it with [storage] reserve_kb
+#   - phpstore (persistent store_* NVS)   -> enable it with [store] size_kb
+# Any storage/phpstore line here is ignored.
+#
+# Sizes take K/M suffixes; leave Offset blank to auto-place.
+#
+# Name,     Type, SubType,  Offset,   Size
+nvs,        data, nvs,      ,         24K
+phy_init,   data, phy,      ,         4K
+factory,    app,  factory,  ,         3200K

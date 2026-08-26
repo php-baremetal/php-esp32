@@ -1,0 +1,27 @@
+name = "custom-partitions"
+storage_type = "embedded"   # PHP source packed into flash (no microSD on the S3-Zero)
+type = "init-loop"          # execution model
+
+[board]
+target = "esp32-s3-zero"    # a tight-flash board: 4 MB flash, 2 MB PSRAM
+port   = ""          # empty = autodetect at flash time
+
+[esp-idf]
+path    = ""
+version = ""
+
+[php-esp32]
+path    = ""
+version = ""
+
+[store]
+size_kb = 32               # reboot-persistent store_* -> a `phpstore` NVS partition (appended automatically)
+
+[php]
+src   = "project-src"      # PHP source folder (packed into the embedded image)
+entry = "index.php"    # entry file within src
+
+# This project ships its OWN partition table in ./partitions.csv (published with
+# `phpflash partitions publish` and then edited). The build uses it instead of the
+# board's committed table; the `storage` and `phpstore` partitions are still appended
+# per build. See docs/recipes/custom-partition-table.md.

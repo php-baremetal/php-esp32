@@ -13,10 +13,21 @@
 # sdkconfig fragment appended to SDKCONFIG_DEFAULTS -- layered last, so it wins over the board's
 # committed CONFIG_PARTITION_TABLE_CUSTOM_FILENAME. Must be included before project().
 #
-# Inputs: BOARD_DIR, REPO_ROOT (resolve-board.cmake); PHP_EMBED_SRC, PHP_STORAGE_RESERVE_KB (-D from
-# flash-tool); it appends to SDKCONFIG_DEFAULTS in the caller's scope.
+# Inputs: BOARD_DIR, REPO_ROOT (resolve-board.cmake); PHP_EMBED_SRC, PHP_STORAGE_RESERVE_KB,
+# PHP_PARTITIONS_CSV (-D from flash-tool); it appends to SDKCONFIG_DEFAULTS in the caller's scope.
 
-set(_board_csv "${BOARD_DIR}/partitions.csv")
+# The fixed-partition spec. A project can override the board's committed table by passing
+# PHP_PARTITIONS_CSV (flash-tool sets it when a partitions.csv sits next to the project config);
+# the generated storage/phpstore partitions below are appended either way.
+if(DEFINED PHP_PARTITIONS_CSV AND NOT PHP_PARTITIONS_CSV STREQUAL "")
+    set(_board_csv "${PHP_PARTITIONS_CSV}")
+    if(NOT IS_ABSOLUTE "${_board_csv}")
+        set(_board_csv "${REPO_ROOT}/${_board_csv}")
+    endif()
+    message(STATUS "php-esp32: partition table base <- project override (${_board_csv})")
+else()
+    set(_board_csv "${BOARD_DIR}/partitions.csv")
+endif()
 if(NOT EXISTS "${_board_csv}")
     message(FATAL_ERROR "partition table: ${_board_csv} not found")
 endif()
