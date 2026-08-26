@@ -245,3 +245,10 @@ required_for = []
 flag = "PHP_EXT_SQLITE=ON"
 fetch = "scripts/fetch-sqlite.sh"
 flash_cost = "~560 KB"
+
+[[extension]]
+key = "s3_onboard_rgb"
+description = "Drive the ESP32-S3 board's onboard WS2812 RGB LED (S3 only). Pin via [extensions.s3_onboard_rgb] pin, default 48."
+required_for = []
+flag = "PHP_EXT_S3_ONBOARD_RGB=ON"
+flash_cost = "~4 KB"

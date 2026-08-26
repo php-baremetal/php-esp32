@@ -1,8 +1,18 @@
 # Changelog
 
-## [0.16.0] — The real ESP32-S3-Zero (4 MB / Quad PSRAM) and per-project partition tables
+## [0.16.0] — ESP32-S3-Zero (4 MB / Quad PSRAM), per-project partition tables, and onboard RGB from PHP
 
 ### Added
+- **`s3_onboard_rgb`: drive the ESP32-S3 board's onboard WS2812 RGB LED from PHP.** An opt-in native
+  extension, **ESP32-S3 only** -- the P4 boards have no such LED. Enable it per project with
+  `[extensions.s3_onboard_rgb] enabled = true`; the data pin is configurable (`pin`, default GPIO 48)
+  because S3 boards wire the LED to different pins. It drives the WS2812 straight from the SoC's RMT
+  peripheral (no external component). API: `s3_onboard_rgb_set($r, $g, $b)`,
+  `s3_onboard_rgb_hsv($h, $s, $v)`, `s3_onboard_rgb_off()`, `s3_onboard_rgb_available()`, plus the
+  `S3_ONBOARD_RGB_PIN` constant. Compiled in only for `esp32s3` targets: enabling the flag on a P4
+  board fails the build early with a clear message (`PHP_EXT_S3_ONBOARD_RGB is ESP32-S3 only`).
+  Registered across every PHP version (8.3-8.5). Verified on ESP32-S3-Zero hardware (GPIO 48). New
+  [`s3-rgb-show`](examples/s3-rgb-show/) example: a slow, continuous rainbow on the onboard LED.
 - **Per-project partition table.** A project can now ship its own `partitions.csv` next to
   `php-esp32.config.toml`; for that build it replaces the board's committed fixed spec.
   `cmake/gen-partitions.cmake` takes it via a new `PHP_PARTITIONS_CSV` input (flash-tool passes it

@@ -31,6 +31,10 @@ extern zend_module_entry gpio_module_entry;
 extern zend_module_entry store_module_entry;
 extern zend_module_entry mem_module_entry;
 
+#ifdef PHP_EXT_S3_ONBOARD_RGB_ENABLED
+extern zend_module_entry s3_onboard_rgb_module_entry;
+#endif
+
 /* Optional real ext/date (DateTime), gated by PHP_EXT_DATE_ENABLED. When off, the
  * core uses compat/date_stub.c instead and no date module is registered. */
 #ifdef PHP_EXT_DATE_ENABLED
@@ -115,6 +119,9 @@ static zend_module_entry * const php_builtin_extensions[] = {
 	&gpio_module_entry,
 	&store_module_entry,
 	&mem_module_entry,
+#ifdef PHP_EXT_S3_ONBOARD_RGB_ENABLED
+	&s3_onboard_rgb_module_entry,
+#endif
 };
 
 #define EXTCOUNT (sizeof(php_builtin_extensions)/sizeof(zend_module_entry *))

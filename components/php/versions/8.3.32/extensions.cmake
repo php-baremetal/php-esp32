@@ -354,3 +354,14 @@ if(PHP_EXT_OPCACHE)
         USE_MALLOC_SHM   # register the PSRAM shared-memory backend (shared_alloc_malloc.c)
     )
 endif()
+
+# --- s3_onboard_rgb: ESP32-S3 onboard WS2812 RGB LED (S3-only) -----------------
+# The extension itself lives in components/php_ext_s3_onboard_rgb/. Here we gate the
+# target and switch on its registration in internal_functions.c.
+option(PHP_EXT_S3_ONBOARD_RGB "Build the s3_onboard_rgb extension (ESP32-S3 onboard RGB LED)" OFF)
+if(PHP_EXT_S3_ONBOARD_RGB)
+    if(NOT IDF_TARGET STREQUAL "esp32s3")
+        message(FATAL_ERROR "PHP_EXT_S3_ONBOARD_RGB is ESP32-S3 only: the onboard RGB LED is an ESP32-S3 board feature, but the target is '${IDF_TARGET}'. Remove [extensions.s3_onboard_rgb] for this board.")
+    endif()
+    target_compile_definitions(${COMPONENT_LIB} PRIVATE PHP_EXT_S3_ONBOARD_RGB_ENABLED)
+endif()

@@ -22,6 +22,14 @@ if(_web_server)
     set(WEB_SERVER_REQUIRES esp_http_server esp_netif)
 endif()
 
+# s3_onboard_rgb (ESP32-S3 onboard WS2812 LED): pulled in only when the project enables it.
+# The component itself refuses to build on a non-esp32s3 target (see its CMakeLists and the php
+# component's extensions.cmake), so this stays empty on the P4.
+set(RGB_REQUIRES "")
+if(PHP_EXT_S3_ONBOARD_RGB)
+    set(RGB_REQUIRES php_ext_s3_onboard_rgb)
+endif()
+
 # microSD support (mount a card for storage / writable data). On by default; a `microsd` project
 # needs it, an `embedded` one can turn it off (-DPHP_STORAGE_MICROSD=OFF) to drop the SD drivers.
 # The board's board.cmake reads $ENV{PHP_ESP32_MICROSD} to match its REQUIRES in the early phase.
@@ -47,7 +55,7 @@ idf_component_register(
     INCLUDE_DIRS "." ${BOARD_INCLUDE_DIRS}
     # esp_partition/fatfs/vfs: main.c mounts the optional read-only embedded source
     # partition itself (board-agnostic); the board adds its own storage drivers too.
-    REQUIRES php php_ext_gpio php_ext_store php_ext_mem php_project_exts esp_partition fatfs vfs ${WEB_SERVER_REQUIRES} ${BOARD_REQUIRES}
+    REQUIRES php php_ext_gpio php_ext_store php_ext_mem php_project_exts esp_partition fatfs vfs ${WEB_SERVER_REQUIRES} ${RGB_REQUIRES} ${BOARD_REQUIRES}
 )
 
 # fs_pathnorm.c: --wrap the file syscalls so "." / ".." in paths are collapsed before the FATFS VFS
