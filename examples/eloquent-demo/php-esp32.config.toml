@@ -1,0 +1,35 @@
+name = "eloquent-demo"
+storage_type = "microsd"   # where the PHP source lives
+type = "init-loop"                  # execution model
+
+[board]
+target = "esp32-p4-pico"
+port   = ""          # empty = autodetect at flash time
+
+[esp-idf]
+path    = ""
+version = ""
+
+[php-esp32]
+path    = ""
+version = ""
+
+[extensions.sqlite]
+enabled = true
+
+[extensions.mbstring]
+enabled = true
+no_cjk = true        # Eloquent doesn't need the CJK codecs; drop them to keep the image small
+
+[extensions.ctype]
+enabled = true
+
+[extensions.filter]
+enabled = true
+
+[extensions.date]
+enabled = true
+
+[php]
+src   = "project-src"      # PHP source folder (copied to the microSD / embedded)
+entry = "index.php"    # entry file within src

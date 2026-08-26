@@ -26,11 +26,11 @@ isn't required either, so `-DPHP_EXT_DATE_MINIMAL_TZ=ON` is fine too (the demo p
 
 ## Producing `vendor/`
 
-`vendor/` isn't committed — generate it on your PC with Composer, then copy the whole folder to
-the card next to `index.php` (the firmware needs FAT long filenames, which it has by default):
+`vendor/` isn't committed — generate it on your PC with Composer inside `project-src/`, then copy
+that folder to the card (the firmware needs FAT long filenames, which it has by default):
 
 ```
-cd examples/eloquent-demo
+cd examples/eloquent-demo/project-src
 composer install
 ```
 

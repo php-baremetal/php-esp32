@@ -27,7 +27,7 @@ tiny `mb_split` polyfill.
 Same as the other example — `vendor/` isn't committed:
 
 ```
-cd examples/eloquent-onig
+cd examples/eloquent-onig/project-src
 composer install
 ```
 
@@ -36,7 +36,7 @@ resolution matches what runs there; `composer.lock` is committed.
 
 ## Run
 
-Copy this folder (with `vendor/`) to the microSD, reset the board, watch the serial port.
+Copy `project-src/` (with `vendor/`) to the microSD, reset the board, watch the serial port.
 
 ## Output (excerpt, first two boots)
 

@@ -1,2 +1,4 @@
-# Third-party code: reproduce it with `composer install` instead of committing it.
+/build/
+/sdkconfig
 /vendor/
+/project-src/vendor/
