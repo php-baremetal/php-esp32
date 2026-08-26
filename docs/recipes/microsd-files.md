@@ -23,7 +23,7 @@ next:
 
 The microSD card is mounted read-write at `/sdcard`, so every core PHP file function works against it unchanged. There is no special API and no extension to enable: `file_put_contents`, `file_get_contents`, `fopen`/`fgets`, `filesize`, `scandir` — all of them take a `/sdcard/...` path and behave exactly as they do on a desktop.
 
-This recipe is built on the [`sd-write`](../../examples/sd-write/) example: it writes a string to `/sdcard/test.txt`, reads it back in the same run to confirm the write path, then appends a second line.
+This recipe is built on the [`sd-write`](https://github.com/php-baremetal/php-esp32/tree/master/examples/sd-write) example: it writes a string to `/sdcard/test.txt`, reads it back in the same run to confirm the write path, then appends a second line.
 
 ## Goal
 

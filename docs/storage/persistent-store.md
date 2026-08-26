@@ -32,7 +32,7 @@ store_set('boots', (string) $boots);
 
 It is backed by the SoC's **NVS** (Non-Volatile Storage): a wear-levelled, power-loss-safe key-value area in flash. The store is written by the running script and changes at runtime — it is the read-write counterpart to the read-only, build-time [`.env`](./environment.md) environment, and the reboot-surviving counterpart to the volatile in-RAM [`mem_*`](./in-ram-store.md) table.
 
-The [`store-demo`](../../examples/store-demo/) example is a boot counter you can watch climb across resets.
+The [`store-demo`](https://github.com/php-baremetal/php-esp32/tree/master/examples/store-demo) example is a boot counter you can watch climb across resets.
 
 ## Enabling it
 

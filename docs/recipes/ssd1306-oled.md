@@ -13,7 +13,7 @@ next: { label: 'Read and write the microSD', href: './microsd-files.md' }
 
 A 0.91" SSD1306 (128x32, I2C) is the smallest useful display you can hang off the board, and there are two ways to drive it from PHP on this target. One writes the whole I2C link — every clock edge — in PHP over two GPIO pins. The other puts the driver in a native C extension and lets the hardware I2C peripheral do the clocking. Both draw the same framebuffer and the same 5x7 text; the difference is frame rate, and the gap is exactly 2x.
 
-Both are shipped as worked examples: [`oled-ssd1306-fps`](../../examples/oled-ssd1306-fps/README.md) (pure PHP) and [`oled-ssd1306-ext`](../../examples/oled-ssd1306-ext/README.md) (C extension).
+Both are shipped as worked examples: [`oled-ssd1306-fps`](https://github.com/php-baremetal/php-esp32/blob/master/examples/oled-ssd1306-fps/README.md) (pure PHP) and [`oled-ssd1306-ext`](https://github.com/php-baremetal/php-esp32/blob/master/examples/oled-ssd1306-ext/README.md) (C extension).
 
 ## Goal
 

@@ -50,7 +50,7 @@ NVS is wear-levelled, but flash cells still wear out per erase/write cycle. Do *
 
 ## The code: a boot counter (store)
 
-The [`store-demo`](../../examples/store-demo/) example runs in the loop model. `setup()` reads the previous count (a string), bumps it, and writes it straight back — persisted the instant `store_set` returns. It writes a one-time message on the first boot and lists the stored keys, then guards the whole thing on `store_available()` so the same script still runs on a build without persistence configured.
+The [`store-demo`](https://github.com/php-baremetal/php-esp32/tree/master/examples/store-demo) example runs in the loop model. `setup()` reads the previous count (a string), bumps it, and writes it straight back — persisted the instant `store_set` returns. It writes a one-time message on the first boot and lists the stored keys, then guards the whole thing on `store_available()` so the same script still runs on a build without persistence configured.
 
 <!-- @code-block language="php" label="project-src/index.php" -->
 ```php
@@ -86,7 +86,7 @@ function loop(int $tick): void
 
 ## The code: a hit counter (mem)
 
-The [`web-init-mem`](../../examples/web-init-mem/) example runs in the web-server model. `init.php` runs once at boot, before the server accepts connections, and seeds the in-RAM table. `index.php` runs per request: it reads what init seeded, bumps a counter in RAM, and returns both over HTTP.
+The [`web-init-mem`](https://github.com/php-baremetal/php-esp32/tree/master/examples/web-init-mem) example runs in the web-server model. `init.php` runs once at boot, before the server accepts connections, and seeds the in-RAM table. `index.php` runs per request: it reads what init seeded, bumps a counter in RAM, and returns both over HTTP.
 
 <!-- @code-block language="php" label="project-src/init.php — runs once at boot, output to the console" -->
 ```php
@@ -221,4 +221,4 @@ mem keys: boot_msg, hits
 
 `boot_msg` is written once by `init.php` and read by every request; `hits` climbs in RAM with no flash cost. The key difference is what a reset does: the `store_*` boot counter keeps climbing, while the `mem_*` hit counter starts over at #1 — `mem_*` is volatile. For state that must survive a reboot, use `store_*`.
 
-The full examples live in [`examples/store-demo/`](../../examples/store-demo/) and [`examples/web-init-mem/`](../../examples/web-init-mem/).
+The full examples live in [`examples/store-demo/`](https://github.com/php-baremetal/php-esp32/tree/master/examples/store-demo) and [`examples/web-init-mem/`](https://github.com/php-baremetal/php-esp32/tree/master/examples/web-init-mem).

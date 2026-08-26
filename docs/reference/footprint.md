@@ -63,7 +63,7 @@ The cost is almost entirely flash (code and read-only data). 8.4 brings the new 
 The static internal-RAM footprint does not move with the version (the three are within about 1 KB of each other), and the PSRAM heap is unaffected. On the P4 the extra flash is immaterial against a 12 MB app partition; on the S3's 16 MB flash it is still comfortable. The per-extension deltas in the rest of this document were measured on 8.3.33 and carry over to 8.4 and 8.5 within a few KB.
 
 <!-- @callout variant="note" title="Version selection" -->
-The supported versions coexist in the tree; a build picks one with `-DPHP_VERSION`. See the [versions README](../../components/php/versions/README.md) for the dropped-lexbor detail and the full list of what each release adds.
+The supported versions coexist in the tree; a build picks one with `-DPHP_VERSION`. See the [versions README](https://github.com/php-baremetal/php-esp32/blob/master/components/php/versions/README.md) for the dropped-lexbor detail and the full list of what each release adds.
 <!-- @endcallout -->
 
 ## Optional extensions

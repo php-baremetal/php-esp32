@@ -115,4 +115,4 @@ php-esp32: tick 512 -- heap free: 32694175 bytes
 ```
 <!-- @endcode-block -->
 
-The full example lives in [`examples/button-led/`](../../examples/button-led/).
+The full example lives in [`examples/button-led/`](https://github.com/php-baremetal/php-esp32/tree/master/examples/button-led).

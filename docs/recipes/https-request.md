@@ -154,4 +154,4 @@ GET https://example.com/ -> HTTP/1.1 200 OK in 11416 ms
 
 A handshake takes around 10 s: the base config uses software AES (the AES accelerator's DMA cannot reach the PSRAM the PHP heap lives in) and the RSA cert-chain verify is software too. That is fine for occasional requests, and the task-watchdog window covers it.
 
-The full example lives in [`examples/https-client/`](../../examples/https-client/).
+The full example lives in [`examples/https-client/`](https://github.com/php-baremetal/php-esp32/tree/master/examples/https-client).

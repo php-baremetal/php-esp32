@@ -13,7 +13,7 @@ next: { label: 'Persistent store', href: '../storage/persistent-store.md' }
 
 A project can ship its own PHP extensions, written in C, and have them compiled into the firmware. This is how you expose new native functions — a display driver, a sensor, a protocol — to your PHP without forking the base firmware. Drop native code under `./firmware/exts/<name>/`, run `phpflash build`, and the new functions are callable from your script.
 
-The bundled [`oled-ssd1306-ext`](../../examples/oled-ssd1306-ext/README.md) example is a worked case: an SSD1306 OLED driver in C, running the same panel at roughly twice the frame rate of the same driver written in pure PHP.
+The bundled [`oled-ssd1306-ext`](https://github.com/php-baremetal/php-esp32/blob/master/examples/oled-ssd1306-ext/README.md) example is a worked case: an SSD1306 OLED driver in C, running the same panel at roughly twice the frame rate of the same driver written in pure PHP.
 
 Extensions are **statically linked**. There is no `dlopen` on this target, so there are no `.so` files. Everything is compiled in and registered at startup.
 
@@ -351,7 +351,7 @@ Each successful registration logs `project ext '<name>' registered` to the seria
 
 ## Worked example: the SSD1306 native driver
 
-The [`oled-ssd1306-ext`](../../examples/oled-ssd1306-ext/README.md) example drives a 0.91" SSD1306 128x32 OLED entirely from C. The I2C link (the ESP32 hardware I2C peripheral), the framebuffer, and the text rendering all live in the extension; PHP just calls the `ssd1306_*` functions. It is the native counterpart to `oled-ssd1306-fps`, where the same panel is driven by a pure-PHP bit-banged I2C driver, and the point of the pair is to compare frame rate.
+The [`oled-ssd1306-ext`](https://github.com/php-baremetal/php-esp32/blob/master/examples/oled-ssd1306-ext/README.md) example drives a 0.91" SSD1306 128x32 OLED entirely from C. The I2C link (the ESP32 hardware I2C peripheral), the framebuffer, and the text rendering all live in the extension; PHP just calls the `ssd1306_*` functions. It is the native counterpart to `oled-ssd1306-fps`, where the same panel is driven by a pure-PHP bit-banged I2C driver, and the point of the pair is to compare frame rate.
 
 ### Project layout
 

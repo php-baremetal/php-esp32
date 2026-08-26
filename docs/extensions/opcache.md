@@ -119,7 +119,7 @@ own heap.
 ## Measured speedup
 
 On the ESP32-P4, the file-cache OPcache takes the
-[`laravel-demo-optimized`](../../examples/laravel-demo-optimized/) welcome page from about 12 s to
+[`laravel-demo-optimized`](https://github.com/php-baremetal/php-esp32/tree/master/examples/laravel-demo-optimized) welcome page from about 12 s to
 about 8.4 s per request. What remains is SD reads of the bytecode plus execution; the compile is gone.
 
 | Board | Framework | Without OPcache | With file-cache OPcache |

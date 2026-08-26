@@ -378,7 +378,7 @@ untested on this port.
 
 ## Worked example: the openssl-full example
 
-The [`openssl-full`](../../examples/openssl-full/) example loads a shipped 2048-bit RSA key, exercises
+The [`openssl-full`](https://github.com/php-baremetal/php-esp32/tree/master/examples/openssl-full) example loads a shipped 2048-bit RSA key, exercises
 the public-key API, and finally generates a fresh RSA key on the chip. Its config uses microSD
 storage and enables the full build:
 
@@ -433,7 +433,7 @@ The ciphertext is interoperable with desktop OpenSSL in both directions.
 - **Always works, either mode.** Digests (`openssl_digest`, the full list: SHA-2, SHA-3, RIPEMD),
   RSA and EC operations on an existing key (`openssl_sign`, `openssl_verify`,
   `openssl_public_encrypt`, `openssl_private_decrypt`, `openssl_pkey_get_*`) and the symmetric
-  ciphers. All verified on hardware; see the [`openssl-full`](../../examples/openssl-full/) example.
+  ciphers. All verified on hardware; see the [`openssl-full`](https://github.com/php-baremetal/php-esp32/tree/master/examples/openssl-full) example.
 - **On-chip RSA key generation** (`openssl_pkey_new`) works in Mode 1, verified on hardware. It is
   CPU-bound (~20 to 45 s for RSA-2048); the widened watchdog covers it. In Mode 2 it fails in
   OpenSSL's provider init.
