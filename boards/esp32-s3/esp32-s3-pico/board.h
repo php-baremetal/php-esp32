@@ -7,9 +7,10 @@
  * The ESP32-S3 has no internal SD host, so the card hangs off SPI here:
  *   - microSD in SPI mode (SD_MOSI=6, SD_MISO=5, SD_CLK=7, SD_CS=4).
  *
- * There is no Ethernet on this board -- it is the S3-ETH without the W5500 -- so it does
- * NOT define BOARD_HAS_NETWORK and provides no board_network_up(). A project's `network`
- * features and the `web-server` model are simply not offered for this board.
+ * There is no wired Ethernet on this board -- it is the S3-ETH without the W5500 -- so it
+ * does NOT define BOARD_HAS_NETWORK and provides no board_network_up(). The network instead
+ * comes from the S3's built-in Wi-Fi, driven from PHP by the `wifi` extension; the `web-server`
+ * model works over that (the httpd binds regardless of any wired link).
  */
 #pragma once
 
@@ -23,8 +24,9 @@
  * (the `-zero` variants) leave this undefined, so the SD path is never built or probed. */
 #define BOARD_HAS_MICROSD 1
 
-/* No BOARD_HAS_NETWORK: this board has no network interface, so main.c skips the
- * bring-up-network-at-boot path entirely and no board_network_up() is declared. */
+/* No BOARD_HAS_NETWORK: this board has no *wired* interface, so main.c skips the
+ * bring-up-network-at-boot path entirely and no board_network_up() is declared. Wi-Fi is
+ * brought up from PHP (the `wifi` extension), not by the board layer. */
 
 /* Mount the board's storage at mount_point. On this board that's a microSD in SPI mode.
  * Returns true on success. */

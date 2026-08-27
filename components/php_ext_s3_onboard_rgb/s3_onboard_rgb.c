@@ -6,7 +6,7 @@
  * build for any other target fails early (see extensions.cmake).
  *
  * The LED is driven straight from the SoC's RMT peripheral -- no external component:
- * a single WS2812 pixel, GRB byte order, ~800 kHz. The data pin is fixed at build
+ * a single WS2812-style pixel, RGB byte order (what these S3 boards use), ~800 kHz. The data pin is fixed at build
  * time via S3_ONBOARD_RGB_GPIO (default 48; override with
  * [extensions.s3_onboard_rgb] pin = N, which flash-tool passes as -DPHP_S3_RGB_GPIO).
  *
@@ -65,15 +65,16 @@ static int rgb_ensure_init(void)
     return 0;
 }
 
-/* Push a single pixel to the LED (WS2812 wants GRB order). */
+/* Push a single pixel to the LED. The onboard LED on these ESP32-S3 dev boards takes RGB byte
+ * order (verified on the S3-Zero: sending GRB swapped red and green). */
 static void rgb_show(uint8_t r, uint8_t g, uint8_t b)
 {
     if (rgb_ensure_init() != 0) {
         return;
     }
-    uint8_t grb[3] = { g, r, b };
+    uint8_t rgb[3] = { r, g, b };
     rmt_transmit_config_t tx = { .loop_count = 0 };
-    rmt_transmit(s_chan, s_encoder, grb, sizeof(grb), &tx);
+    rmt_transmit(s_chan, s_encoder, rgb, sizeof(rgb), &tx);
     rmt_tx_wait_all_done(s_chan, 100);   /* ms; the frame is ~30 us */
 }
 

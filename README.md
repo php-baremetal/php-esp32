@@ -140,7 +140,9 @@ lines of PHP driving a physical pin:
 a fresh PHP run, the way a script runs behind Apache or PHP-FPM. The entry script produces the page;
 whatever it prints becomes the response body, and `$_SERVER`, `$_GET`, `$_POST`, cookies and sessions
 are populated per request. This is what makes a framework browsable: on the ESP32-P4, stock Laravel
-and Symfony both serve pages this way.
+and Symfony both serve pages this way. And because every ESP32-S3 has WiFi on the die, a board can even
+create its own network and serve the page over it -- no router, no cable: [`wifi-ap-s3-rgb-manage`](examples/wifi-ap-s3-rgb-manage/)
+starts a WiFi access point and serves a live PHP page that controls the board's onboard RGB LED from your phone.
 
 **Where the code lives.** Also per project. A `microsd` project reads its source from a FAT card, so
 to change what runs you pull the card, edit the files from your PC, put it back and reset, with no

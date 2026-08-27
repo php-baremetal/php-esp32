@@ -1,0 +1,32 @@
+name = "wifi-ap-s3-rgb-manage"
+storage_type = "embedded"   # PHP source packed into flash
+type = "web-server"         # HTTP server in front, PHP per request
+
+[board]
+target = "esp32-s3-zero"    # any WiFi-capable ESP32-S3 board with the onboard RGB LED
+port   = ""          # empty = autodetect at flash time
+
+[esp-idf]
+path    = ""
+version = ""
+
+[php-esp32]
+path    = ""
+version = ""
+
+# WiFi from PHP. init.php creates a SoftAP so the board serves its page over WiFi -- no router.
+[extensions.wifi]
+enabled = true
+
+# The onboard WS2812 RGB LED (ESP32-S3 boards only). pin 48 on the S3-Zero / most S3 dev boards.
+[extensions.s3_onboard_rgb]
+enabled = true
+pin     = 48
+
+# Runs once, before the HTTP server starts (server_init): brings up the WiFi AP and the LED.
+[web-server]
+init = "init.php"
+
+[php]
+src   = "project-src"      # PHP source folder (packed into the embedded image)
+entry = "index.php"    # per-request front controller

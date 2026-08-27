@@ -7,13 +7,13 @@
 #   the selected PHP version's manifest
 #   (components/php/versions/<version>/manifest.toml).
 #
-# This board has no wired Ethernet, so it does NOT advertise `web-server`; it runs the
-# `init-loop` and `event-driven` sketch models. It is the S3-ETH without the W5500 -- same
-# microSD-over-SPI wiring, same 16 MB flash, just no network stack.
+# This board has no wired Ethernet, but every ESP32-S3 has a Wi-Fi radio on the die, so it
+# advertises `web-server`: the `wifi` extension brings up a network from PHP (join one, or
+# create a SoftAP) and the firmware serves per-request PHP over it -- no router or wired link
+# needed. It also runs the `init-loop` and `event-driven` sketch models. It is the S3-ETH
+# without the W5500 -- same microSD-over-SPI wiring, same 16 MB flash, just no wired network.
 #
-# network : omitted entirely -- this board has no network interface, so `phpflash
-#   discover` reports "network: none" for it. (The S3 has a Wi-Fi radio on the die, but
-#   this board profile exposes no networking.)
+# network : the S3's built-in Wi-Fi. Reachable from PHP via the `wifi` extension.
 
 schema_version = 1
 
@@ -21,4 +21,4 @@ name   = "ESP32-S3-Pico"
 family = "esp32-s3"
 
 storage_types = ["microsd", "embedded"]
-project_types = ["init-loop", "event-driven"]
+project_types = ["init-loop", "event-driven", "web-server"]

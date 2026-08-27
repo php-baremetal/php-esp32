@@ -1,0 +1,23 @@
+name = "wifi-ap"
+storage_type = "embedded"   # PHP source packed into flash
+type = "init-loop"          # execution model
+
+[board]
+target = "esp32-s3-zero"    # any WiFi-capable board (ESP32 / ESP32-S3 / C-series); NOT the P4
+port   = ""          # empty = autodetect at flash time
+
+[esp-idf]
+path    = ""
+version = ""
+
+[php-esp32]
+path    = ""
+version = ""
+
+# WiFi from PHP. Here the board CREATES a network (SoftAP) that you connect to.
+[extensions.wifi]
+enabled = true
+
+[php]
+src   = "project-src"      # PHP source folder (packed into the embedded image)
+entry = "index.php"    # entry file within src

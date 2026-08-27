@@ -1,0 +1,23 @@
+I (652) boot: Loaded app from partition at offset 0x10000
+I (654) esp_psram: Found 2MB PSRAM device
+I (884) esp_psram: SPI SRAM memory test OK
+I (905) app_init: Project name:     php-esp32
+I (905) app_init: ESP-IDF:          v5.5.5
+I (906) efuse_init: Chip rev:         v0.2
+I (911) esp_psram: Adding pool of 2048K of PSRAM memory to heap allocator
+I (921) php-esp32: starting PHP runtime
+I (921) php-esp32: embedded source mounted at /app
+I (921) php-esp32: php_embed_init()...
+PHP 8.4.24 on ESP32-S3
+--- web-server init: /app/init.php ---
+I (1171) phy_init: phy_version 712,87e8c20e,Apr 13 2026,18:51:10
+I (1231) wifi:mode : softAP (28:84:85:67:57:81)
+[init] access point 'php-rgb' up at 192.168.4.1
+[init] join it (password 'baremetal') then open http://192.168.4.1/
+I (1241) esp_netif_lwip: DHCP server started on interface WIFI_AP_DEF with IP: 192.168.4.1
+[init] LED ready (h=210 s=255 v=40)
+--- web-server init done ---
+I (1251) php-esp32: web-server model: serving /app/index.php over HTTP on :80
+
+# Now connect a phone/laptop to the "php-rgb" WiFi network and open http://192.168.4.1/ -- drag the
+# sliders and each move sends GET /set to the board, so the onboard RGB LED reacts instantly.

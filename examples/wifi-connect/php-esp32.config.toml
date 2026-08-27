@@ -1,0 +1,31 @@
+name = "wifi-connect"
+storage_type = "embedded"   # PHP source packed into flash
+type = "init-loop"          # execution model
+
+[board]
+target = "esp32-s3-zero"    # any WiFi-capable board (ESP32 / ESP32-S3 / C-series); NOT the P4
+port   = ""          # empty = autodetect at flash time
+
+[esp-idf]
+path    = ""
+version = ""
+
+[php-esp32]
+path    = ""
+version = ""
+
+# WiFi from PHP. Opt-in (the stack is heavy). Credentials are NOT stored here -- they live in the
+# project's .env (copy .env.example) and reach PHP as $_ENV. Not available on the ESP32-P4 (no radio);
+# enabling it there fails the build.
+[extensions.wifi]
+enabled = true
+
+# The ./.env next to this file is baked into the firmware and exposed as $_ENV / getenv().
+# On by default when .env exists; shown here so it's obvious the credentials come from there.
+[env]
+enabled = true
+file    = ".env"
+
+[php]
+src   = "project-src"      # PHP source folder (packed into the embedded image)
+entry = "index.php"    # entry file within src

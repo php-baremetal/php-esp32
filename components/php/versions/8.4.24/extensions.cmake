@@ -366,3 +366,14 @@ if(PHP_EXT_S3_ONBOARD_RGB)
     endif()
     target_compile_definitions(${COMPONENT_LIB} PRIVATE PHP_EXT_S3_ONBOARD_RGB_ENABLED)
 endif()
+
+# --- wifi: WiFi client (STA) + access point (AP), from PHP (WiFi-capable SoCs only) ----------
+# The extension lives in components/php_ext_wifi/. Here we gate the target and switch on its
+# registration in internal_functions.c.
+option(PHP_EXT_WIFI "Build the wifi extension (scan/join/create a WiFi network)" OFF)
+if(PHP_EXT_WIFI)
+    if(IDF_TARGET STREQUAL "esp32p4" OR IDF_TARGET STREQUAL "esp32h2")
+        message(FATAL_ERROR "PHP_EXT_WIFI needs a WiFi radio: the target '${IDF_TARGET}' has none (the ESP32-P4 has no integrated WiFi). Use an ESP32 / ESP32-S3 / C-series board.")
+    endif()
+    target_compile_definitions(${COMPONENT_LIB} PRIVATE PHP_EXT_WIFI_ENABLED)
+endif()

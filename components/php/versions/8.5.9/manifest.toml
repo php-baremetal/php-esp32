@@ -252,3 +252,10 @@ description = "Drive the ESP32-S3 board's onboard WS2812 RGB LED (S3 only). Pin 
 required_for = []
 flag = "PHP_EXT_S3_ONBOARD_RGB=ON"
 flash_cost = "~4 KB"
+
+[[extension]]
+key = "wifi"
+description = "WiFi from PHP: scan/join a network (STA) and create one (SoftAP). WiFi-capable SoCs only (not the ESP32-P4)."
+required_for = []
+flag = "PHP_EXT_WIFI=ON"
+flash_cost = "~600 KB"

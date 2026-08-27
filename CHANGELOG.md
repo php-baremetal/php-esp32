@@ -1,6 +1,36 @@
 # Changelog
 
-## [0.16.0] — ESP32-S3-Zero (4 MB / Quad PSRAM), per-project partition tables, and onboard RGB from PHP
+## [0.17.0] — WIP — WiFi from PHP: scan, join, or create a network, and serve web pages over it
+
+### Added
+- **`wifi`: scan/join a WiFi network and create one, from PHP.** An opt-in native extension for
+  **WiFi-capable SoCs** (ESP32 / ESP32-S3 / C-series -- **not** the radio-less ESP32-P4, which fails
+  the build early with a clear message). Client (STA): `wifi_scan()` lists the nearby APs
+  (`ssid`/`bssid`/`rssi`/`channel`/`auth`), `wifi_connect($ssid, $password = null)` joins one (open,
+  WPA2, or WPA2/WPA3-transition -- it is PMF-capable, does WPA3-SAE, scans every channel, and
+  auto-retries transient association drops so real phone hotspots connect reliably), plus `wifi_ip()` /
+  `wifi_rssi()` / `wifi_connected()` / `wifi_disconnect()`. Access point
+  (SoftAP): `wifi_ap_start($ssid, $password = null, $channel, $max_conn)` makes the board its own
+  network with a built-in DHCP server (default 192.168.4.1), plus `wifi_ap_ip()` /
+  `wifi_ap_clients()` / `wifi_ap_stop()`. Driven straight from `esp_wifi`; credentials are never baked
+  into the config -- PHP passes them at runtime. Registered across every PHP version (8.3-8.5); ~600 KB
+  of flash, so opt-in (`[extensions.wifi] enabled = true`). Verified on ESP32-S3-Zero hardware (scanned
+  real networks, joined a WPA2/WPA3 network and got a DHCP lease, and brought up a SoftAP). New
+  [`wifi-connect`](examples/wifi-connect/) (credentials come from a gitignored `.env` baked into the
+  firmware) and [`wifi-ap`](examples/wifi-ap/) examples.
+- **The `web-server` model now runs on WiFi-only ESP32-S3 boards.** Every ESP32-S3 has WiFi on the
+  die, so all S3 board profiles (`esp32-s3-zero`, `esp32-s3-pico`, `esp32-s3-eth`) now advertise the
+  `web-server` project type -- previously reserved for boards with wired Ethernet. The HTTP server was
+  always independent of the wired-network path; the network simply comes from the `wifi` extension
+  instead. A `[web-server] init` (server_init) script brings WiFi up before the server binds, so a
+  board can create its own network and serve pages over it with no router or cable. New
+  [`wifi-ap-s3-rgb-manage`](examples/wifi-ap-s3-rgb-manage/) example: the board starts a SoftAP and
+  serves a live web page (from PHP) that controls the onboard RGB LED's colour and brightness --
+  verified end to end on ESP32-S3-Zero hardware (AP up, page served over HTTP on the WiFi, LED reacts
+  live to the sliders). (`$_SERVER['SERVER_ADDR']` reads `0.0.0.0` on WiFi-only boards -- use
+  `wifi_ap_ip()` / `wifi_ip()` for the real address.)
+
+## [0.16.0] — Onboard RGB LED from PHP, per-project partition tables, and the real ESP32-S3-Zero
 
 ### Added
 - **`s3_onboard_rgb`: drive the ESP32-S3 board's onboard WS2812 RGB LED from PHP.** An opt-in native

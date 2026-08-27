@@ -16,7 +16,7 @@ partitions. php-esp32 does not ship one fixed table: it **generates** it per bui
 adapts to a microSD project (source on the card) or an embedded one (source packed into flash), and to
 boards with very different flash sizes.
 
-![A fingertip-sized ESP32-S3 board that costs about $4 — 4 MB flash and 2 MB PSRAM. Boards this small are the tight-fit case for the flash layout.](https://raw.githubusercontent.com/php-baremetal/php-esp32/master/docs/assets/tiny-esp32-s3.jpg)
+![A fingertip-sized ESP32-S3 board — 4 MB flash and 2 MB PSRAM. Boards this small are the tight-fit case for the flash layout.](https://raw.githubusercontent.com/php-baremetal/php-esp32/master/docs/assets/tiny-esp32-s3.jpg)
 
 *A ~$4, fingertip-sized ESP32-S3 (4 MB flash / 2 MB PSRAM). On boards this small the ~3 MB firmware,
 the embedded source, and the store all have to fit at once — this page is about making that work.*

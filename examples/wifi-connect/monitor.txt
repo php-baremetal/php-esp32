@@ -1,0 +1,36 @@
+I (652) boot: Loaded app from partition at offset 0x10000
+I (654) esp_psram: Found 2MB PSRAM device
+I (884) esp_psram: SPI SRAM memory test OK
+I (893) cpu_start: cpu freq: 160000000 Hz
+I (893) app_init: Project name:     php-esp32
+I (894) app_init: ESP-IDF:          v5.5.5
+I (894) efuse_init: Chip rev:         v0.2
+I (896) esp_psram: Adding pool of 2048K of PSRAM memory to heap allocator
+I (899) php-esp32: starting PHP runtime
+I (899) php-esp32: embedded source mounted at /app
+I (909) php-esp32: applied 2 env var(s) from .env
+I (909) php-esp32: php_embed_init()...
+PHP 8.4.24 on ESP32-S3
+--- /app/index.php ---
+scanning for networks...
+I (1149) wifi:wifi firmware version: b9f67df
+I (1199) wifi:mode : sta (28:84:85:67:57:80)
+  My-wifi-network                      ch1    -31 dBm  wpa2/wpa3
+  neighbour-net-a                  ch1    -76 dBm  wpa2
+  neighbour-net-b                  ch8    -81 dBm  wpa2/wpa3
+  neighbour-net-c                  ch11   -94 dBm  wpa2
+connecting to 'My-wifi-network'...
+I (6109) wifi:state: init -> auth (0xb0)
+I (6859) wifi:state: auth -> assoc (0x0)
+I (7859) wifi:state: assoc -> init (0x400)
+W (7869) php-wifi: sta disconnected, reason=4 -- retrying
+I (10279) wifi:state: init -> auth (0xb0)
+I (10289) wifi:state: auth -> assoc (0x0)
+I (10329) wifi:state: assoc -> run (0x10)
+I (10359) wifi:connected with My-wifi-network, aid = 5, channel 1, BW20, bssid = de:d3:be:xx:xx:xx
+I (10429) esp_netif_handlers: sta ip: 10.33.146.111, mask: 255.255.255.0, gw: 10.33.146.62
+connected! IP 10.33.146.111  (-27 dBm)
+tick 0: online, IP 10.33.146.111, rssi -27 dBm
+tick 1: online, IP 10.33.146.111, rssi -27 dBm
+tick 2: online, IP 10.33.146.111, rssi -27 dBm
+tick 3: online, IP 10.33.146.111, rssi -28 dBm

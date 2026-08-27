@@ -1,0 +1,6 @@
+/build/
+/sdkconfig
+
+# your real credentials -- never committed; copy .env.example to .env
+.env
+!.env.example
