@@ -10,11 +10,12 @@ board you choose. `./scripts/info.sh` lists what the checkout can build.
 | Board | Family | Notes                                                                                                                                                                         |
 |---|---|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | `esp32-p4-zero` | `esp32-p4` | Minimal ESP32-P4: **embedded storage only**, no microSD slot and no network. The P4-Pico without the SD hardware. 32 MB flash. `init-loop` and `event-driven` only.                        |
-| `esp32-p4-pico` | `esp32-p4` | Waveshare/generic ESP32-P4-Pico. 4-bit SDMMC microSD, 32 MB flash, no network. The default board.                                                                             |
-| `esp32-p4-eth` | `esp32-p4` | Waveshare/generic  ESP32-P4-ETH. The same P4 SD design as the Pico (plus a GPIO45 card-power switch) and a wired Ethernet PHY (IP101GRI over RMII), so it runs the `web-server` model. |
+| `esp32-p4-pico` | `esp32-p4` | Generic ESP32-P4-Pico. 4-bit SDMMC microSD, 32 MB flash, no network. The default board.                                                                             |
+| `esp32-p4-eth` | `esp32-p4` | Generic ESP32-P4-ETH. The same P4 SD design as the Pico (plus a GPIO45 card-power switch) and a wired Ethernet PHY (IP101GRI over RMII), so it runs the `web-server` model. |
+| `esp32-p4-wifi-c6` | `esp32-p4` | ESP32-P4-WIFI6. The P4 has no native radio; this board pairs it with an on-board **ESP32-C6** (WiFi 6 / BLE 5) over SDIO, so it gets WiFi via **ESP-HOSTED**. Runs the `wifi` extension and the `web-server` model. A **special board** — see [docs/reference/special-boards.md](../docs/reference/special-boards.md). |
 | `esp32-s3-zero` | `esp32-s3` | Minimal ESP32-S3: **embedded storage only**, no microSD slot and no network. The S3-Pico without the SD hardware. 8 MB PSRAM, 16 MB flash. `init-loop` and `event-driven` only.                     |
 | `esp32-s3-pico` | `esp32-s3` | Generic ESP32-S3 with a microSD slot and no network. Xtensa LX7, 8 MB PSRAM, 16 MB flash. microSD over SPI (same wiring as the S3-ETH). The S3-ETH without the W5500, so `init-loop` and `event-driven` only. |
-| `esp32-s3-eth` | `esp32-s3` | Waveshare/generic  ESP32-S3-ETH. Xtensa LX7, 8 MB PSRAM, 16 MB flash. microSD over SPI and a W5500 Ethernet controller over SPI. Runs plain apps and a live web server.                |
+| `esp32-s3-eth` | `esp32-s3` | Generic ESP32-S3-ETH. Xtensa LX7, 8 MB PSRAM, 16 MB flash. microSD over SPI and a W5500 Ethernet controller over SPI. Runs plain apps and a live web server.                |
 
 Two families are supported today, `esp32-p4` (RISC-V) and `esp32-s3` (Xtensa). Others in the ESP32
 line with PSRAM and enough flash are candidates, and a new one is a directory here, not a change to

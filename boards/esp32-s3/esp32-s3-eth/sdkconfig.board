@@ -1,4 +1,4 @@
-# ESP32-S3-ETH board defaults (Waveshare). Layered last (over base + family), so
+# ESP32-S3-ETH board defaults. Layered last (over base + family), so
 # board-specific choices win.
 
 # 16 MB NOR flash on board (the IDF default is 2 MB, which the app blows past).

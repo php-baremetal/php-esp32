@@ -1,0 +1,37 @@
+# ESP32-P4-WIFI-C6 board defaults. Layered last (over base + family), so board-specific
+# choices win.
+
+# Early ESP32-P4 boards carry a rev v1.3 chip; IDF 5.5.5 defaults to a minimum
+# of v3.01 and refuses to flash. The <3.0 and >=3.0 revisions differ a lot in
+# hardware: SELECTS_REV_LESS_V3 unlocks the <3.0 family, then REV_MIN_100 (v1.00)
+# covers this chip.
+CONFIG_ESP32P4_SELECTS_REV_LESS_V3=y
+CONFIG_ESP32P4_REV_MIN_100=y
+
+# 32 MB NOR flash on board (the IDF default is 2 MB, which the app blows past).
+CONFIG_ESPTOOLPY_FLASHSIZE_32MB=y
+CONFIG_ESPTOOLPY_FLASHSIZE="32MB"
+
+# Console on UART0. On this board the USB-C port is an onboard USB-UART bridge
+# (CH343P) wired to UART0, so a single USB-C cable carries flashing and console.
+CONFIG_ESP_CONSOLE_UART_DEFAULT=y
+
+# This board's partition layout (sized for the 32 MB flash). Path is relative to
+# the project root.
+CONFIG_PARTITION_TABLE_CUSTOM_FILENAME="boards/esp32-p4/esp32-p4-wifi-c6/partitions.csv"
+
+# --- WiFi via ESP-HOSTED (on-board ESP32-C6 companion over SDIO) ---
+# The P4 has no native radio; esp_wifi_remote forwards esp_wifi_* to the C6 over SDIO
+# (esp_hosted transport). Selecting the C6 slave + the ESP32-P4-Function-EV-Board profile
+# picks the reference SDIO pin mapping and defines the CONFIG_ESP_WIFI_* buffers the API needs.
+# NOTE: assumes this board followed the Function-EV-Board SDIO pinout; if not, set custom pins.
+CONFIG_SLAVE_IDF_TARGET_ESP32C6=y
+CONFIG_ESP_HOSTED_CP_TARGET_ESP32C6=y
+CONFIG_ESP_HOSTED_P4_DEV_BOARD_FUNC_BOARD=y
+CONFIG_WIFI_RMT_STATIC_RX_BUFFER_NUM=16
+CONFIG_WIFI_RMT_DYNAMIC_RX_BUFFER_NUM=64
+CONFIG_WIFI_RMT_DYNAMIC_TX_BUFFER_NUM=64
+CONFIG_WIFI_RMT_AMPDU_TX_ENABLED=y
+CONFIG_WIFI_RMT_TX_BA_WIN=32
+CONFIG_WIFI_RMT_AMPDU_RX_ENABLED=y
+CONFIG_WIFI_RMT_RX_BA_WIN=32

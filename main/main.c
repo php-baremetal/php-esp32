@@ -24,6 +24,8 @@
 #include "esp_vfs_fat.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
+#include "esp_app_desc.h"    /* esp_app_get_description()->version -- the php-esp32 firmware version */
+#include "esp_idf_version.h" /* esp_get_idf_version() */
 
 #include "board.h"   /* board_mount_storage()/board_unmount_storage(), BOARD_NAME, BOARD_HAS_NETWORK */
 
@@ -55,6 +57,23 @@ static const char *TAG = "php-esp32";
  * model. Set in php_task when the network comes up; empty if there's no network. */
 static char s_board_ip[16] = "";
 
+/* php-esp32 identity, exposed to PHP in $_SERVER (both execution models) and in phpinfo()'s
+ * "PHP Baremetal Infos" table (info.c reads these globals directly). Deliberately NOT setenv'd, so
+ * they stay out of $_ENV and the process environment. Set once at boot, before php_embed_init(). */
+const char *php_esp32_project     = "";
+const char *php_esp32_board       = "";
+const char *php_esp32_version     = "";
+const char *php_esp32_idf_version = "";
+
+/* Add the four PHP_ESP32_* entries to a $_SERVER track-vars array. */
+static void register_esp32_server_vars(zval *srv)
+{
+    php_register_variable("PHP_ESP32_PROJECT",     (char *) php_esp32_project,     srv);
+    php_register_variable("PHP_ESP32_BOARD",       (char *) php_esp32_board,       srv);
+    php_register_variable("PHP_ESP32_VERSION",     (char *) php_esp32_version,     srv);
+    php_register_variable("PHP_ESP32_IDF_VERSION", (char *) php_esp32_idf_version, srv);
+}
+
 static void set_run_once_server_vars(const char *script)
 {
     zend_is_auto_global_str(ZEND_STRL("_SERVER"));   /* force the JIT auto-global to materialise */
@@ -73,6 +92,7 @@ static void set_run_once_server_vars(const char *script)
     php_register_variable("SERVER_PORT", "80", srv);
     php_register_variable("REMOTE_ADDR", "127.0.0.1", srv);
     php_register_variable("SERVER_SOFTWARE", "php-esp32", srv);
+    register_esp32_server_vars(srv);
 }
 
 #ifdef BOARD_HAS_NETWORK
@@ -465,6 +485,7 @@ static void ws_register_server_vars(zval *arr)
         snprintf(cl, sizeof cl, "%zu", s_req.body_len);
         php_register_variable("CONTENT_LENGTH", cl, arr);
     }
+    register_esp32_server_vars(arr);
 }
 
 /* send_headers hook (runs in php_task): translate the headers/status the script set into the httpd
@@ -1007,6 +1028,15 @@ static void php_task(void *arg)
 
     /* Apply the baked .env before the engine starts, so it lands in $_ENV / getenv(). */
     apply_project_env();
+
+    /* Fill the php-esp32 identity globals (surfaced in $_SERVER and phpinfo's "PHP Baremetal Infos"
+     * table). NOT setenv'd, so they never enter $_ENV or the process environment. */
+    php_esp32_board       = BOARD_NAME;
+    php_esp32_version     = esp_app_get_description()->version;
+    php_esp32_idf_version = esp_get_idf_version();
+#ifdef PHP_ESP32_PROJECT_NAME
+    php_esp32_project = PHP_ESP32_PROJECT_NAME;
+#endif
 
     ESP_LOGI(TAG, "php_embed_init()...");
     if (php_embed_init(0, NULL) != SUCCESS) {

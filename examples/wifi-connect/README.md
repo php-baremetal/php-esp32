@@ -1,7 +1,8 @@
 # wifi-connect
 
 Scan for WiFi networks and join one, from PHP, on any **WiFi-capable board** (ESP32 / ESP32-S3 /
-C-series — not the radio-less ESP32-P4).
+C-series). A bare ESP32-P4 has no radio, but the **`esp32-p4-wifi-c6`** (a P4 with an on-board WiFi
+companion) works too — see [docs/reference/special-boards.md](../../docs/reference/special-boards.md).
 
 The **scan works out of the box** — it lists the access points around you. To **connect**, put your
 credentials in a `.env`:

@@ -26,7 +26,7 @@ system underneath, and no interpreter of our own invention in the middle.
 
 ## Real PHP, not a reimplementation
 
-The engine is the unmodified release from [php.net](https://www.php.net/) (the default is `php-8.4.24`,
+The engine is the unmodified release from [php.net](https://www.php.net/) (the default is `php-8.4.25`,
 sha256 verified; 8.3 and 8.5 build too). The source tree is vendored exactly as it ships and is never edited in place; every
 adjustment the target needs is a separate patch applied at build time. The whole Zend Engine is
 compiled in: the lexer, the parser and the opcode compiler, the virtual machine and executor, the
@@ -59,17 +59,19 @@ Two chip families are supported today:
 
 | Family | Core | Boards | Networking | Notes |
 |---|---|---|---|---|
-| **ESP32-P4** | dual-core RISC-V, up to 400 MHz | P4-Zero, P4-Pico, P4-ETH | Ethernet on P4-ETH (RMII + IP101 PHY); Pico/Zero have none | up to 32 MB PSRAM; enough headroom to run full frameworks |
+| **ESP32-P4** | dual-core RISC-V, up to 400 MHz | P4-Zero, P4-Pico, P4-ETH, P4-WiFi-C6 | Ethernet on P4-ETH (RMII + IP101 PHY); **WiFi 6 on P4-WiFi-C6** (on-board ESP32-C6 companion over ESP-HOSTED); Pico/Zero have none | up to 32 MB PSRAM; enough headroom to run full frameworks |
 | **ESP32-S3** | dual-core Xtensa LX7, 240 MHz | S3-Zero, S3-Pico, S3-ETH | Ethernet on S3-ETH (W5500 over SPI); Pico/Zero have none | 8 MB PSRAM; runs plain apps, and a live web server on S3-ETH |
 
 Within each family, `-ETH` adds a wired network, `-Pico` is the same board without it (microSD +
-embedded), and `-Zero` is the minimal variant: embedded-only, no microSD slot.
+embedded), and `-Zero` is the minimal variant: embedded-only, no microSD slot. The ESP32-P4 has no
+native radio, so `esp32-p4-wifi-c6` is a **special board** that adds WiFi through an on-board companion
+chip (see [docs/reference/special-boards.md](docs/reference/special-boards.md)).
 
 More of the ESP32 line will follow. Any part with PSRAM and a reasonable flash is a candidate, and a
 new family is a directory under `boards/`, not a change to the engine. The parts without PSRAM (the C
 and H series) are out regardless of clock speed: the heap has nowhere to live.
 
-PHP **8.3** (8.3.33), **8.4** (8.4.24) and **8.5** (8.5.9) are all built today, selectable per project (`-DPHP_VERSION=<ver>`). The tree keeps everything version-specific under
+PHP **8.3** (8.3.33), **8.4** (8.4.25) and **8.5** (8.5.9) are all built today, selectable per project (`-DPHP_VERSION=<ver>`). The tree keeps everything version-specific under
 `components/php/versions/<version>/`, so further releases slot in beside them as they are ported.
 
 ## Getting started
@@ -209,7 +211,8 @@ php-esp32/
 │   ├── esp32-p4/             family: target and PSRAM (sdkconfig.family, family.toml)
 │   │   ├── esp32-p4-zero/    board: embedded-only, no microSD, no network
 │   │   ├── esp32-p4-pico/    board: pins and mount code (board.c/.h), sdkconfig, partitions
-│   │   └── esp32-p4-eth/     board: adds the wired Ethernet
+│   │   ├── esp32-p4-eth/     board: adds the wired Ethernet
+│   │   └── esp32-p4-wifi-c6/   board: adds WiFi via an on-board ESP32-C6 (ESP-HOSTED)
 │   └── esp32-s3/
 │       ├── esp32-s3-zero/    board: embedded-only, no microSD, no network
 │       ├── esp32-s3-pico/    board: SD over SPI, no network
@@ -219,8 +222,8 @@ php-esp32/
 │   ├── php/
 │   │   ├── CMakeLists.txt     generic: builds the selected PHP version
 │   │   ├── compat/            shared POSIX stubs (posix_stubs, syslog, opcache backends)
-│   │   ├── versions/8.4.24/   per-version: sources.cmake, config headers, patches, manifest.toml
-│   │   └── php-8.4.24/        the PHP source (fetched, not committed)
+│   │   ├── versions/8.4.25/   per-version: sources.cmake, config headers, patches, manifest.toml
+│   │   └── php-8.4.25/        the PHP source (fetched, not committed)
 │   ├── php_ext_gpio/          the gpio_* and delay extension
 │   ├── php_ext_store/         the store_* reboot-persistent key-value store (NVS)
 │   ├── php_ext_mem/           the mem_* volatile in-RAM key-value store

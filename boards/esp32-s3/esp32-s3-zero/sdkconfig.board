@@ -1,7 +1,7 @@
 # ESP32-S3-Zero board defaults. Layered last (over base + family), so board-specific
 # choices win.
 
-# The Waveshare ESP32-S3-Zero carries an ESP32-S3FH4R2: 4 MB in-package NOR flash
+# The ESP32-S3-Zero carries an ESP32-S3FH4R2: 4 MB in-package NOR flash
 # (the IDF default is 2 MB, which the app blows past).
 CONFIG_ESPTOOLPY_FLASHSIZE_4MB=y
 CONFIG_ESPTOOLPY_FLASHSIZE="4MB"

@@ -1,8 +1,9 @@
 # wifi-ap
 
 Turn the board into a **WiFi access point** from PHP — it creates its own network, with its own DHCP
-server, that you connect to. Works on any **WiFi-capable board** (ESP32 / ESP32-S3 / C-series — not
-the radio-less ESP32-P4).
+server, that you connect to. Works on any **WiFi-capable board** (ESP32 / ESP32-S3 / C-series). A bare
+ESP32-P4 has no radio, but the **`esp32-p4-wifi-c6`** — which pairs the P4 with an on-board ESP32-C6
+over ESP-HOSTED — works too (see [docs/reference/special-boards.md](../../docs/reference/special-boards.md)).
 
 Set the network name/password at the top of `index.php` (default `php-esp32` / `baremetal`, WPA2),
 build and flash. Then connect a phone or laptop to it — the board hands out an IP and lives at

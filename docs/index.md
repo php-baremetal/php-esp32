@@ -26,3 +26,4 @@
   - [Footprint](./reference/footprint.md)
   - [Porting notes](./reference/porting-notes.md)
   - [Partitions and the flash layout](./reference/partitions.md)
+  - [Special boards (ESP32-P4 WiFi via a companion)](./reference/special-boards.md)

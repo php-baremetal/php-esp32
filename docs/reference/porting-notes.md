@@ -39,7 +39,7 @@ A couple of headers that `configure` would generate are provided by hand, becaus
 
 ## One directory per PHP version
 
-Everything that is specific to a PHP version lives under `components/php/versions/<version>/`, so supporting a new PHP release is a new directory rather than edits scattered across the build. PHP **8.3** (8.3.33), **8.4** (8.4.24) and **8.5** (8.5.9) are all supported, selectable with `-DPHP_VERSION=<ver>` (default `8.4.24`).
+Everything that is specific to a PHP version lives under `components/php/versions/<version>/`, so supporting a new PHP release is a new directory rather than edits scattered across the build. PHP **8.3** (8.3.33), **8.4** (8.4.25) and **8.5** (8.5.9) are all supported, selectable with `-DPHP_VERSION=<ver>` (default `8.4.25`).
 
 Each version directory owns:
 
@@ -242,7 +242,7 @@ CONFIG_ESP32P4_REV_MIN_100=y
 ```
 <!-- @endcode-block -->
 
-**Powering the microSD.** The card didn't respond at all (every command timed out) until it turned out to be powered by an internal LDO of the chip, channel 4, which has to be turned on in software with `sd_pwr_ctrl_new_on_chip_ldo`. A detail confirmed by Waveshare's official SD example, which enables it by default. The microSD is wired as 4-bit SDMMC: CLK on GPIO43, CMD on GPIO44, D0-D3 on GPIO39-42.
+**Powering the microSD.** The card didn't respond at all (every command timed out) until it turned out to be powered by an internal LDO of the chip, channel 4, which has to be turned on in software with `sd_pwr_ctrl_new_on_chip_ldo`. A detail confirmed by the official SD example for this board, which enables it by default. The microSD is wired as 4-bit SDMMC: CLK on GPIO43, CMD on GPIO44, D0-D3 on GPIO39-42.
 
 **The console.** The board's USB-C port is not the ESP32's native USB: it is a USB-UART bridge (CH343P) wired to the chip's UART0. Convenient, because a single USB-C cable does flashing and console with automatic reset. But it means the P4's native USB is elsewhere, on a separate connector: that is why the "USB stick" variant was left out.
 

@@ -325,7 +325,7 @@ Build, selecting the board and PHP version (`./scripts/info.sh` lists what is av
 
 <!-- @code-block language="bash" label="terminal — idf.py build" -->
 ```bash
-idf.py -DBOARD=esp32-s3-eth -DPHP_VERSION=8.4.24 build
+idf.py -DBOARD=esp32-s3-eth -DPHP_VERSION=8.4.25 build
 ```
 <!-- @endcode-block -->
 

@@ -1,4 +1,4 @@
-# ESP32-S3-ETH board descriptor -- capabilities for flash-tool (Waveshare ESP32-S3-ETH).
+# ESP32-S3-ETH board descriptor -- capabilities for flash-tool (ESP32-S3-ETH).
 #
 # name/family : identity.
 # storage_types / project_types : the modes this board's HARDWARE supports. flash-tool

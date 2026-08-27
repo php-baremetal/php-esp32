@@ -4,7 +4,7 @@ Each supported PHP version is a self-contained directory, `components/php/versio
 one with `-DPHP_VERSION=<ver>`; the default is `default_version` in the repo-root
 [`php-esp32.toml`](../../../php-esp32.toml). `./scripts/info.sh` lists them.
 
-PHP **8.3** (8.3.33), **8.4** (8.4.24) and **8.5** (8.5.9) are all supported, selectable with `-DPHP_VERSION=<ver>` (default `8.4.24`). The layout keeps everything
+PHP **8.3** (8.3.33), **8.4** (8.4.25) and **8.5** (8.5.9) are all supported, selectable with `-DPHP_VERSION=<ver>` (default `8.4.25`). The layout keeps everything
 version-specific in one directory so further releases slot in beside it as they are ported, without
 touching the shared engine glue or the boards.
 

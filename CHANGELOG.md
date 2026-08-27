@@ -1,11 +1,15 @@
 # Changelog
 
-## [0.17.0] — WIP — WiFi from PHP: scan, join, or create a network, and serve web pages over it
+## [0.17.0] — WiFi from PHP: scan, join, or create a network and serve web pages over it — even on the radio-less ESP32-P4 (via a companion)
+
+### Changed
+- **Default PHP bumped to 8.4.25** (a drop-in patch update of 8.4.24; all 8 port patches apply
+  unchanged and the source file set is identical). 8.4.24 stays available, like every other version.
 
 ### Added
 - **`wifi`: scan/join a WiFi network and create one, from PHP.** An opt-in native extension for
-  **WiFi-capable SoCs** (ESP32 / ESP32-S3 / C-series -- **not** the radio-less ESP32-P4, which fails
-  the build early with a clear message). Client (STA): `wifi_scan()` lists the nearby APs
+  **WiFi-capable SoCs** (ESP32 / ESP32-S3 / C-series with a native radio, or an ESP32-P4 with a WiFi
+  companion over ESP-HOSTED -- see the `esp32-p4-wifi-c6` board below). Client (STA): `wifi_scan()` lists the nearby APs
   (`ssid`/`bssid`/`rssi`/`channel`/`auth`), `wifi_connect($ssid, $password = null)` joins one (open,
   WPA2, or WPA2/WPA3-transition -- it is PMF-capable, does WPA3-SAE, scans every channel, and
   auto-retries transient association drops so real phone hotspots connect reliably), plus `wifi_ip()` /
@@ -29,6 +33,23 @@
   verified end to end on ESP32-S3-Zero hardware (AP up, page served over HTTP on the WiFi, LED reacts
   live to the sliders). (`$_SERVER['SERVER_ADDR']` reads `0.0.0.0` on WiFi-only boards -- use
   `wifi_ap_ip()` / `wifi_ip()` for the real address.)
+- **New board `esp32-p4-wifi-c6`: WiFi on the radio-less ESP32-P4, via a companion.** The P4 has no
+  built-in radio, but this board (the ESP32-P4-WIFI6) pairs it with an on-board **ESP32-C6**
+  over SDIO, running **ESP-HOSTED**: `esp_wifi_remote` re-exposes the `esp_wifi_*` API and forwards it
+  to the companion, so the `wifi` extension and the `web-server` model work **unchanged**. The host
+  components (`esp_wifi_remote` + `esp_hosted`) are pulled automatically for P4 builds (a `phpflash
+  build` downloads them via `main/idf_component.yml`, gated to the `esp32p4` target; git-ignored, like
+  the fetched PHP source). Verified on hardware: PHP brought up a SoftAP (`wifi_ap_start()`), the C6
+  answered over SDIO using the ESP32-P4-Function-EV-Board reference pins with no schematic needed
+  (already pre-flashed), and the board served a page over its own WiFi. With the P4's 32 MB PSRAM this
+  even brings full frameworks over WiFi into reach. See
+  [docs/reference/special-boards.md](docs/reference/special-boards.md).
+- **`phpinfo()` gains a "PHP Baremetal Infos" table.** A second table right under phpinfo()'s general
+  one, showing the **project name** (from the config's `name`, passed by phpflash), the **board**
+  (`BOARD_NAME`), and the **php-esp32** and **ESP-IDF** versions. The firmware sets these as
+  C globals before the engine starts (`main.c`), and a small per-version patch to
+  `ext/standard/info.c` renders the table. The same values are also exposed in **`$_SERVER`** as
+  `PHP_ESP32_*` (deliberately kept out of `$_ENV` and the process environment).
 
 ## [0.16.0] — Onboard RGB LED from PHP, per-project partition tables, and the real ESP32-S3-Zero
 
@@ -53,7 +74,7 @@
 
 ### Fixed
 - **`esp32-s3-zero` corrected to the real hardware.** Its definition inherited the S3-ETH module's
-  assumptions (16 MB flash, Octal 8 MB PSRAM), but the actual Waveshare ESP32-S3-Zero (ESP32-S3FH4R2)
+  assumptions (16 MB flash, Octal 8 MB PSRAM), but the actual ESP32-S3-Zero (ESP32-S3FH4R2)
   carries **4 MB flash and 2 MB Quad PSRAM**. `sdkconfig.board` now pins 4 MB flash and overrides PSRAM
   to **Quad** (the family default is Octal -- in Octal mode a Quad module never initialises, and with
   `USE_ZEND_ALLOC=0` the whole runtime heap lives in PSRAM, so the engine would have no memory to run
@@ -579,7 +600,7 @@ First working version: the real PHP engine runs on the microcontroller.
   `mbstring` / `ctype`, and networking or processes (this hardware has neither).
 
 ### Added
-- Real **PHP 8.3.32** (Zend engine, `embed` SAPI) running natively on the Waveshare
+- Real **PHP 8.3.32** (Zend engine, `embed` SAPI) running natively on the
   ESP32-P4-Pico, executing an `index.php` read from a microSD — no recompiling to change the
   script.
 - Bundled extensions: `ext/standard`, PCRE, hash, JSON, SPL, Reflection, random.

@@ -23,7 +23,7 @@ next:
 Every extension that ships in the PHP source tree, and where it stands on this port. There is a
 machine-readable version of the optional extensions, per PHP version, in
 `components/php/versions/<version>/manifest.toml` (for the current default,
-[8.4.24](https://github.com/php-baremetal/php-esp32/blob/master/components/php/versions/8.4.24/manifest.toml)). That manifest is the contract the
+[8.4.25](https://github.com/php-baremetal/php-esp32/blob/master/components/php/versions/8.4.25/manifest.toml)). That manifest is the contract the
 `flash-tool` CLI (`phpflash`) reads: the flags, settings, dependencies, fetch scripts and per-mode
 rules. It is the single source of truth — `phpflash init` offers the optional extensions from it, and
 enabling one in the project config compiles it in. By hand, each is a `-DPHP_EXT_*=ON` flag on

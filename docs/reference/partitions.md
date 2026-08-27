@@ -6,7 +6,7 @@ see_also:
   - { href: '../storage/persistent-store.md', meta: 'Storage', label: 'Persistent store' }
   - { href: 'https://github.com/php-baremetal/flash-tool', meta: 'external', label: 'phpflash (project-side partitions)' }
 prev: { label: 'Porting notes', href: './porting-notes.md' }
-next: { label: 'No next page', href: '#' }
+next: { label: 'Special boards', href: './special-boards.md' }
 ---
 
 # Partitions and the flash layout

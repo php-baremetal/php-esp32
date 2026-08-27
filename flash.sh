@@ -65,6 +65,8 @@ OPTIONAL_EXTS=(
     "openssl|ext/openssl: openssl_* (mbedTLS subset by default; symmetric AES)|"
     "sqlite|PDO + SQLite: read/write .db files on the microSD|scripts/fetch-sqlite.sh"
     "opcache|Zend OPcache: file-cache bytecode cache (no JIT/SHM); needs a writable microSD|"
+    "wifi|wifi: scan/join/create a WiFi network from PHP (WiFi-capable SoCs, not the ESP32-P4)|"
+    "s3_onboard_rgb|s3_onboard_rgb: drive the onboard WS2812 RGB LED (ESP32-S3 boards only)|"
 )
 
 EXT_ARGS=()

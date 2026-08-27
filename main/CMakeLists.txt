@@ -62,7 +62,7 @@ idf_component_register(
     INCLUDE_DIRS "." ${BOARD_INCLUDE_DIRS}
     # esp_partition/fatfs/vfs: main.c mounts the optional read-only embedded source
     # partition itself (board-agnostic); the board adds its own storage drivers too.
-    REQUIRES php php_ext_gpio php_ext_store php_ext_mem php_project_exts esp_partition fatfs vfs ${WEB_SERVER_REQUIRES} ${RGB_REQUIRES} ${WIFI_REQUIRES} ${BOARD_REQUIRES}
+    REQUIRES php php_ext_gpio php_ext_store php_ext_mem php_project_exts esp_partition esp_app_format fatfs vfs ${WEB_SERVER_REQUIRES} ${RGB_REQUIRES} ${WIFI_REQUIRES} ${BOARD_REQUIRES}
 )
 
 # fs_pathnorm.c: --wrap the file syscalls so "." / ".." in paths are collapsed before the FATFS VFS
@@ -148,4 +148,15 @@ if(NOT _web_init AND NOT "$ENV{PHP_WEB_INIT}" STREQUAL "")
 endif()
 if(_web_init)
     target_compile_definitions(${COMPONENT_LIB} PRIVATE "PHP_WEB_INIT=\"${_web_init}\"")
+endif()
+
+# -DPHP_ESP32_PROJECT_NAME from the project config's `name` (flash-tool passes it): the firmware
+# exposes it to phpinfo()'s "PHP Baremetal Infos" table. Recover it from the env in the early
+# requirement-expansion pass too, like the flags above.
+set(_proj_name "${PHP_ESP32_PROJECT_NAME}")
+if(NOT _proj_name AND NOT "$ENV{PHP_ESP32_PROJECT_NAME}" STREQUAL "")
+    set(_proj_name "$ENV{PHP_ESP32_PROJECT_NAME}")
+endif()
+if(_proj_name)
+    target_compile_definitions(${COMPONENT_LIB} PRIVATE "PHP_ESP32_PROJECT_NAME=\"${_proj_name}\"")
 endif()

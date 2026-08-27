@@ -1,0 +1,17 @@
+# Managed dependencies -- downloaded by the ESP-IDF component manager at build time
+# (no manual step; a `phpflash build` fetches them automatically).
+#
+# The ESP32-P4 has no built-in radio: WiFi comes from a companion chip (an on-board
+# ESP32-C6 on boards like the ESP32-P4-WIFI6) over ESP-HOSTED. esp_wifi_remote provides
+# the esp_wifi_* API on the host and forwards it to the co-processor; esp_hosted is the
+# transport (SDIO) + the real implementation. Gated to the esp32p4 target so they are
+# fetched only for P4 builds (other targets have native WiFi and must not pull these).
+dependencies:
+  espressif/esp_wifi_remote:
+    version: "*"
+    rules:
+      - if: "target in [esp32p4]"
+  espressif/esp_hosted:
+    version: "*"
+    rules:
+      - if: "target in [esp32p4]"

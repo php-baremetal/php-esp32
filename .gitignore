@@ -16,6 +16,12 @@ sdkconfig.ci
 # demand, not versioned. Recreate it with: ./scripts/fetch-oniguruma.sh
 /components/php/oniguruma/
 
+# ESP-IDF managed components (esp_hosted / esp_wifi_remote for ESP32-P4 hosted WiFi):
+# downloaded by the IDF component manager on build from main/idf_component.yml, like the
+# PHP source above. Reproducible, not versioned.
+/managed_components/
+/dependencies.lock
+
 # Editor / OS
 *.swp
 .DS_Store

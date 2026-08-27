@@ -1,5 +1,5 @@
 /*
- * ESP32-S3-ETH board support (Waveshare).
+ * ESP32-S3-ETH board support.
  *
  * Like every board, this one owns everything specific to its wiring: the microSD pins
  * and the Ethernet wiring, plus the mount/network code in board.c. main.c is

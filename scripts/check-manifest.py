@@ -47,7 +47,7 @@ for e in exts:
     for s in e.get("setting", []):
         manifest_flags.add(s["flag"].split("=")[0])
 
-cmake_flags = set(re.findall(r"option\((PHP_EXT_[A-Z_]+)", read(os.path.join(vdir, "extensions.cmake"))))
+cmake_flags = set(re.findall(r"option\((PHP_EXT_[A-Z0-9_]+)", read(os.path.join(vdir, "extensions.cmake"))))
 
 for f in sorted(manifest_flags - cmake_flags):
     errors.append(f"flag {f} is in the manifest but not an option() in CMakeLists.txt")

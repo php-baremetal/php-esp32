@@ -1,11 +1,11 @@
 /*
- * ESP32-P4-ETH board support (Waveshare).
+ * ESP32-P4-ETH board support.
  *
  * Like every board, this one owns everything specific to its wiring: the microSD
  * pins and power, and the mount code in board.c. main.c is board-agnostic and talks
  * only to this interface.
  *
- * Storage is the same 4-bit SDMMC microSD as the P4-Pico (Waveshare reuse the P4 SD
+ * Storage is the same 4-bit SDMMC microSD as the P4-Pico (reusing the P4 SD
  * reference design), with one addition: the card's VDD is gated by a P-MOSFET driven
  * from GPIO45, which board.c enables before mounting.
  *

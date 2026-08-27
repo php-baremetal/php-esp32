@@ -1,5 +1,5 @@
 /*
- * ESP32-S3-ETH storage + networking (Waveshare).
+ * ESP32-S3-ETH storage + networking.
  *
  * The ESP32-S3 has no internal SD host and no internal Ethernet MAC, so both peripherals
  * are SPI devices on this board, each on its own SPI host:
@@ -115,7 +115,7 @@ void board_unmount_storage(const char *mount_point)
 #define ETH_PIN_CS        GPIO_NUM_14
 #define ETH_PIN_INT       GPIO_NUM_10
 #define ETH_PIN_RST       GPIO_NUM_9
-/* W5500 SPI clock. 20 MHz is the reliable figure Waveshare/Espressif use for this module
+/* W5500 SPI clock. 20 MHz is the reliable figure Espressif use for this module
  * (the part can do more, but margins on the SPI traces make 20 MHz the safe default). */
 #define ETH_SPI_CLOCK_MHZ 20
 /* How long to wait for a DHCP lease before giving up (link-up + negotiation). */

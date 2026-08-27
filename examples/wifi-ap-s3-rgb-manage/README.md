@@ -70,5 +70,5 @@ Set the network name/password at the top of `init.php` (default `php-rgb` / `bar
 
 Works on any **WiFi-capable ESP32-S3** board with the onboard WS2812 (S3-Zero, S3-Pico, S3-ETH…).
 Every ESP32-S3 has WiFi on the die, so all S3 boards now offer the `web-server` model — the network
-comes from the `wifi` extension rather than a wired link. Not for the radio-less ESP32-P4, and the
-`s3_onboard_rgb` extension is S3-only.
+comes from the `wifi` extension rather than a wired link. This example is ESP32-S3-only because the
+`s3_onboard_rgb` LED extension is (its WiFi + web-server half would also run on the esp32-p4-wifi-c6).
