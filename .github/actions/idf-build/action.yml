@@ -1,0 +1,66 @@
+name: idf-build
+description: Fetch the PHP source, build the firmware in the IDF container, and check the image fits the board's app partition.
+
+inputs:
+  board:
+    required: true
+  version:
+    required: true
+  web-server:
+    default: 'false'
+  extensions:
+    description: Extra -D flags, e.g. "-DPHP_EXT_SQLITE=ON -DPHP_EXT_OPENSSL=ON"
+    default: ''
+  fetch-ext-sources:
+    description: Also fetch the SQLite and oniguruma sources (needed by the extensions above).
+    default: 'false'
+
+runs:
+  using: composite
+  steps:
+    # PHP tarball is ~20 MB down / ~210 MB extracted; keyed on the pinned sha256 in
+    # version.env plus the patch set, so a rebuild only refetches when either changes.
+    - name: Cache PHP source
+      uses: actions/cache@v4
+      with:
+        path: components/php/php-${{ inputs.version }}
+        key: php-src-${{ inputs.version }}-${{ hashFiles(format('components/php/versions/{0}/version.env', inputs.version), format('components/php/versions/{0}/patches/**', inputs.version)) }}
+
+    - name: Fetch PHP source
+      shell: bash
+      run: |
+        [ -d "components/php/php-${{ inputs.version }}" ] && exit 0
+        PHP_VERSION=${{ inputs.version }} ./scripts/fetch-php.sh
+
+    - name: Fetch extension sources
+      if: inputs.fetch-ext-sources == 'true'
+      shell: bash
+      run: ./scripts/fetch-sqlite.sh && ./scripts/fetch-oniguruma.sh
+
+    - name: Cache ccache
+      uses: actions/cache@v4
+      with:
+        path: .ccache
+        key: ccache-${{ inputs.board }}-${{ inputs.version }}-${{ github.sha }}
+        restore-keys: |
+          ccache-${{ inputs.board }}-${{ inputs.version }}-
+          ccache-${{ inputs.board }}-
+
+    - name: Build
+      shell: bash
+      env:
+        IDF_CCACHE_ENABLE: '1'
+        CCACHE_DIR: ${{ github.workspace }}/.ccache
+      run: |
+        . "$IDF_PATH/export.sh"
+        mkdir -p ci-src && printf '<?php echo "ci\\n";\n' > ci-src/index.php
+        # zero boards are embedded-only with no card; drop the SD stack there.
+        msd=ON; [[ "${{ inputs.board }}" == *-zero ]] && msd=OFF
+        ws=OFF; [ "${{ inputs.web-server }}" = "true" ] && ws=ON
+        idf.py -DBOARD=${{ inputs.board }} -DPHP_VERSION=${{ inputs.version }} \
+               -DPHP_EMBED_SRC="$PWD/ci-src" -DPHP_STORAGE_MICROSD=$msd \
+               -DPHP_PROJECT_WEB_SERVER=$ws ${{ inputs.extensions }} build
+
+    - name: Check image fits the app partition
+      shell: bash
+      run: bash ci/check-size.sh "${{ inputs.board }}"
