@@ -71,7 +71,7 @@ More of the ESP32 line will follow. Any part with PSRAM and a reasonable flash i
 new family is a directory under `boards/`, not a change to the engine. The parts without PSRAM (the C
 and H series) are out regardless of clock speed: the heap has nowhere to live.
 
-PHP **8.3** (8.3.33), **8.4** (8.4.25) and **8.5** (8.5.9) are all built today, selectable per project (`-DPHP_VERSION=<ver>`). The tree keeps everything version-specific under
+PHP **8.3** (8.3.33), **8.4** (8.4.25) and **8.5** (8.5.10) are all built today, selectable per project (`-DPHP_VERSION=<ver>`). The tree keeps everything version-specific under
 `components/php/versions/<version>/`, so further releases slot in beside them as they are ported.
 
 ## Getting started
@@ -271,6 +271,24 @@ is the full account, with each decision and the reason for it.
 - [boards/README.md](boards/README.md) and
   [components/php/versions/README.md](components/php/versions/README.md): how to add a board or a PHP
   version.
+
+## AI usage
+
+I use an LLM as a tool on this project, and I'd rather be upfront about it than leave you guessing.
+
+- **The engineering is mine.** The architecture, the design decisions, and the approach to each
+  problem — cross-compiling the *unmodified* Zend engine for the chip, the build-time patches for the
+  bare-metal quirks (setjmp, the allocator, tz/csprng/session), the SAPI and the hardware bring-up —
+  are calls I made and debugged myself. The proof is that it runs on real hardware: it builds, flashes,
+  and serves pages.
+- **Where AI helps.** The website and most of the doc *prose* are heavily AI-assisted — I'm one person
+  doing this in my spare time, and I'm not a native English speaker, so I lean on it for the wording.
+  (The DMD format the docs are written in, and which the site renders to HTML, is my own.) On the code
+  it's an assistant: reasoning through problems, mechanical and *verifiable* work — e.g. diffing the
+  sources to confirm the patches still apply across a version bump — and writing comments that describe
+  the code accurately. A tool to go faster, like an IDE or a compiler.
+
+When a project of mine is genuinely AI-heavy, design and engineering included, I say so too.
 
 ## License
 

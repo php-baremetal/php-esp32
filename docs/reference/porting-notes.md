@@ -39,7 +39,7 @@ A couple of headers that `configure` would generate are provided by hand, becaus
 
 ## One directory per PHP version
 
-Everything that is specific to a PHP version lives under `components/php/versions/<version>/`, so supporting a new PHP release is a new directory rather than edits scattered across the build. PHP **8.3** (8.3.33), **8.4** (8.4.25) and **8.5** (8.5.9) are all supported, selectable with `-DPHP_VERSION=<ver>` (default `8.4.25`).
+Everything that is specific to a PHP version lives under `components/php/versions/<version>/`, so supporting a new PHP release is a new directory rather than edits scattered across the build. PHP **8.3** (8.3.33), **8.4** (8.4.25) and **8.5** (8.5.10) are all supported, selectable with `-DPHP_VERSION=<ver>` (default `8.4.25`).
 
 Each version directory owns:
 

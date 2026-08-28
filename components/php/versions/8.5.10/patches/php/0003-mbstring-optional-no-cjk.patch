@@ -1,0 +1,110 @@
+Optionally drop the CJK encodings from mbstring to shrink the image.
+
+The bundled libmbfl carries the legacy CJK (Chinese/Japanese/Korean) codec tables in
+mbfilter_cjk.c -- ~740 KB of the ~965 KB mbstring costs. When built with
+-DPHP_EXT_MBSTRING_NO_CJK, mbfilter_cjk.c and mbfilter_utf8_mobile.c (which reuses the
+CJK emoji tables) are left out of the build; this patch then drops, behind the
+MBSTRING_NO_CJK macro, everything that would otherwise reference the missing symbols:
+the CJK/mobile entries in the encoding registry, the sjis_mac fast-path check in
+mb_substr, and the mb_convert_kana() function (Japanese kana, backed by a table in
+mbfilter_cjk.c). UTF-8/UTF-16/Latin and everything else keep working. Without the macro
+this is a no-op (all encodings and mb_convert_kana present).
+--- a/ext/mbstring/libmbfl/mbfl/mbfl_encoding.c
++++ b/ext/mbstring/libmbfl/mbfl/mbfl_encoding.c
+@@ -77,6 +77,7 @@
+ 	&mbfl_encoding_utf7,
+ 	&mbfl_encoding_utf7imap,
+ 	&mbfl_encoding_ascii,
++#ifndef MBSTRING_NO_CJK
+ 	&mbfl_encoding_euc_jp,
+ 	&mbfl_encoding_sjis,
+ 	&mbfl_encoding_eucjp_win,
+@@ -98,6 +99,7 @@
+ 	&mbfl_encoding_2022jpms,
+ 	&mbfl_encoding_gb18030,
+ 	&mbfl_encoding_gb18030_2022,
++#endif
+ 	&mbfl_encoding_cp1252,
+ 	&mbfl_encoding_cp1254,
+ 	&mbfl_encoding_8859_1,
+@@ -114,6 +116,7 @@
+ 	&mbfl_encoding_8859_14,
+ 	&mbfl_encoding_8859_15,
+ 	&mbfl_encoding_8859_16,
++#ifndef MBSTRING_NO_CJK
+ 	&mbfl_encoding_euc_cn,
+ 	&mbfl_encoding_cp936,
+ 	&mbfl_encoding_hz,
+@@ -123,17 +126,20 @@
+ 	&mbfl_encoding_euc_kr,
+ 	&mbfl_encoding_uhc,
+ 	&mbfl_encoding_2022kr,
++#endif
+ 	&mbfl_encoding_cp1251,
+ 	&mbfl_encoding_cp866,
+ 	&mbfl_encoding_koi8r,
+ 	&mbfl_encoding_koi8u,
+ 	&mbfl_encoding_armscii8,
+ 	&mbfl_encoding_cp850,
++#ifndef MBSTRING_NO_CJK
+ 	&mbfl_encoding_2022jp_2004,
+ 	&mbfl_encoding_2022jp_kddi,
+ 	&mbfl_encoding_cp50220,
+ 	&mbfl_encoding_cp50221,
+ 	&mbfl_encoding_cp50222,
++#endif
+ 	NULL
+ };
+ 
+--- a/ext/mbstring/mbstring.c
++++ b/ext/mbstring/mbstring.c
+@@ -94,7 +94,9 @@
+ static zend_string* mb_mime_header_encode(zend_string *input, const mbfl_encoding *incode, const mbfl_encoding *outcode, bool base64, char *linefeed, size_t linefeed_len, zend_long indent);
+ 
+ /* See mbfilter_cp5022x.c */
++#ifndef MBSTRING_NO_CJK
+ uint32_t mb_convert_kana_codepoint(uint32_t c, uint32_t next, bool *consumed, uint32_t *second, int mode);
++#endif
+ /* }}} */
+ 
+ /* {{{ php_mb_default_identify_list */
+@@ -2126,7 +2128,11 @@
+ 	unsigned char *in = (unsigned char*)ZSTR_VAL(input);
+ 	size_t in_len = ZSTR_LEN(input);
+ 
++#ifdef MBSTRING_NO_CJK
++	if (len == 0 || from >= in_len) {
++#else
+ 	if (len == 0 || (from >= in_len && enc != &mbfl_encoding_sjis_mac)) {
++#endif
+ 		/* Other than MacJapanese, no supported text encoding decodes to
+ 		 * more than one codepoint per byte
+ 		 * So if the number of codepoints to skip >= number of input bytes,
+@@ -3537,6 +3543,7 @@
+ }
+ /* }}} */
+ 
++#ifndef MBSTRING_NO_CJK
+ static zend_string* jp_kana_convert(zend_string *input, const mbfl_encoding *encoding, unsigned int mode)
+ {
+ 	/* Each wchar may potentially expand to 2 when we perform kana conversion...
+@@ -3701,6 +3708,7 @@
+ 
+ 	RETVAL_STR(jp_kana_convert(str, enc, opt));
+ }
++#endif
+ 
+ static zend_always_inline bool mb_check_stack_limit(void)
+ {
+--- a/ext/mbstring/mbstring_arginfo.h
++++ b/ext/mbstring/mbstring_arginfo.h
+@@ -401,7 +401,9 @@
+ 	ZEND_FE(mb_encoding_aliases, arginfo_mb_encoding_aliases)
+ 	ZEND_FE(mb_encode_mimeheader, arginfo_mb_encode_mimeheader)
+ 	ZEND_FE(mb_decode_mimeheader, arginfo_mb_decode_mimeheader)
++#ifndef MBSTRING_NO_CJK
+ 	ZEND_FE(mb_convert_kana, arginfo_mb_convert_kana)
++#endif
+ 	ZEND_FE(mb_convert_variables, arginfo_mb_convert_variables)
+ 	ZEND_FE(mb_encode_numericentity, arginfo_mb_encode_numericentity)
+ 	ZEND_FE(mb_decode_numericentity, arginfo_mb_decode_numericentity)

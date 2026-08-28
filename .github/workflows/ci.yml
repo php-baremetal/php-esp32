@@ -1,0 +1,93 @@
+name: CI
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+  schedule:
+    - cron: '0 4 * * *'
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # Test matrices live here, in one place.
+  config:
+    runs-on: ubuntu-latest
+    outputs:
+      versions: ${{ steps.m.outputs.versions }}
+      boards: ${{ steps.m.outputs.boards }}
+      projects: ${{ steps.m.outputs.projects }}
+    steps:
+      - id: m
+        run: |
+          {
+            echo 'versions=["8.3.32","8.3.33","8.4.24","8.4.25","8.5.9","8.5.10"]'
+            echo 'boards=["esp32-p4-zero","esp32-p4-pico","esp32-p4-eth","esp32-p4-wifi-c6","esp32-s3-zero","esp32-s3-pico","esp32-s3-eth"]'
+            echo 'projects=["init-loop","web-server"]'
+          } >> "$GITHUB_OUTPUT"
+
+  # 1 — every version's manifest.toml matches the actual build wiring.
+  check-manifest:
+    needs: config
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        version: ${{ fromJson(needs.config.outputs.versions) }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python3 scripts/check-manifest.py "${{ matrix.version }}"
+
+  # 2 — base firmware compiles for every version × board × project type.
+  # No optional extensions; microSD storage so there's no source to embed. Heavy (84 combos),
+  # so it stays off pull requests — pushes, nightly and manual runs only.
+  build-base:
+    needs: [config, check-manifest]
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    container: espressif/idf:v5.5.5
+    strategy:
+      fail-fast: false
+      matrix:
+        version: ${{ fromJson(needs.config.outputs.versions) }}
+        board: ${{ fromJson(needs.config.outputs.boards) }}
+        project: ${{ fromJson(needs.config.outputs.projects) }}
+    steps:
+      - uses: actions/checkout@v4
+      - run: PHP_VERSION=${{ matrix.version }} ./scripts/fetch-php.sh
+      - shell: bash
+        run: |
+          . "$IDF_PATH/export.sh"
+          ws=OFF; [ "${{ matrix.project }}" = web-server ] && ws=ON
+          idf.py -DBOARD=${{ matrix.board }} -DPHP_VERSION=${{ matrix.version }} \
+                 -DPHP_STORAGE_MICROSD=ON -DPHP_PROJECT_WEB_SERVER=$ws build
+
+  # 3 — same, but with the optional extensions turned on. Rough sketch: one config for now,
+  # marked non-blocking until the extension fetches and a caching strategy are wired up.
+  build-extensions:
+    needs: build-base
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    container: espressif/idf:v5.5.5
+    steps:
+      - uses: actions/checkout@v4
+      - run: |
+          PHP_VERSION=8.4.25 ./scripts/fetch-php.sh
+          ./scripts/fetch-sqlite.sh
+          ./scripts/fetch-oniguruma.sh
+      - shell: bash
+        continue-on-error: true
+        run: |
+          . "$IDF_PATH/export.sh"
+          idf.py -DBOARD=esp32-s3-eth -DPHP_VERSION=8.4.25 -DPHP_STORAGE_MICROSD=ON \
+                 -DPHP_EXT_MBSTRING=ON -DPHP_EXT_SQLITE=ON -DPHP_EXT_OPENSSL=ON \
+                 -DPHP_EXT_DATE=ON -DPHP_EXT_SESSION=ON build
+
+  # 4 (later) — run the image under Espressif's QEMU and check the serial banner.
+  # Targets an S3 board; QEMU support for the ESP32-P4 isn't there yet.

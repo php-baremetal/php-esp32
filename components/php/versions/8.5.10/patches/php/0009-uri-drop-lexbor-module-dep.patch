@@ -1,0 +1,21 @@
+Drop ext/uri's hard module dependency on lexbor.
+
+This firmware doesn't build lexbor (its ~370 KB of static tables overflow the ESP32's internal
+RAM), so the WHATWG URL parser is stubbed and the lexbor module isn't registered. Without this,
+uri_module_entry's ZEND_MOD_REQUIRED("lexbor") fails at startup, which cascades: ext/standard
+requires uri, so the whole engine fails to start. ext/uri keeps the RFC 3986 (uriparser) and the
+legacy parse_url() parsers, which is what the core stream layer uses.
+
+--- a/ext/uri/php_uri.c
++++ b/ext/uri/php_uri.c
+@@ -46,7 +46,9 @@
+ static zend_object_handlers object_handlers_whatwg_uri;
+ 
+ static const zend_module_dep uri_deps[] = {
+-	ZEND_MOD_REQUIRED("lexbor")
++	/* php-esp32: lexbor is not built (its static tables overflow the internal RAM), so drop the
++	 * hard dependency on the lexbor module. ext/uri keeps the RFC 3986 (uriparser) and legacy
++	 * parse_url() parsers; the WHATWG parser is stubbed (see compat/uri_whatwg_stub.c). */
+ 	ZEND_MOD_END
+ };
+ 

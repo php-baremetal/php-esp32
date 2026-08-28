@@ -1,0 +1,18 @@
+PHP 8.4 changed the SETJMP/JMP_BUF selection from '#ifdef HAVE_SIGSETJMP' to '#ifndef ZEND_WIN32',
+so it uses sigsetjmp()/sigjmp_buf on every non-Windows target. picolibc (ESP-IDF's libc) has no
+sigsetjmp/sigjmp_buf. Require HAVE_SIGSETJMP again (our php_config.h leaves it undef -> plain setjmp).
+--- a/Zend/zend_portability.h
++++ b/Zend/zend_portability.h
+@@ -424,7 +424,11 @@
+ # define XtOffsetOf(s_type, field) offsetof(s_type, field)
+ #endif
+ 
+-#ifndef ZEND_WIN32
++/* php-esp32: PHP 8.4 switched this from '#ifdef HAVE_SIGSETJMP' to '#ifndef ZEND_WIN32', which
++ * uses sigsetjmp()/sigjmp_buf unconditionally on non-Windows. picolibc (the ESP-IDF libc) has
++ * no sigsetjmp/sigjmp_buf, so require HAVE_SIGSETJMP again; our php_config.h leaves it undef, so
++ * this target falls back to plain setjmp()/jmp_buf. Unchanged where HAVE_SIGSETJMP is set. */
++#if !defined(ZEND_WIN32) && defined(HAVE_SIGSETJMP)
+ # define SETJMP(a) sigsetjmp(a, 0)
+ # define LONGJMP(a,b) siglongjmp(a, b)
+ # define JMP_BUF sigjmp_buf

@@ -1,0 +1,29 @@
+Fix heap corruption when a closure's non-shared run-time cache is freed.
+
+On this port (no opcache, USE_ZEND_ALLOC=0) the per-closure efree() of the
+run-time cache in destroy_op_array() corrupts the PSRAM heap, crashing on
+scope-bound closures (heavily used by frameworks such as Illuminate).
+Allocate that cache from the request arena instead, so it is released
+wholesale at shutdown and never individually freed.
+--- a/Zend/zend_closures.c
++++ b/Zend/zend_closures.c
+@@ -810,9 +810,16 @@
+ 				ZEND_MAP_PTR_SET(func->op_array.run_time_cache, ptr);
+ 				closure->func.op_array.fn_flags &= ~ZEND_ACC_HEAP_RT_CACHE;
+ 			} else {
+-				/* Otherwise, we use a non-shared runtime cache */
+-				ptr = emalloc(func->op_array.cache_size);
+-				closure->func.op_array.fn_flags |= ZEND_ACC_HEAP_RT_CACHE;
++				/* ESP32-P4 PORT FIX: allocate the non-shared run-time cache from the
++				 * request arena instead of emalloc(), and DON'T flag it as a heap
++				 * cache. On this build (no opcache, USE_ZEND_ALLOC=0) the per-closure
++				 * efree() of this cache in destroy_op_array() corrupts the heap; letting
++				 * the arena own it (freed wholesale at request shutdown) avoids that.
++				 * Trade-off: the cache isn't reclaimed per closure, so a script that
++				 * creates many closures in a long-running loop grows memory until the
++				 * run ends. Fine for one-shot scripts. */
++				ptr = zend_arena_alloc(&CG(arena), func->op_array.cache_size);
++				closure->func.op_array.fn_flags &= ~ZEND_ACC_HEAP_RT_CACHE;
+ 			}
+ 			memset(ptr, 0, func->op_array.cache_size);
+ 		}
