@@ -40,14 +40,24 @@ fi
 TMP="$(mktemp -d)"
 trap 'rm -rf "${TMP}"' EXIT
 
-echo "Downloading ${TARBALL}..."
-curl -fsSL -o "${TMP}/${TARBALL}" "${URL}"
+TARBALL_PATH="${TMP}/${TARBALL}"
+if [ -n "${PHP_TARBALL_CACHE:-}" ]; then
+    mkdir -p "${PHP_TARBALL_CACHE}"
+    TARBALL_PATH="${PHP_TARBALL_CACHE}/${TARBALL}"
+fi
+
+if [ -f "${TARBALL_PATH}" ]; then
+    echo "Using cached tarball ${TARBALL_PATH}"
+else
+    echo "Downloading ${TARBALL}..."
+    curl -fsSL -o "${TARBALL_PATH}" "${URL}"
+fi
 
 echo "Checking sha256..."
-echo "${PHP_SHA256}  ${TMP}/${TARBALL}" | sha256sum -c -
+echo "${PHP_SHA256}  ${TARBALL_PATH}" | sha256sum -c -
 
 echo "Extracting into ${DEST}..."
-tar xzf "${TMP}/${TARBALL}" -C "${REPO_ROOT}/components/php/"
+tar xzf "${TARBALL_PATH}" -C "${REPO_ROOT}/components/php/"
 
 # Apply this version's patches (port fixes that must live in the vendored source).
 # Each patch is a -p1 unified diff rooted at the php-<version> directory.

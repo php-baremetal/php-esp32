@@ -8,20 +8,22 @@
 # Select the version with -DPHP_VERSION=<ver> (default below). The default mirrors
 # php-esp32.toml at the repo root, which is also what flash-tool reads.
 
-set(PHP_VERSION "8.3.32" CACHE STRING "PHP version to build (needs a versions/<ver> dir)")
+set(PHP_VERSION "8.4.25" CACHE STRING "PHP version to build (needs a versions/<ver> dir)")
 
 set(PHP_COMPONENT_DIR "${CMAKE_CURRENT_LIST_DIR}")
 set(PHP_VER_DIR "versions/${PHP_VERSION}")   # relative to the component
 set(PHP_SRC "php-${PHP_VERSION}")            # the fetched source tree (git-ignored)
 
-if(NOT EXISTS "${PHP_COMPONENT_DIR}/${PHP_VER_DIR}/sources.cmake")
-    message(FATAL_ERROR
-        "Unknown PHP version '${PHP_VERSION}': ${PHP_VER_DIR}/sources.cmake not found. "
-        "Available: see components/php/versions/.")
-endif()
-if(NOT EXISTS "${PHP_COMPONENT_DIR}/${PHP_SRC}/main/php_version.h")
-    message(FATAL_ERROR
-        "PHP source ${PHP_SRC}/ is missing. Run ./scripts/fetch-php.sh first.")
+if(NOT CMAKE_BUILD_EARLY_EXPANSION)
+    if(NOT EXISTS "${PHP_COMPONENT_DIR}/${PHP_VER_DIR}/sources.cmake")
+        message(FATAL_ERROR
+            "Unknown PHP version '${PHP_VERSION}': ${PHP_VER_DIR}/sources.cmake not found. "
+            "Available: see components/php/versions/.")
+    endif()
+    if(NOT EXISTS "${PHP_COMPONENT_DIR}/${PHP_SRC}/main/php_version.h")
+        message(FATAL_ERROR
+            "PHP source ${PHP_SRC}/ is missing. Run ./scripts/fetch-php.sh first.")
+    endif()
 endif()
 
 # The version dir sets PHP_SRCS / PHP_INCLUDE_DIRS / PHP_PRIV_INCLUDE_DIRS.

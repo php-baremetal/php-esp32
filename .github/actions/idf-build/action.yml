@@ -18,19 +18,20 @@ inputs:
 runs:
   using: composite
   steps:
-    # PHP tarball is ~20 MB down / ~210 MB extracted; keyed on the pinned sha256 in
-    # version.env plus the patch set, so a rebuild only refetches when either changes.
-    - name: Cache PHP source
+    # Cache the ~20 MB tarball (immutable per version, keyed on its sha256), not the
+    # extracted tree: fetch-php.sh makes the tree read-only, and restoring a read-only
+    # dir from cache leaves it empty. Extraction + patching runs fresh every time (cheap).
+    - name: Cache PHP tarball
       uses: actions/cache@v4
       with:
-        path: components/php/php-${{ inputs.version }}
-        key: php-src-${{ inputs.version }}-${{ hashFiles(format('components/php/versions/{0}/version.env', inputs.version), format('components/php/versions/{0}/patches/**', inputs.version)) }}
+        path: .php-tarballs
+        key: php-tarball-${{ inputs.version }}-${{ hashFiles(format('components/php/versions/{0}/version.env', inputs.version)) }}
 
-    - name: Fetch PHP source
+    - name: Fetch and extract PHP source
       shell: bash
-      run: |
-        [ -d "components/php/php-${{ inputs.version }}" ] && exit 0
-        PHP_VERSION=${{ inputs.version }} ./scripts/fetch-php.sh
+      env:
+        PHP_TARBALL_CACHE: ${{ github.workspace }}/.php-tarballs
+      run: PHP_VERSION=${{ inputs.version }} ./scripts/fetch-php.sh
 
     - name: Fetch extension sources
       if: inputs.fetch-ext-sources == 'true'
