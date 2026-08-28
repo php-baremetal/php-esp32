@@ -6,6 +6,7 @@
 set -euo pipefail
 
 board="$1"
+build_dir="${BUILD_DIR:-build}"
 csv=$(ls boards/*/"$board"/partitions.csv)
 cap=$(awk -F',' '/^[[:space:]]*#/ { next } { gsub(/[[:space:]]/,"",$1) } $1 == "factory" { gsub(/[[:space:]]/,"",$5); print $5 }' "$csv")
 
@@ -18,7 +19,7 @@ to_bytes() {
 }
 
 cap_b=$(to_bytes "$cap")
-app_bin="build/$(python3 -c "import json,sys; print(json.load(open('build/project_description.json'))['app_bin'])")"
+app_bin="${build_dir}/$(python3 -c "import json; print(json.load(open('${build_dir}/project_description.json'))['app_bin'])")"
 size_b=$(stat -c%s "$app_bin")
 pct=$(( size_b * 100 / cap_b ))
 

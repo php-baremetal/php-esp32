@@ -113,7 +113,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: ./.github/actions/idf-build
         with:
-          board: esp32-s3-eth
+          board: esp32-p4-eth
           version: ${{ needs.config.outputs.default_version }}
           web-server: ${{ matrix.web-server }}
           extensions: ${{ matrix.exts }}
@@ -121,3 +121,23 @@ jobs:
 
   # 3 (later) — run the image under Espressif's QEMU and check the serial banner.
   # Targets an S3 board; QEMU support for the ESP32-P4 isn't there yet.
+  qemu:
+    needs: [config, check-manifest]
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    container: espressif/idf:v5.5.5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/idf-build
+        with:
+          board: esp32-s3-zero
+          version: ${{ needs.config.outputs.default_version }}
+      - name: Boot under QEMU and show the serial log
+        shell: bash
+        continue-on-error: true
+        run: |
+          . "$IDF_PATH/export.sh"
+          python "$IDF_PATH/tools/idf_tools.py" install qemu-xtensa
+          . "$IDF_PATH/export.sh"
+          timeout 90 idf.py qemu monitor 2>&1 | tee qemu.log || true
+          grep -Eq "PHP|engine check" qemu.log && echo "banner seen" || echo "no banner yet (WIP)"

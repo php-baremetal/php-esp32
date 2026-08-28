@@ -33,10 +33,12 @@ runs:
         PHP_TARBALL_CACHE: ${{ github.workspace }}/.php-tarballs
       run: PHP_VERSION=${{ inputs.version }} ./scripts/fetch-php.sh
 
-    - name: Fetch extension sources
+    - name: Cache OpenSSL build
       if: inputs.fetch-ext-sources == 'true'
-      shell: bash
-      run: ./scripts/fetch-sqlite.sh && ./scripts/fetch-oniguruma.sh
+      uses: actions/cache@v4
+      with:
+        path: components/php/openssl-build
+        key: openssl-${{ inputs.board }}-${{ hashFiles('scripts/fetch-openssl.sh') }}
 
     - name: Cache ccache
       uses: actions/cache@v4
@@ -54,6 +56,11 @@ runs:
         CCACHE_DIR: ${{ github.workspace }}/.ccache
       run: |
         . "$IDF_PATH/export.sh"
+        if [ "${{ inputs.fetch-ext-sources }}" = "true" ]; then
+          ./scripts/fetch-sqlite.sh
+          ./scripts/fetch-oniguruma.sh
+          ./scripts/fetch-openssl.sh
+        fi
         mkdir -p ci-src && printf '<?php echo "ci\\n";\n' > ci-src/index.php
         # zero boards are embedded-only with no card; drop the SD stack there.
         msd=ON; [[ "${{ inputs.board }}" == *-zero ]] && msd=OFF
