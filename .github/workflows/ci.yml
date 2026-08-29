@@ -4,8 +4,6 @@ on:
   push:
     branches: [master]
   pull_request:
-  schedule:
-    - cron: '0 4 * * *'
   workflow_dispatch:
 
 concurrency:
@@ -47,7 +45,7 @@ jobs:
       - run: python3 scripts/check-manifest.py "${{ matrix.version }}"
 
   # The build jobs below share three axes instead of a full cross-product (which would be
-  # dozens of combos). They're heavy, so they stay off pull requests — pushes, nightly and
+  # dozens of combos). They're heavy, so they stay off pull requests — pushes to master and
   # manual runs only. Each build also checks the image fits the board's app partition.
 
   # 2a — default version on every board: catches board-profile breakage.
@@ -86,9 +84,10 @@ jobs:
           board: ${{ matrix.board }}
           version: ${{ matrix.version }}
 
-  # 2c — two extreme configs on one loaded board: a fat build (web-server + full openssl +
+  # 2c — two extreme configs on one board: a fat build (web-server + full openssl +
   # mbstring/onig + opcache + sqlite + wifi) that stresses the link and flash, and a minimal
-  # one. S3-ETH has native wifi and a 10M app partition, so both fit and stay comparable.
+  # one. On P4-ETH: full openssl and oniguruma cross-compile for riscv32 (their fetch scripts
+  # are P4-tuned), and the 12M partition leaves room for the loaded image.
   build-configs:
     needs: [config, check-manifest]
     if: github.event_name != 'pull_request'
@@ -119,8 +118,8 @@ jobs:
           extensions: ${{ matrix.exts }}
           fetch-ext-sources: ${{ matrix.fetch }}
 
-  # 3 (later) — run the image under Espressif's QEMU and check the serial banner.
-  # Targets an S3 board; QEMU support for the ESP32-P4 isn't there yet.
+  # 3 — smoke-test the image under QEMU. WIP and non-blocking: it boots the firmware and prints
+  # the serial log; asserting on the banner still needs work (see TODO.MD). S3 only (no P4 in QEMU).
   qemu:
     needs: [config, check-manifest]
     if: github.event_name != 'pull_request'

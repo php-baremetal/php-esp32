@@ -1,0 +1,29 @@
+Captured on an ESP32-S3-Zero "Super Mini" (Quad 2MB PSRAM @ 80MHz, CPU 160MHz), PHP 8.4.25, no
+opcache, with the native_gpio C extension compiled in. See README.md for the S3 / P4 comparison.
+
+... (boot log) ...
+I (562) esp_psram: Found 2MB PSRAM device
+I (562) esp_psram: Speed: 80MHz
+I (802) cpu_start: cpu freq: 160000000 Hz
+I (805) esp_psram: Adding pool of 2048K of PSRAM memory to heap allocator
+...
+
+==== php-baremetal benchmark ====
+PHP 8.4.25
+(PSRAM size/speed and CPU freq are in the boot log above)
+
+PSRAM: 744.7 KB free of 2,048.0 KB   |   internal RAM: 183.4 KB free of 326.4 KB
+
+compiled footprint (PSRAM consumed to compile a source file):
+  file              lines    source   compiled
+  bench_small.php      17    0.4 KB     2.3 KB
+  bench_medium.php     76    2.0 KB    10.3 KB
+  bench_large.php     167    4.2 KB    22.4 KB
+
+GPIO tight loop (100000 writes on GPIO 2):
+  PHP loop:     3229 ns/write  ->  309,687 writes/s  ~154,843 Hz  (empty loop 829 ns)
+  native C:     357 ns/write  ->  2,804,239 writes/s  ~1,402,119 Hz  (9x faster than PHP)
+
+execution: 1,090-row working set = 403.1 KB in PSRAM (710.1 KB was free)
+
+==== done ====

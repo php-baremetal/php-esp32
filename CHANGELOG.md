@@ -1,5 +1,26 @@
 # Changelog
 
+## [0.18.0] — WIP — Measuring the engine: an on-device benchmark, memory introspection, and PHP 8.5.10
+
+### Added
+- **`baremetal_utility`: read the real memory footprint from PHP.** A built-in extension (always
+  compiled in, like `gpio`) exposing the ESP-IDF heap: `psram_free()`, `psram_size()`,
+  `psram_largest_free()`, `heap_free()`, `heap_size()`. It fills a real gap -- with `USE_ZEND_ALLOC=0`
+  the Zend heap lives in PSRAM via `malloc`, so PHP's own `memory_get_usage()` reads **0**; these
+  report the actual heap, which also counts everything (op_arrays, zvals, buffers), not just PHP's
+  arena. Registered across every PHP version (8.3-8.5).
+- **New [`benchmark`](examples/benchmark/) example: real, on-device numbers for memory and GPIO.** It
+  prints, at boot, the engine's PSRAM baseline, the PSRAM a compiled script costs (three reference
+  classes), the working set of a data workload (sized to the PSRAM on hand, so it runs on a 2 MB board
+  too), and the GPIO toggle rate from a tight PHP loop. Verified across the PSRAM range -- ESP32-S3-Zero
+  "Super Mini" (2 MB Quad), ESP32-S3 (8 MB Octal), ESP32-P4 (32 MB): a compiled script costs ~5x its
+  source everywhere (it's the engine, not the chip); the PHP GPIO loop is CPU-bound (~155 kHz at
+  160 MHz, ~279 kHz at 360 MHz). Answers the memory and throughput questions people ask with
+  measurements instead of estimates.
+- **PHP 8.5.10 available.** A drop-in patch update of 8.5.9 (all 10 port patches apply unchanged and
+  the source file set is identical). Verified on ESP32-S3 hardware. 8.5.9 stays available; the default
+  stays 8.4.25.
+
 ## [0.17.0] — WiFi from PHP: scan, join, or create a network and serve web pages over it — even on the radio-less ESP32-P4 (via a companion)
 
 ### Changed
