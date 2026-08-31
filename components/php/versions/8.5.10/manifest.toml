@@ -240,11 +240,18 @@ flash_cost = "~42 KB (subset)"
 
 [[extension]]
 key = "sqlite"
-description = "PDO with the SQLite driver (ext/pdo + ext/pdo_sqlite, built together)."
+description = "SQLite: read/write .db files. Default API is PDO (ext/pdo + pdo_sqlite); the 'sqlite3' type selects the SQLite3-class API instead (~45 KB smaller, no PDO)."
 required_for = []
 flag = "PHP_EXT_SQLITE=ON"
 fetch = "scripts/fetch-sqlite.sh"
 flash_cost = "~560 KB"
+  [[extension.setting]]
+  key = "type"
+  description = "SQLite API layer: 'pdo-sqlite' (default, ext/pdo + pdo_sqlite) or 'sqlite3' (ext/sqlite3, ~45 KB smaller, no PDO)."
+  kind = "enum"
+  choices = ["pdo-sqlite", "sqlite3"]
+  default = "pdo-sqlite"
+  flag = "PHP_EXT_SQLITE_API"
 
 [[extension]]
 key = "s3_onboard_rgb"

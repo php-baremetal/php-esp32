@@ -1,6 +1,6 @@
 # Changelog
 
-## [0.18.0] — WIP — Measuring the engine: an on-device benchmark, memory introspection, and PHP 8.5.10
+## [0.18.0] — Benchmarks, memory introspection, a SQLite API choice, PHP 8.5.10, and project foundations
 
 ### Added
 - **`baremetal_utility`: read the real memory footprint from PHP.** A built-in extension (always
@@ -20,6 +20,33 @@
 - **PHP 8.5.10 available.** A drop-in patch update of 8.5.9 (all 10 port patches apply unchanged and
   the source file set is identical). Verified on ESP32-S3 hardware. 8.5.9 stays available; the default
   stays 8.4.25.
+- **`[extensions.sqlite] type`: choose the SQLite API layer.** The `sqlite` extension now builds either
+  **PDO + `pdo_sqlite`** (`type = "pdo-sqlite"`, the default) or the procedural **SQLite3-class API**
+  (`type = "sqlite3"`, `ext/sqlite3`). Both share the same SQL engine (the amalgamation is built once),
+  so the choice is only the API surface: `sqlite3` is about **45 KB smaller** (no PDO layer) and gives
+  the `SQLite3`/`SQLite3Stmt`/`SQLite3Result` classes; `pdo-sqlite` keeps portable PDO code working.
+  Wired end to end -- a new enum setting in the manifest (the first `kind = "enum"` setting, validated
+  by `check-manifest`), phpflash's config, interactive `init` and `-DPHP_EXT_SQLITE_API` flag, and the
+  CMake source/registration split across every PHP version (8.3-8.5). Verified on ESP32-S3 hardware:
+  both APIs create a table, insert and query. New [`sqlite3-notes`](examples/sqlite3-notes/) example
+  (the SQLite3-class counterpart to [`sqlite-notes`](examples/sqlite-notes/), which now spells out
+  `type = "pdo-sqlite"`).
+- **Continuous integration (GitHub Actions).** Checks each version's manifest and compiles the base
+  firmware across versions, boards and project types, with caching and a per-board image-size budget
+  (`.github/workflows/ci.yml`, `ci/check-size.sh`). QEMU smoke test scaffolded (WIP).
+- **Project docs:** a [roadmap](ROADMAP.md) (the 1.0.0 → 3.0.0 milestones), [contributing](CONTRIBUTING.md)
+  guidelines (hardware verification is mandatory before a PR), a [security policy](SECURITY.md), and an
+  [AI usage policy](AI_USAGE.md).
+
+### Fixed
+- **SQLite `loadExtension()` no longer breaks the link.** `SQLITE_OMIT_LOAD_EXTENSION` drops
+  `sqlite3_load_extension()` from the amalgamation, but both `Pdo\Sqlite::loadExtension()` and
+  `SQLite3::loadExtension()` reference it -- an `undefined reference` that surfaced when SQLite was
+  linked alongside other extensions. Added no-op stubs (`components/php/compat/sqlite_loadext_stub.c`):
+  the method links and fails cleanly at runtime, since loading a shared object isn't possible on the chip.
+- **CI build reliability.** Fixed a stale `PHP_VERSION` default and a source check firing during
+  ESP-IDF's early expansion (guarded with `CMAKE_BUILD_EARLY_EXPANSION`); `fetch-php.sh` now caches the
+  verified tarball, not the read-only extracted tree, so a restored cache can't leave an empty source dir.
 
 ## [0.17.0] — WiFi from PHP: scan, join, or create a network and serve web pages over it — even on the radio-less ESP32-P4 (via a companion)
 

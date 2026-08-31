@@ -45,43 +45,35 @@ else()
     target_sources(${COMPONENT_LIB} PRIVATE ${PHP_VER_DIR}/compat/date_stub.c)
 endif()
 
-# PDO + SQLite: read/write .db files on the microSD. Enable with:
-#   idf.py -DPHP_EXT_SQLITE=ON ...   (or answer "y" in flash.sh)
-# Needs the SQLite amalgamation: ./scripts/fetch-sqlite.sh
-option(PHP_EXT_SQLITE "Build the PDO/SQLite extension" OFF)
+# SQLite: read/write .db files. Enable with -DPHP_EXT_SQLITE=ON (needs ./scripts/fetch-sqlite.sh).
+# The SQL engine (the amalgamation) is shared; PHP_EXT_SQLITE_API picks the API layer on top:
+#   pdo-sqlite (default) -- PDO + the SQLite driver (ext/pdo + ext/pdo_sqlite)
+#   sqlite3              -- the procedural SQLite3-class API (ext/sqlite3), ~45 KB smaller, no PDO
+option(PHP_EXT_SQLITE "Build the SQLite extension (API layer chosen by PHP_EXT_SQLITE_API)" OFF)
+set(PHP_EXT_SQLITE_API "pdo-sqlite" CACHE STRING "SQLite API layer: pdo-sqlite or sqlite3")
 if(PHP_EXT_SQLITE)
     if(NOT EXISTS "${PHP_COMPONENT_DIR}/sqlite-amalgamation/sqlite3.c")
         message(FATAL_ERROR
             "PHP_EXT_SQLITE=ON but the SQLite amalgamation is missing. "
             "Run ./scripts/fetch-sqlite.sh first.")
     endif()
+    # Shared engine: the amalgamation, plus load-extension stubs (SQLITE_OMIT_LOAD_EXTENSION drops
+    # them from it, but both API layers' loadExtension() method references them).
     target_sources(${COMPONENT_LIB} PRIVATE
-        ${PHP_SRC}/ext/pdo/pdo.c
-        ${PHP_SRC}/ext/pdo/pdo_dbh.c
-        ${PHP_SRC}/ext/pdo/pdo_sql_parser.c
-        ${PHP_SRC}/ext/pdo/pdo_sqlstate.c
-        ${PHP_SRC}/ext/pdo/pdo_stmt.c
-        ${PHP_SRC}/ext/pdo_sqlite/pdo_sqlite.c
-        ${PHP_SRC}/ext/pdo_sqlite/sqlite_driver.c
-        ${PHP_SRC}/ext/pdo_sqlite/sqlite_statement.c
-        ${PHP_SRC}/ext/pdo_sqlite/sqlite_sql_parser.c
         sqlite-amalgamation/sqlite3.c
+        ${PHP_COMPONENT_DIR}/compat/sqlite_loadext_stub.c
     )
     target_include_directories(${COMPONENT_LIB} PRIVATE
         sqlite-amalgamation
         ${PHP_SRC}/ext
     )
-    # Force-include a small shim into sqlite3.c only: it neutralizes the project's
-    # global HAVE_*INT*_T macros (which would misconfigure SQLite's integer
-    # typedefs) and maps lstat->stat. Scoped to this file so nothing else changes.
+    # Force-include a small shim into sqlite3.c only: it neutralizes the project's global HAVE_*INT*_T
+    # macros (which would misconfigure SQLite's integer typedefs) and maps lstat->stat.
     set_source_files_properties(sqlite-amalgamation/sqlite3.c PROPERTIES
         COMPILE_OPTIONS "-include;${PHP_COMPONENT_DIR}/compat/sqlite-compat.h")
-    # PHP_EXT_SQLITE_ENABLED gates the module registration in internal_functions.c.
-    # The SQLite flags tune it for a single-process, no-OS target on FATFS: no
-    # threads, no WAL, no mmap, temp tables in RAM, and URI filenames (so the DSN
-    # can pass ?nolock=1 to skip POSIX file locking, which FATFS doesn't provide).
+    # SQLite tuned for a single-process, no-OS target on FATFS: no threads, no WAL, no mmap, temp
+    # tables in RAM, URI filenames (so a DSN can pass ?nolock=1 to skip POSIX locking FATFS lacks).
     target_compile_definitions(${COMPONENT_LIB} PRIVATE
-        PHP_EXT_SQLITE_ENABLED
         SQLITE_THREADSAFE=0
         SQLITE_OMIT_WAL
         SQLITE_OMIT_LOAD_EXTENSION
@@ -90,6 +82,26 @@ if(PHP_EXT_SQLITE)
         SQLITE_DEFAULT_MEMSTATUS=0
         SQLITE_USE_URI=1
     )
+    # API layer. PHP_EXT_{PDO_SQLITE,SQLITE3}_ENABLED gate the module registration in
+    # internal_functions.c.
+    if(PHP_EXT_SQLITE_API STREQUAL "sqlite3")
+        target_sources(${COMPONENT_LIB} PRIVATE ${PHP_SRC}/ext/sqlite3/sqlite3.c)
+        target_compile_definitions(${COMPONENT_LIB} PRIVATE PHP_EXT_SQLITE3_ENABLED)
+    else()
+        # pdo-sqlite (default). pdo must be registered before pdo_sqlite, which depends on it.
+        target_sources(${COMPONENT_LIB} PRIVATE
+            ${PHP_SRC}/ext/pdo/pdo.c
+            ${PHP_SRC}/ext/pdo/pdo_dbh.c
+            ${PHP_SRC}/ext/pdo/pdo_sql_parser.c
+            ${PHP_SRC}/ext/pdo/pdo_sqlstate.c
+            ${PHP_SRC}/ext/pdo/pdo_stmt.c
+            ${PHP_SRC}/ext/pdo_sqlite/pdo_sqlite.c
+            ${PHP_SRC}/ext/pdo_sqlite/sqlite_driver.c
+            ${PHP_SRC}/ext/pdo_sqlite/sqlite_statement.c
+            ${PHP_SRC}/ext/pdo_sqlite/sqlite_sql_parser.c
+        )
+        target_compile_definitions(${COMPONENT_LIB} PRIVATE PHP_EXT_PDO_SQLITE_ENABLED)
+    endif()
 endif()
 
 # ext/ctype: the ctype_*() character-class checks. Tiny (one source file, no data

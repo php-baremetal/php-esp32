@@ -76,12 +76,16 @@ extern zend_module_entry openssl_module_entry;
 extern zend_module_entry opcache_module_entry;
 #endif
 
-/* Optional PDO/SQLite extension, gated by PHP_EXT_SQLITE_ENABLED (set from the
+/* Optional SQLite extension. The API layer is chosen by PHP_EXT_SQLITE_API and gated here by
+ * PHP_EXT_PDO_SQLITE_ENABLED (pdo + pdo_sqlite) or PHP_EXT_SQLITE3_ENABLED (ext/sqlite3), set from the
  * php component's CMakeLists when built with -DPHP_EXT_SQLITE=ON). pdo must be
  * registered before pdo_sqlite, which depends on it. */
-#ifdef PHP_EXT_SQLITE_ENABLED
+#ifdef PHP_EXT_PDO_SQLITE_ENABLED
 extern zend_module_entry pdo_module_entry;
 extern zend_module_entry pdo_sqlite_module_entry;
+#endif
+#ifdef PHP_EXT_SQLITE3_ENABLED
+extern zend_module_entry sqlite3_module_entry;
 #endif
 
 static zend_module_entry * const php_builtin_extensions[] = {
@@ -117,9 +121,12 @@ static zend_module_entry * const php_builtin_extensions[] = {
 #ifdef PHP_EXT_OPCACHE_ENABLED
 	&opcache_module_entry,
 #endif
-#ifdef PHP_EXT_SQLITE_ENABLED
+#ifdef PHP_EXT_PDO_SQLITE_ENABLED
 	&pdo_module_entry,
 	&pdo_sqlite_module_entry,
+#endif
+#ifdef PHP_EXT_SQLITE3_ENABLED
+	&sqlite3_module_entry,
 #endif
 	&gpio_module_entry,
 	&store_module_entry,

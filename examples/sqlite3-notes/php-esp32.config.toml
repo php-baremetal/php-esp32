@@ -1,4 +1,4 @@
-name = "sqlite-notes"
+name = "sqlite3-notes"
 storage_type = "microsd"   # where the PHP source lives
 type = "init-loop"                  # execution model
 
@@ -16,8 +16,8 @@ version = ""
 
 [extensions.sqlite]
 enabled = true
-type    = "pdo-sqlite"   # PDO + the SQLite driver (default). "sqlite3" builds the SQLite3-class API
-                         # instead (~45 KB smaller, no PDO) -- see examples/sqlite3-notes.
+type    = "sqlite3"      # the SQLite3-class API (ext/sqlite3), no PDO. Default is "pdo-sqlite"
+                         # (ext/pdo + pdo_sqlite) -- see examples/sqlite-notes.
 
 [php]
 src   = "project-src"      # PHP source folder (copied to the microSD / embedded)

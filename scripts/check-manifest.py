@@ -39,20 +39,34 @@ if not any(t.get("available") for t in manifest["project_type"]):
 if not any(s.get("available") for s in manifest.get("storage_type", [])):
     errors.append("no available storage_type")
 
-# 1) flags declared in the manifest (extension + settings) vs CMake option()s
+# 1) flags declared in the manifest (extension + settings) vs CMake option()s.
+# Boolean flags map to option(FLAG); an enum setting (kind = "enum") maps instead to a
+# -DFLAG=<value> backed by a set(FLAG "default" CACHE STRING ...), so it is checked separately.
 manifest_flags = set()
+enum_flags = set()
 for e in exts:
     if "flag" in e:
         manifest_flags.add(e["flag"].split("=")[0])
     for s in e.get("setting", []):
-        manifest_flags.add(s["flag"].split("=")[0])
+        if s.get("kind") == "enum":
+            enum_flags.add(s["flag"].split("=")[0])
+            if s.get("default") not in s.get("choices", []):
+                errors.append(f"enum setting '{s['key']}' default '{s.get('default')}' is not one of its choices")
+        else:
+            manifest_flags.add(s["flag"].split("=")[0])
 
-cmake_flags = set(re.findall(r"option\((PHP_EXT_[A-Z0-9_]+)", read(os.path.join(vdir, "extensions.cmake"))))
+cmake_text = read(os.path.join(vdir, "extensions.cmake"))
+cmake_flags = set(re.findall(r"option\((PHP_EXT_[A-Z0-9_]+)", cmake_text))
+cmake_enum_flags = set(re.findall(r'set\((PHP_EXT_[A-Z0-9_]+)\s+"[^"]*"\s+CACHE\s+STRING', cmake_text))
 
 for f in sorted(manifest_flags - cmake_flags):
     errors.append(f"flag {f} is in the manifest but not an option() in CMakeLists.txt")
 for f in sorted(cmake_flags - manifest_flags):
     errors.append(f"CMake option {f} is not declared in the manifest")
+for f in sorted(enum_flags - cmake_enum_flags):
+    errors.append(f"enum flag {f} is in the manifest but not a set(... CACHE STRING) in extensions.cmake")
+for f in sorted(cmake_enum_flags - enum_flags):
+    errors.append(f"CMake set({f} ... CACHE STRING) is not declared as an enum setting in the manifest")
 
 # 1b) project-type flags (e.g. web-server) vs option()s in main/CMakeLists.txt
 pt_flags = {t["flag"].split("=")[0] for t in manifest["project_type"] if "flag" in t}

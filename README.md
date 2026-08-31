@@ -16,6 +16,14 @@
 
 # PHP on ESP32
 
+> **A quick heads-up on the project's pace.**
+>
+> If you've followed this from the start, you know it began as something to fill my time over the
+> holidays. The holidays are now over. **This does not mean the project is dead or parked** — it means
+> the release cycles will be a bit longer from here on. I fully intend to keep growing it, and the
+> interest is still very much there. There's a **[roadmap](ROADMAP.md)** laying out how I want to
+> structure and carry the project forward from now on. **New contributors are very welcome.**
+
 Run the real PHP interpreter on a microcontroller. Not a lookalike, not a language subset, not a
 transpiler: the official Zend engine from php.net, cross-compiled for the chip, executing your
 `index.php` opcode by opcode the same way it would behind a web server.
@@ -272,23 +280,26 @@ is the full account, with each decision and the reason for it.
   [components/php/versions/README.md](components/php/versions/README.md): how to add a board or a PHP
   version.
 
+## Project & community
+
+- **[Roadmap](ROADMAP.md)** — where the project is heading, and the 1.0.0 → 3.0.0 milestones.
+- **[Contributing](CONTRIBUTING.md)** — how to add a board, an extension or an example, and how to open
+  a good PR. New contributors are welcome.
+- **[Security policy](SECURITY.md)** — how to report a vulnerability, and the security model of running
+  PHP on a microcontroller.
+
 ## AI usage
 
-I use an LLM as a tool on this project, and I'd rather be upfront about it than leave you guessing.
+AI is used as a tool here, on top of human engineering — the architecture, the design decisions and the
+hardware bring-up are done by hand; AI mostly helps with the docs/website prose and with mechanical,
+verifiable work. The full policy, and what's expected of contributions made with it, is in
+**[AI_USAGE.md](AI_USAGE.md)**.
 
-- **The engineering is mine.** The architecture, the design decisions, and the approach to each
-  problem — cross-compiling the *unmodified* Zend engine for the chip, the build-time patches for the
-  bare-metal quirks (setjmp, the allocator, tz/csprng/session), the SAPI and the hardware bring-up —
-  are calls I made and debugged myself. The proof is that it runs on real hardware: it builds, flashes,
-  and serves pages.
-- **Where AI helps.** The website and most of the doc *prose* are heavily AI-assisted — I'm one person
-  doing this in my spare time, and I'm not a native English speaker, so I lean on it for the wording.
-  (The DMD format the docs are written in, and which the site renders to HTML, is my own.) On the code
-  it's an assistant: reasoning through problems, mechanical and *verifiable* work — e.g. diffing the
-  sources to confirm the patches still apply across a version bump — and writing comments that describe
-  the code accurately. A tool to go faster, like an IDE or a compiler.
+Not for you? No worries at all — nobody's forcing it on you, and it's free, open-source project you 
+didn't spend a minute or a cent on owes you an explanation anyway. Take it or leave it, no hard feelings. 
 
-When a project of mine is genuinely AI-heavy, design and engineering included, I say so too.
+And for everyone who's on board: when contributing, you're kindly asked to follow the guidelines in
+[AI_USAGE.md](AI_USAGE.md). Thanks!
 
 ## License
 
