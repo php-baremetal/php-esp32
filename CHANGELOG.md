@@ -1,5 +1,21 @@
 # Changelog
 
+## [1.0.0] — WIP — First stable release
+
+The consolidation milestone (see [ROADMAP.md](ROADMAP.md)); still in progress. What's landed so far:
+
+### Added
+- **The test CI is complete.** The GitHub Actions pipeline (introduced in 0.18.0) is now finished and
+  exercised across the full matrix: manifest checks on every PHP version, and base-firmware builds on
+  the default version × every board, every version × one board per family, and two extreme configs
+  (a minimal build and a "fat" one with the heavy extensions on). Every build is gated by the per-board
+  image-size budget, with the PHP source and ccache cached between runs.
+- **QEMU smoke test (gating).** The image now boots under Espressif's QEMU, headless, and the job
+  asserts the `PHP <ver> on ESP32-S3` banner on the serial output -- so a boot regression (PSRAM not
+  coming up, the engine not starting) fails CI without hardware. `ci/run-qemu.sh` switches the S3
+  console to UART0 (QEMU doesn't expose USB-Serial-JTAG on `-serial`), merges the flash from the build's
+  `flasher_args.json`, and runs `qemu-system-xtensa`. S3 only (no P4 in QEMU yet).
+
 ## [0.18.0] — Benchmarks, memory introspection, a SQLite API choice, PHP 8.5.10, and project foundations
 
 ### Added

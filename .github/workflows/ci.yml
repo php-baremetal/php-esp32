@@ -118,8 +118,8 @@ jobs:
           extensions: ${{ matrix.exts }}
           fetch-ext-sources: ${{ matrix.fetch }}
 
-  # 3 — smoke-test the image under QEMU. WIP and non-blocking: it boots the firmware and prints
-  # the serial log; asserting on the banner still needs work (see TODO.MD). S3 only (no P4 in QEMU).
+  # 3 — smoke-test the image under QEMU: boot the firmware and assert the PHP banner appears on the
+  # serial output, so a boot regression is caught without hardware. S3 only (no P4 in QEMU yet).
   qemu:
     needs: [config, check-manifest]
     if: github.event_name != 'pull_request'
@@ -131,12 +131,10 @@ jobs:
         with:
           board: esp32-s3-zero
           version: ${{ needs.config.outputs.default_version }}
-      - name: Boot under QEMU and show the serial log
+      - name: Boot under QEMU and assert the PHP banner
         shell: bash
-        continue-on-error: true
         run: |
           . "$IDF_PATH/export.sh"
           python "$IDF_PATH/tools/idf_tools.py" install qemu-xtensa
           . "$IDF_PATH/export.sh"
-          timeout 90 idf.py qemu monitor 2>&1 | tee qemu.log || true
-          grep -Eq "PHP|engine check" qemu.log && echo "banner seen" || echo "no banner yet (WIP)"
+          bash ci/run-qemu.sh build "on ESP32-S3"
