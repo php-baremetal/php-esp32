@@ -2,6 +2,8 @@
 eyebrow: 'Docs · Extensions'
 lede: 'Every extension in the PHP source tree, and where it stands on this port: which are built in unconditionally, which are optional behind a build flag, which are this project''s own, and which are not available and why. The authoritative, machine-readable list lives in each version''s manifest.toml.'
 see_also:
+  - href: ./builtin-api.md
+    meta: 'API of the built-in native extensions (GPIO, sys, WiFi, RGB, memory, store)'
   - href: ./openssl.md
     meta: 'The openssl subset and the full OpenSSL 3.0 build'
   - href: ./opcache.md
@@ -74,14 +76,18 @@ required.
 
 ### The project's own extensions
 
-Three non-standard extensions of ours ship alongside the core. They are built in, but their required
-scope differs.
+These non-standard extensions are ours, not in the PHP source tree. Four are **always built in**;
+two are **opt-in** (a flag, like the ported extensions). Full signatures are in the
+[built-in extension API](./builtin-api.md) reference.
 
-| Extension | Functions | Required for | Notes |
+| Extension | State | Functions | Notes |
 |---|---|---|---|
-| `gpio` | `gpio_mode`, `gpio_write`, `gpio_read`, `delay`, and the `GPIO_*` constants | `init-loop`, `event-driven` | Direct pin control. Not required for `web-server`. Covered in [porting-notes.md](../reference/porting-notes.md). |
-| `store` | `store_set`, `store_get`, `store_keys`, `store_available`, ... | all types | Reboot-persistent key-value store backed by NVS. Always built in, but needs `[store] size_kb` in the project config to have any flash to use — otherwise `store_available()` is false. See [persistent-store.md](../storage/persistent-store.md). |
-| `mem` | `mem_set`, `mem_get`, `mem_keys`, ... | all types | The volatile in-RAM twin of `store`: shares data across the requests of one boot without touching flash. Not persistent across reboots, but cheap to write every request. See [in-ram-store.md](../storage/in-ram-store.md). |
+| `gpio` | Built-in | `gpio_mode`, `gpio_write`, `gpio_read`, `gpio_available`, `GPIO_*` constants | Direct pin control. Required for `init-loop`/`event-driven`. Covered in [porting-notes.md](../reference/porting-notes.md). |
+| `sys` | Built-in | `sys_delay` (+ `delay` alias), `sys_uptime_ms`, `sys_micros`, `sys_restart`, `sys_reset_reason`, `sys_chip_model`, `sys_cpu_freq_mhz`, `sys_mac`, `sys_idf_version`, `sys_psram_*`, `sys_heap_*`, `sys_available` | System/runtime: timing, reboot, chip identity, and memory introspection (the real ESP-IDF heap, which `memory_get_usage()` can't report here). The unprefixed `psram_*`/`heap_*` are **deprecated** aliases of the `sys_*` memory functions. |
+| `store` | Built-in | `store_set`, `store_get`, `store_keys`, `store_available`, ... | Reboot-persistent key-value store backed by NVS. Always built in, but needs `[store] size_kb` in the project config to have any flash to use — otherwise `store_available()` is false. See [persistent-store.md](../storage/persistent-store.md). |
+| `mem` | Built-in | `mem_set`, `mem_get`, `mem_keys`, `mem_available`, ... | The volatile in-RAM twin of `store`: shares data across the requests of one boot without touching flash. Cheap to write every request. See [in-ram-store.md](../storage/in-ram-store.md). |
+| `wifi` | Flag | `wifi_scan`, `wifi_connect`, `wifi_ap_start`, `wifi_ip`, `wifi_available`, ... | Opt-in (`[extensions.wifi]`), WiFi-capable SoCs. Scan/join a network or create a SoftAP, from PHP. ~600 KB. |
+| `s3_onboard_rgb` | Flag | `s3_onboard_rgb_set`, `s3_onboard_rgb_hsv`, `s3_onboard_rgb_off`, `s3_onboard_rgb_available` | Opt-in (`[extensions.s3_onboard_rgb]`), **ESP32-S3 only**: the onboard WS2812 RGB LED. |
 
 ## Full list
 
@@ -124,14 +130,14 @@ are the source tree's example and test extensions, not real features.
 | `openssl` | **Flag** | Done | `-DPHP_EXT_OPENSSL=ON` (mbedTLS-backed subset, symmetric AES, ~42 KB); `-DPHP_EXT_OPENSSL_FULL=ON` builds the real OpenSSL 3.0 (RSA/EC/X.509/digests plus on-chip keygen, ~2.1 MB); add `-DPHP_EXT_OPENSSL_TLS=ON` for an HTTPS client. See [openssl.md](./openssl.md) |
 | `pcntl` | Not available | Not possible | no processes (no `fork`) |
 | `pcre` | **Built-in** | Done | always on |
-| `pdo` | **Flag** | Done | `-DPHP_EXT_SQLITE=ON` (built together with `pdo_sqlite`) |
+| `pdo` | **Flag** | Done | `-DPHP_EXT_SQLITE=ON` with the default `type = "pdo-sqlite"` (built together with `pdo_sqlite`) |
 | `pdo_dblib` | Not available | Not planned | needs FreeTDS |
 | `pdo_firebird` | Not available | Not planned | needs the Firebird client |
 | `pdo_mysql` | Not available | Not planned | needs mysqlnd |
 | `pdo_oci` | Not available | Not planned | needs the Oracle client |
 | `pdo_odbc` | Not available | Not planned | needs unixODBC |
 | `pdo_pgsql` | Not available | Not planned | needs libpq |
-| `pdo_sqlite` | **Flag** | Done | `-DPHP_EXT_SQLITE=ON` (~560 KB with `pdo`; SQLite amalgamation via `scripts/fetch-sqlite.sh`) |
+| `pdo_sqlite` | **Flag** | Done | `-DPHP_EXT_SQLITE=ON` (the default `type = "pdo-sqlite"`, ~560 KB with `pdo`; SQLite amalgamation via `scripts/fetch-sqlite.sh`) |
 | `pgsql` | Not available | Not planned | needs libpq |
 | `phar` | Not available | Planned | leans on hash and spl; bundle an app into one archive |
 | `posix` | Not available | Not possible | no users or processes (the symbols it wants are weak-stubbed instead) |
@@ -147,7 +153,7 @@ are the source tree's example and test extensions, not real features.
 | `sockets` | Not available | Not planned | lwIP provides BSD sockets (the openssl TLS client uses them), but `ext/sockets` is not ported; a candidate |
 | `sodium` | Not available | Not planned | needs libsodium |
 | `spl` | **Built-in** | Done | always on |
-| `sqlite3` | Not available | Not planned | the standalone `SQLite3` class is not built; use `pdo_sqlite` instead |
+| `sqlite3` | **Flag** | Done | the standalone `SQLite3` class, selected with `[extensions.sqlite] type = "sqlite3"` (~45 KB smaller than PDO; `-DPHP_EXT_SQLITE_API=sqlite3`). The default `type = "pdo-sqlite"` builds `pdo`/`pdo_sqlite` instead |
 | `standard` | **Built-in** | Done | always on (strings, arrays, math, url, base64) |
 | `sysvmsg` | Not available | Not possible | no System V IPC |
 | `sysvsem` | Not available | Not possible | no System V IPC |
@@ -200,7 +206,7 @@ any extra sources on demand; setting them by hand means adding the flags to `idf
 | `-DPHP_EXT_OPENSSL=ON` | `ext/openssl` (mbedTLS subset) | `-DPHP_EXT_OPENSSL_FULL=ON` (real OpenSSL 3.0), `-DPHP_EXT_OPENSSL_NO_LOAD_CONFIG=ON`, `-DPHP_EXT_OPENSSL_TLS=ON` (HTTPS client) |
 | `-DPHP_EXT_TOKENIZER=ON` | `ext/tokenizer` | |
 | `-DPHP_EXT_SESSION=ON` | `ext/session` | |
-| `-DPHP_EXT_SQLITE=ON` | `ext/pdo` and `ext/pdo_sqlite` | |
+| `-DPHP_EXT_SQLITE=ON` | `ext/pdo` and `ext/pdo_sqlite`, or `ext/sqlite3` | `-DPHP_EXT_SQLITE_API=pdo-sqlite` (default) or `=sqlite3` (`[extensions.sqlite] type`) |
 
 Some flags pull sources that are not committed to the repo. The manifest names a `fetch` script that
 must run before the build: `scripts/fetch-sqlite.sh` for the SQLite amalgamation,
@@ -318,11 +324,17 @@ request). The `in_memory` setting keeps the cache in PSRAM (SHM) instead, fastes
 whole bytecode plus per-request heap must fit in PSRAM — good for a small app, not a large framework.
 See [opcache.md](./opcache.md).
 
-### pdo / sqlite
+### sqlite — PDO or the SQLite3 class
 
-`-DPHP_EXT_SQLITE=ON` builds `ext/pdo` and `ext/pdo_sqlite` together, ~560 KB (about 530 KB of that
-is the SQLite library itself, fetched via `scripts/fetch-sqlite.sh`). The standalone `SQLite3` class
-is not built — use the PDO driver.
+`-DPHP_EXT_SQLITE=ON` builds a SQLite extension; the `type` setting picks the API layer, both over the
+same SQLite library (fetched via `scripts/fetch-sqlite.sh`, ~530 KB):
+
+- `type = "pdo-sqlite"` (the default) builds `ext/pdo` + `ext/pdo_sqlite`, ~560 KB — portable PDO code.
+- `type = "sqlite3"` builds `ext/sqlite3` (the `SQLite3`/`SQLite3Stmt`/`SQLite3Result` classes), ~45 KB
+  smaller (no PDO layer).
+
+By hand it's `-DPHP_EXT_SQLITE_API=pdo-sqlite` or `=sqlite3`. See the `sqlite-notes` (PDO) and
+`sqlite3-notes` (SQLite3 class) examples.
 
 ### session, tokenizer, ctype, filter
 
