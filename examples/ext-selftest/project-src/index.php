@@ -2,7 +2,7 @@
 // A self-test for the native extensions: it exercises each one on the board and prints PASS/FAIL,
 // so a regression in the extension layer shows up on the serial log. It checks the shape of the
 // 1.0 API -- every extension's _available() probe, typed return values, argument coercion, the
-// gpio_delay()/delay() pair, and the deprecated psram_*/heap_* aliases of the bm_* functions.
+// sys_delay()/delay() pair, and the deprecated psram_*/heap_* aliases of the sys_* memory functions.
 //
 // It adapts to what's compiled in: the opt-in extensions (wifi, s3_onboard_rgb) are guarded with
 // function_exists(), so the script still runs on a build with fewer of them.
@@ -23,18 +23,22 @@ echo "==== ext-selftest (PHP " . PHP_VERSION . ") ====\n";
 check('gpio_available() bool',  is_bool(gpio_available()));
 check('mem_available() bool',   is_bool(mem_available()));
 check('store_available() bool', is_bool(store_available()));
-check('bm_available() bool',    is_bool(bm_available()));
+check('sys_available() bool',    is_bool(sys_available()));
 if (function_exists('wifi_available'))           check('wifi_available() bool', is_bool(wifi_available()));
 if (function_exists('s3_onboard_rgb_available')) check('s3_onboard_rgb_available() bool', is_bool(s3_onboard_rgb_available()));
 
-// 2) gpio_delay() is canonical; delay() is a plain alias (no deprecation warning)
-gpio_delay(1); check('gpio_delay(1) ran', true);
+// 2) sys timing + info; delay() is a plain alias of sys_delay() (no deprecation warning)
+sys_delay(1); check('sys_delay(1) ran', true);
 $b = count($deprecations); delay(1);
 check('delay() is a clean alias (no E_DEPRECATED)', count($deprecations) === $b);
+check('sys_uptime_ms() > 0', sys_uptime_ms() > 0);
+check('sys_chip_model() is string', is_string(sys_chip_model()) && sys_chip_model() !== '');
+check('sys_mac() looks like a MAC', (bool) preg_match('/^([0-9a-f]{2}:){5}[0-9a-f]{2}$/', sys_mac()));
+check('sys_idf_version() is string', is_string(sys_idf_version()) && sys_idf_version() !== '');
 
-// 3) bm_* are canonical; the unprefixed psram_*/heap_* names still work but are deprecated
-check('bm_psram_free() > 0', bm_psram_free() > 0);
-check('bm_heap_free() > 0',  bm_heap_free() > 0);
+// 3) sys_* are canonical for memory; the unprefixed psram_*/heap_* names still work but are deprecated
+check('sys_psram_free() > 0', sys_psram_free() > 0);
+check('sys_heap_free() > 0',  sys_heap_free() > 0);
 $b = count($deprecations); $v = psram_free();
 check('psram_free() still returns int', is_int($v) && $v > 0);
 check('psram_free() emits E_DEPRECATED', count($deprecations) > $b);

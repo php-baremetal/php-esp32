@@ -5,6 +5,7 @@
   - [Getting started](./getting-started/quick-start.md)
   - [Architecture](./getting-started/architecture.md)
 - Extensions
+  - [Built-in extension API (GPIO, WiFi, RGB, memory, store)](./extensions/builtin-api.md)
   - [Extension porting status](./extensions/porting-status.md)
   - [OpenSSL](./extensions/openssl.md)
   - [OPcache](./extensions/opcache.md)

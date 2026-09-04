@@ -82,7 +82,7 @@ in a browser).
 | [`oled-ssd1306-ext/`](oled-ssd1306-ext/) | The same panel driven by a native C extension (hardware I2C) shipped as a per-project extension: ~82 FPS, twice the pure-PHP driver. | a 0.91" SSD1306 OLED |
 | [`patch-test/`](patch-test/) | Exercises every port patch (closures, date, mbstring, CSPRNG, session, OPcache) and reports PASS/FAIL on the serial log. | a microSD |
 | [`benchmark/`](benchmark/) | On-device measurements: the PSRAM a compiled script costs, a workload's working set, and the GPIO toggle rate from a tight PHP loop. | nothing |
-| [`ext-selftest/`](ext-selftest/) | Exercises every native extension on the board (their `_available()` probes, typed returns, the `bm_*`/deprecated aliases) and reports PASS/FAIL. | `wifi` + `s3_onboard_rgb` (S3) |
+| [`ext-selftest/`](ext-selftest/) | Exercises every native extension on the board (their `_available()` probes, typed returns, the `sys_*` functions and deprecated aliases) and reports PASS/FAIL. | `wifi` + `s3_onboard_rgb` (S3) |
 
 The linear examples run once and finish; the hardware ones (`led-blink`, `blink-sos`, `button-led`)
 use the setup/loop model and keep going as long as the board is powered. The `web-server` examples

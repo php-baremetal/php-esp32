@@ -173,6 +173,7 @@ The same surface at a glance:
 | `mem_delete(string $key)` | `bool` | `true` if the key existed and was removed. |
 | `mem_clear()` | `bool` | Drop every key; always `true`. |
 | `mem_keys()` | `array` | The keys currently stored. |
+| `mem_available()` | `bool` | Whether the in-RAM store is up (always `true` once the module started). |
 
 ### Lifecycle and internals
 

@@ -3,7 +3,7 @@
 // running PHP on the chip -- how much a compiled script costs, how much memory
 // a workload uses, and how fast a tight PHP loop can toggle a GPIO.
 //
-// Memory is read with the baremetal_utility extension (bm_psram_free(), etc.): on
+// Memory is read with the baremetal_utility extension (sys_psram_free(), etc.): on
 // this port the Zend heap lives in PSRAM via malloc (USE_ZEND_ALLOC=0), so PHP's
 // own memory_get_usage() reads 0. Watching PSRAM free go down is the real figure.
 //
@@ -22,9 +22,9 @@ function kb(int $b): string { return number_format($b / 1024, 1) . ' KB'; }
 function measure_compile(string $file): array {
     $bytes = filesize($file);
     $lines = count(file($file));
-    $before = bm_psram_free();
+    $before = sys_psram_free();
     require $file;
-    return [$lines, $bytes, $before - bm_psram_free()];
+    return [$lines, $bytes, $before - sys_psram_free()];
 }
 
 // Build a data set of $n sorted rows and return it (kept alive so we can read
@@ -46,7 +46,7 @@ function setup(): void {
 
     // 1) engine baseline
     printf("PSRAM: %s free of %s   |   internal RAM: %s free of %s\n\n",
-        kb(bm_psram_free()), kb(bm_psram_size()), kb(bm_heap_free()), kb(bm_heap_size()));
+        kb(sys_psram_free()), kb(sys_psram_size()), kb(sys_heap_free()), kb(sys_heap_size()));
 
     // 2) compiled footprint, per script
     echo "compiled footprint (PSRAM consumed to compile a source file):\n";
@@ -91,11 +91,11 @@ function setup(): void {
 
     // 4) execution working set -- last, and sized to the PSRAM on hand (~400 B/row) so a
     //    2 MB board doesn't run out mid-report.
-    $free = bm_psram_free();
+    $free = sys_psram_free();
     $rows = (int) min(5000, max(500, $free * 0.6 / 400));
-    $before = bm_psram_free();
+    $before = sys_psram_free();
     $data = build_workload($rows);
-    $peak = $before - bm_psram_free();
+    $peak = $before - sys_psram_free();
     unset($data);
     printf("execution: %s-row working set = %s in PSRAM (%s was free)\n",
         number_format($rows), kb($peak), kb($free));

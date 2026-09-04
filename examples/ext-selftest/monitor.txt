@@ -5,13 +5,17 @@ store compiled in.
   PASS  gpio_available() bool
   PASS  mem_available() bool
   PASS  store_available() bool
-  PASS  bm_available() bool
+  PASS  sys_available() bool
   PASS  wifi_available() bool
   PASS  s3_onboard_rgb_available() bool
-  PASS  gpio_delay(1) ran
+  PASS  sys_delay(1) ran
   PASS  delay() is a clean alias (no E_DEPRECATED)
-  PASS  bm_psram_free() > 0
-  PASS  bm_heap_free() > 0
+  PASS  sys_uptime_ms() > 0
+  PASS  sys_chip_model() is string
+  PASS  sys_mac() looks like a MAC
+  PASS  sys_idf_version() is string
+  PASS  sys_psram_free() > 0
+  PASS  sys_heap_free() > 0
   PASS  psram_free() still returns int
   PASS  psram_free() emits E_DEPRECATED
   PASS  mem_keys() array
@@ -22,7 +26,7 @@ store compiled in.
   PASS  gpio_write coerces "1" -> 1
   PASS  s3_onboard_rgb_set ran
 
-==== 19 passed, 0 failed ====
+==== 23 passed, 0 failed ====
 deprecations (expected for psram_/heap_):
   - Function psram_free() is deprecated
 SELFTEST DONE

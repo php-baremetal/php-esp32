@@ -54,7 +54,9 @@ Three built-in calls do all the hardware work, from the `gpio` extension:
 
 - `gpio_mode(pin, GPIO_OUTPUT)` — set the pin direction. The constants are `GPIO_INPUT` and `GPIO_OUTPUT`.
 - `gpio_write(pin, level)` — drive the pin high (non-zero) or low (0).
-- `delay(ms)` — sleep for `ms` milliseconds. It yields the core (it is not a busy-wait), so the watchdog stays happy through long pauses.
+- `sys_delay(ms)` — sleep for `ms` milliseconds. It yields the core (it is not a busy-wait), so the watchdog stays happy through long pauses. `delay(ms)` is a plain alias, kept for the Arduino-style idiom. (Timing lives in the `sys` extension, not `gpio`.)
+
+The full list of GPIO (and other built-in) functions is in the [built-in extension API](../extensions/builtin-api.md) reference.
 
 ## Config
 
