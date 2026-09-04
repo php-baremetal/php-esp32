@@ -51,8 +51,11 @@ in a browser).
 | [`led-blink/`](led-blink/) | The setup/loop model: blinks an LED forever. | LED + ~330 ohm between GPIO2 and GND |
 | [`blink-sos/`](blink-sos/) | Blinks "SOS" in Morse code on the LED. | same as above |
 | [`button-led/`](button-led/) | Reads a push button and mirrors it to the LED. | LED on GPIO2, button between GPIO4 and GND |
+| [`s3-rgb-show/`](s3-rgb-show/) | A slow, continuous rainbow on the ESP32-S3 board's onboard WS2812 RGB LED. | an ESP32-S3 board + `s3_onboard_rgb` |
 | [`sd-write/`](sd-write/) | Writes a file to the microSD and reads it back, a quick check of the write path. | a microSD |
 | [`sqlite-notes/`](sqlite-notes/) | PDO opens a SQLite database on the microSD and writes a row each boot. | `sqlite` extension |
+| [`sqlite3-notes/`](sqlite3-notes/) | The same tiny database through the `SQLite3` class instead of PDO (`type = "sqlite3"`, ~45 KB smaller). | `sqlite` extension |
+| [`custom-partitions/`](custom-partitions/) | A project that ships its own `partitions.csv` to reshape the flash layout for that build. | nothing |
 | [`date-timezones/`](date-timezones/) | `DateTime` across named timezones, DST-aware conversions and interval math. | `date` extension (full tz db) |
 | [`date-utc/`](date-utc/) | `DateTime` in a UTC-only build: what still works and the named zones you give up. | `date` extension (UTC-only db) |
 | [`ctype-demo/`](ctype-demo/) | The `ctype_*` character-class checks on whole strings. | `ctype` extension |
@@ -72,9 +75,14 @@ in a browser).
 | [`symfony-demo/`](symfony-demo/) | Symfony 7.4 (skeleton + a controller) on the microSD, browsable over HTTP at ~2.1 s per request (prod, OPcache warm). A minimal, XML-free slice: Symfony's `ext-iconv` and `ext-xml` requirements are bypassed. | P4-ETH + network, `ctype`/`mbstring`/`tokenizer`/`session`/`date`/`opcache` + microSD |
 | [`web-server-init-loop/`](web-server-init-loop/) | Serves a web page over Ethernet, with the whole HTTP server written in PHP (setup/loop). | networked board |
 | [`web-server/`](web-server/) | The same page, using the firmware's `web-server` project type: a C HTTP server in front, PHP run fresh per request. | networked board |
+| [`wifi-connect/`](wifi-connect/) | Scan for networks and join one (open / WPA2 / WPA3) from PHP; credentials come from a gitignored `.env` baked in. | a WiFi SoC + `wifi` |
+| [`wifi-ap/`](wifi-ap/) | The board creates its own WiFi access point (SoftAP) from PHP, with a built-in DHCP server. | a WiFi SoC + `wifi` |
+| [`wifi-ap-s3-rgb-manage/`](wifi-ap-s3-rgb-manage/) | The board starts a WiFi AP and serves a live web page (from PHP) that controls the onboard RGB LED's colour and brightness. | an ESP32-S3 board + `wifi` + `s3_onboard_rgb` |
 | [`oled-ssd1306-fps/`](oled-ssd1306-fps/) | A 128x32 SSD1306 OLED driven from pure PHP, I2C bit-banged over two GPIO pins; benchmarks full-frame throughput (~41 FPS). | a 0.91" SSD1306 OLED |
 | [`oled-ssd1306-ext/`](oled-ssd1306-ext/) | The same panel driven by a native C extension (hardware I2C) shipped as a per-project extension: ~82 FPS, twice the pure-PHP driver. | a 0.91" SSD1306 OLED |
 | [`patch-test/`](patch-test/) | Exercises every port patch (closures, date, mbstring, CSPRNG, session, OPcache) and reports PASS/FAIL on the serial log. | a microSD |
+| [`benchmark/`](benchmark/) | On-device measurements: the PSRAM a compiled script costs, a workload's working set, and the GPIO toggle rate from a tight PHP loop. | nothing |
+| [`ext-selftest/`](ext-selftest/) | Exercises every native extension on the board (their `_available()` probes, typed returns, the `bm_*`/deprecated aliases) and reports PASS/FAIL. | `wifi` + `s3_onboard_rgb` (S3) |
 
 The linear examples run once and finish; the hardware ones (`led-blink`, `blink-sos`, `button-led`)
 use the setup/loop model and keep going as long as the board is powered. The `web-server` examples
@@ -88,7 +96,8 @@ side-loaded from the card and has to be compiled in. You do not pass any build f
 `php-esp32.config.toml` already enables what it needs, and `phpflash build` reads it. The
 `[extensions.*]` block in each config:
 
-- [`sqlite-notes`](sqlite-notes/): `[extensions.sqlite]`
+- [`sqlite-notes`](sqlite-notes/): `[extensions.sqlite]` (PDO, the default)
+- [`sqlite3-notes`](sqlite3-notes/): `[extensions.sqlite]` with `type = "sqlite3"` (the SQLite3 class)
 - [`date-timezones`](date-timezones/): `[extensions.date]` (full timezone database)
 - [`date-utc`](date-utc/): `[extensions.date]` with `minimal_tz = true` (UTC-only, smaller)
 - [`ctype-demo`](ctype-demo/): `[extensions.ctype]`
@@ -100,6 +109,10 @@ side-loaded from the card and has to be compiled in. You do not pass any build f
 - [`session-demo`](session-demo/): `[extensions.session]`
 - [`openssl-compat`](openssl-compat/): `[extensions.openssl]` (mbedTLS subset)
 - [`openssl-full`](openssl-full/): `[extensions.openssl]` with `full = true` (real OpenSSL, ~2 MB)
+- [`s3-rgb-show`](s3-rgb-show/): `[extensions.s3_onboard_rgb]` (ESP32-S3 only)
+- [`wifi-connect`](wifi-connect/) / [`wifi-ap`](wifi-ap/): `[extensions.wifi]`
+- [`wifi-ap-s3-rgb-manage`](wifi-ap-s3-rgb-manage/): `[extensions.wifi]` + `[extensions.s3_onboard_rgb]`
+- [`ext-selftest`](ext-selftest/): `[extensions.wifi]` + `[extensions.s3_onboard_rgb]` + `[store]`
 
 If an extension pulls in a library (SQLite's amalgamation, mbstring's oniguruma), `phpflash build`
 runs the fetch step for you the first time.

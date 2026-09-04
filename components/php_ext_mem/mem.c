@@ -39,14 +39,20 @@ static void mem_val_dtor(zval *zv)
     }
 }
 
-/* Empty arg list for the no-argument functions (PHP 8 warns without an arginfo). */
-ZEND_BEGIN_ARG_INFO_EX(arginfo_mem_none, 0, 0, 0)
+/* mem_clear/mem_keys/mem_available take no arguments; the return type differs, so one arginfo each. */
+ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_mem_clear, 0, 0, _IS_BOOL, 0)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_mem_keys, 0, 0, IS_ARRAY, 0)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_mem_available, 0, 0, _IS_BOOL, 0)
 ZEND_END_ARG_INFO()
 
 /* mem_set(string $key, mixed $value): bool */
-ZEND_BEGIN_ARG_INFO_EX(arginfo_mem_set, 0, 0, 2)
-    ZEND_ARG_INFO(0, key)
-    ZEND_ARG_INFO(0, value)
+ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_mem_set, 0, 2, _IS_BOOL, 0)
+    ZEND_ARG_TYPE_INFO(0, key, IS_STRING, 0)
+    ZEND_ARG_TYPE_INFO(0, value, IS_MIXED, 0)
 ZEND_END_ARG_INFO()
 PHP_FUNCTION(mem_set)
 {
@@ -83,9 +89,9 @@ PHP_FUNCTION(mem_set)
 }
 
 /* mem_get(string $key, mixed $default = null): mixed */
-ZEND_BEGIN_ARG_INFO_EX(arginfo_mem_get, 0, 0, 1)
-    ZEND_ARG_INFO(0, key)
-    ZEND_ARG_INFO(0, default)
+ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_mem_get, 0, 1, IS_MIXED, 0)
+    ZEND_ARG_TYPE_INFO(0, key, IS_STRING, 0)
+    ZEND_ARG_TYPE_INFO_WITH_DEFAULT_VALUE(0, default, IS_MIXED, 0, "null")
 ZEND_END_ARG_INFO()
 PHP_FUNCTION(mem_get)
 {
@@ -120,9 +126,9 @@ PHP_FUNCTION(mem_get)
     RETURN_NULL();
 }
 
-/* mem_has(string $key): bool */
-ZEND_BEGIN_ARG_INFO_EX(arginfo_mem_key, 0, 0, 1)
-    ZEND_ARG_INFO(0, key)
+/* mem_has(string $key): bool -- also used for mem_delete (same signature). */
+ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_mem_key, 0, 1, _IS_BOOL, 0)
+    ZEND_ARG_TYPE_INFO(0, key, IS_STRING, 0)
 ZEND_END_ARG_INFO()
 PHP_FUNCTION(mem_has)
 {
@@ -179,6 +185,13 @@ PHP_FUNCTION(mem_keys)
     } ZEND_HASH_FOREACH_END();
 }
 
+/* mem_available(): bool -- the in-RAM store is up (always true once the module started). */
+PHP_FUNCTION(mem_available)
+{
+    ZEND_PARSE_PARAMETERS_NONE();
+    RETURN_BOOL(s_ready);
+}
+
 PHP_MINIT_FUNCTION(mem)
 {
     zend_hash_init(&s_mem, 8, NULL, mem_val_dtor, 1 /* persistent */);
@@ -196,12 +209,13 @@ PHP_MSHUTDOWN_FUNCTION(mem)
 }
 
 static const zend_function_entry mem_functions[] = {
-    PHP_FE(mem_set,    arginfo_mem_set)
-    PHP_FE(mem_get,    arginfo_mem_get)
-    PHP_FE(mem_has,    arginfo_mem_key)
-    PHP_FE(mem_delete, arginfo_mem_key)
-    PHP_FE(mem_clear,  arginfo_mem_none)
-    PHP_FE(mem_keys,   arginfo_mem_none)
+    PHP_FE(mem_set,       arginfo_mem_set)
+    PHP_FE(mem_get,       arginfo_mem_get)
+    PHP_FE(mem_has,       arginfo_mem_key)
+    PHP_FE(mem_delete,    arginfo_mem_key)
+    PHP_FE(mem_clear,     arginfo_mem_clear)
+    PHP_FE(mem_keys,      arginfo_mem_keys)
+    PHP_FE(mem_available, arginfo_mem_available)
     PHP_FE_END
 };
 
@@ -212,6 +226,6 @@ zend_module_entry mem_module_entry = {
     PHP_MINIT(mem),
     PHP_MSHUTDOWN(mem),
     NULL, NULL, NULL,
-    "0.1",
+    "1.0",
     STANDARD_MODULE_PROPERTIES,
 };

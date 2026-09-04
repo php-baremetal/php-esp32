@@ -10,11 +10,11 @@ It answers, with real numbers, the kind of questions raised in
 
 ## What it measures
 
-Memory is read with the `baremetal_utility` extension (`psram_free()`, `heap_free()`, ...). On this
+Memory is read with the `baremetal_utility` extension (`bm_psram_free()`, `bm_heap_free()`, ...). On this
 port the Zend heap lives in PSRAM via malloc (`USE_ZEND_ALLOC=0`), so PHP's own `memory_get_usage()`
 reads 0 — watching PSRAM free go down is the real figure, and it counts everything, not just PHP's arena.
 
-1. **Engine baseline** — `psram_free()` right after boot: how much PSRAM the running engine already
+1. **Engine baseline** — `bm_psram_free()` right after boot: how much PSRAM the running engine already
    holds before your code does anything.
 2. **Compiled footprint** — for three reference files (`bench_small/medium/large.php`) it prints the
    source size and the PSRAM that `require`-ing them consumes (definitions only). That delta is the

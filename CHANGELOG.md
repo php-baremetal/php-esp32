@@ -5,6 +5,14 @@
 The consolidation milestone (see [ROADMAP.md](ROADMAP.md)); still in progress. What's landed so far:
 
 ### Added
+- **The native extensions refined for a stable 1.0 API.** A consistency pass across `gpio`, `mem`,
+  `store`, `wifi`, `s3_onboard_rgb` and `baremetal_utility`: every function now carries typed arginfo
+  (argument and return types, so reflection and type coercion work properly, including `wifi_scan()`'s
+  `array|false` and the nullable `?string`/`?int` returns); every extension exposes a
+  `<name>_available()` probe; and naming is consistent per module. `gpio_delay()` is the namespaced
+  name for the Arduino-style `delay()`, which stays as a plain alias. The `baremetal_utility` functions
+  gain a `bm_` prefix (`bm_psram_free()`, `bm_heap_free()`, …); the old unprefixed `psram_*` / `heap_*`
+  names remain as **deprecated** aliases. Builds across every PHP version (8.3–8.5); no breaking changes.
 - **The test CI is complete.** The GitHub Actions pipeline (introduced in 0.18.0) is now finished and
   exercised across the full matrix: manifest checks on every PHP version, and base-firmware builds on
   the default version × every board, every version × one board per family, and two extreme configs

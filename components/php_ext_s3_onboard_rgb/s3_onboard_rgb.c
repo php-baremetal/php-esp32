@@ -112,19 +112,22 @@ static void hsv2rgb(zend_long h, zend_long s, zend_long v, uint8_t *r, uint8_t *
     *b = (uint8_t) bb;
 }
 
-ZEND_BEGIN_ARG_INFO_EX(arginfo_s3_onboard_rgb_set, 0, 0, 3)
-    ZEND_ARG_INFO(0, r)
-    ZEND_ARG_INFO(0, g)
-    ZEND_ARG_INFO(0, b)
+ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_s3_onboard_rgb_set, 0, 3, IS_VOID, 0)
+    ZEND_ARG_TYPE_INFO(0, r, IS_LONG, 0)
+    ZEND_ARG_TYPE_INFO(0, g, IS_LONG, 0)
+    ZEND_ARG_TYPE_INFO(0, b, IS_LONG, 0)
 ZEND_END_ARG_INFO()
 
-ZEND_BEGIN_ARG_INFO_EX(arginfo_s3_onboard_rgb_hsv, 0, 0, 3)
-    ZEND_ARG_INFO(0, h)
-    ZEND_ARG_INFO(0, s)
-    ZEND_ARG_INFO(0, v)
+ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_s3_onboard_rgb_hsv, 0, 3, IS_VOID, 0)
+    ZEND_ARG_TYPE_INFO(0, h, IS_LONG, 0)
+    ZEND_ARG_TYPE_INFO(0, s, IS_LONG, 0)
+    ZEND_ARG_TYPE_INFO(0, v, IS_LONG, 0)
 ZEND_END_ARG_INFO()
 
-ZEND_BEGIN_ARG_INFO_EX(arginfo_s3_onboard_rgb_none, 0, 0, 0)
+ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_s3_onboard_rgb_off, 0, 0, IS_VOID, 0)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_s3_onboard_rgb_available, 0, 0, _IS_BOOL, 0)
 ZEND_END_ARG_INFO()
 
 PHP_FUNCTION(s3_onboard_rgb_set)
@@ -168,8 +171,8 @@ PHP_FUNCTION(s3_onboard_rgb_available)
 static const zend_function_entry s3_onboard_rgb_functions[] = {
     PHP_FE(s3_onboard_rgb_set,       arginfo_s3_onboard_rgb_set)
     PHP_FE(s3_onboard_rgb_hsv,       arginfo_s3_onboard_rgb_hsv)
-    PHP_FE(s3_onboard_rgb_off,       arginfo_s3_onboard_rgb_none)
-    PHP_FE(s3_onboard_rgb_available, arginfo_s3_onboard_rgb_none)
+    PHP_FE(s3_onboard_rgb_off,       arginfo_s3_onboard_rgb_off)
+    PHP_FE(s3_onboard_rgb_available, arginfo_s3_onboard_rgb_available)
     PHP_FE_END
 };
 
@@ -188,7 +191,7 @@ zend_module_entry s3_onboard_rgb_module_entry = {
     NULL,   /* RINIT */
     NULL,   /* RSHUTDOWN */
     NULL,   /* MINFO */
-    "0.1",
+    "1.0",
     STANDARD_MODULE_PROPERTIES
 };
 

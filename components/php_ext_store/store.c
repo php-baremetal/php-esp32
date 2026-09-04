@@ -32,8 +32,11 @@ static const char *TAG = "store";
 static nvs_handle_t s_handle;
 static bool s_ok;
 
-/* Empty arg list for the no-argument functions (PHP 8 warns without an arginfo). */
-ZEND_BEGIN_ARG_INFO_EX(arginfo_store_none, 0, 0, 0)
+/* No-argument functions, one arginfo per return type. */
+ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_store_bool, 0, 0, _IS_BOOL, 0)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_store_keys, 0, 0, IS_ARRAY, 0)
 ZEND_END_ARG_INFO()
 
 static void store_init(void)
@@ -63,9 +66,9 @@ static inline bool key_ok(size_t len)
 }
 
 /* store_set(string $key, string $value): bool */
-ZEND_BEGIN_ARG_INFO_EX(arginfo_store_set, 0, 0, 2)
-    ZEND_ARG_INFO(0, key)
-    ZEND_ARG_INFO(0, value)
+ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_store_set, 0, 2, _IS_BOOL, 0)
+    ZEND_ARG_TYPE_INFO(0, key, IS_STRING, 0)
+    ZEND_ARG_TYPE_INFO(0, value, IS_STRING, 0)
 ZEND_END_ARG_INFO()
 PHP_FUNCTION(store_set)
 {
@@ -87,9 +90,9 @@ PHP_FUNCTION(store_set)
 }
 
 /* store_get(string $key, ?string $default = null): ?string */
-ZEND_BEGIN_ARG_INFO_EX(arginfo_store_get, 0, 0, 1)
-    ZEND_ARG_INFO(0, key)
-    ZEND_ARG_INFO(0, default)
+ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_store_get, 0, 1, IS_STRING, 1)
+    ZEND_ARG_TYPE_INFO(0, key, IS_STRING, 0)
+    ZEND_ARG_TYPE_INFO_WITH_DEFAULT_VALUE(0, default, IS_STRING, 1, "null")
 ZEND_END_ARG_INFO()
 PHP_FUNCTION(store_get)
 {
@@ -120,9 +123,9 @@ PHP_FUNCTION(store_get)
     RETURN_NULL();
 }
 
-/* store_has(string $key): bool */
-ZEND_BEGIN_ARG_INFO_EX(arginfo_store_key, 0, 0, 1)
-    ZEND_ARG_INFO(0, key)
+/* store_has(string $key): bool -- also used for store_delete (same signature). */
+ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_store_key, 0, 1, _IS_BOOL, 0)
+    ZEND_ARG_TYPE_INFO(0, key, IS_STRING, 0)
 ZEND_END_ARG_INFO()
 PHP_FUNCTION(store_has)
 {
@@ -209,9 +212,9 @@ static const zend_function_entry store_functions[] = {
     PHP_FE(store_get,       arginfo_store_get)
     PHP_FE(store_has,       arginfo_store_key)
     PHP_FE(store_delete,    arginfo_store_key)
-    PHP_FE(store_clear,     arginfo_store_none)
-    PHP_FE(store_keys,      arginfo_store_none)
-    PHP_FE(store_available, arginfo_store_none)
+    PHP_FE(store_clear,     arginfo_store_bool)
+    PHP_FE(store_keys,      arginfo_store_keys)
+    PHP_FE(store_available, arginfo_store_bool)
     PHP_FE_END
 };
 
@@ -221,6 +224,6 @@ zend_module_entry store_module_entry = {
     store_functions,
     PHP_MINIT(store),
     NULL, NULL, NULL, NULL,
-    "0.1",
+    "1.0",
     STANDARD_MODULE_PROPERTIES,
 };

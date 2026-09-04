@@ -1,0 +1,31 @@
+name = "ext-selftest"
+storage_type = "embedded"   # a linear script packed into flash; no card needed
+type = "init-loop"          # runs start to finish and stops
+
+[board]
+target = "esp32-s3-zero"    # an ESP32-S3 board (so the onboard-RGB extension is available)
+port   = ""          # empty = autodetect at flash time
+
+[esp-idf]
+path    = ""
+version = ""
+
+[php-esp32]
+path    = ""
+version = ""
+
+# Turn the opt-in native extensions on so the self-test can exercise them. The script guards each one
+# with function_exists()/_available(), so it still runs on a build with fewer extensions compiled in.
+[extensions.wifi]
+enabled = true
+
+[extensions.s3_onboard_rgb]
+enabled = true
+pin     = 48
+
+[store]
+size_kb = 32   # give the persistent store a partition, so store_* can round-trip
+
+[php]
+src   = "project-src"      # PHP source folder (packed into the embedded image)
+entry = "index.php"    # entry file within src

@@ -18,7 +18,11 @@ function setup(): void
     }
 
     echo "scanning for networks...\n";
-    foreach (wifi_scan() as $ap) {
+    $aps = wifi_scan();   // array of APs, or false if the scan itself failed
+    if ($aps === false) {
+        echo "  scan failed\n";
+    }
+    foreach ($aps ?: [] as $ap) {
         printf("  %-32s ch%-3d %4d dBm  %s\n",
                $ap['ssid'] !== '' ? $ap['ssid'] : '(hidden)',
                $ap['channel'], $ap['rssi'], $ap['auth']);

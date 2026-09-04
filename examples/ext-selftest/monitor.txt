@@ -1,0 +1,28 @@
+Captured on an ESP32-S3-Zero "Super Mini" (Quad 2MB PSRAM), PHP 8.4.25, with wifi + s3_onboard_rgb +
+store compiled in.
+
+==== ext-selftest (PHP 8.4.25) ====
+  PASS  gpio_available() bool
+  PASS  mem_available() bool
+  PASS  store_available() bool
+  PASS  bm_available() bool
+  PASS  wifi_available() bool
+  PASS  s3_onboard_rgb_available() bool
+  PASS  gpio_delay(1) ran
+  PASS  delay() is a clean alias (no E_DEPRECATED)
+  PASS  bm_psram_free() > 0
+  PASS  bm_heap_free() > 0
+  PASS  psram_free() still returns int
+  PASS  psram_free() emits E_DEPRECATED
+  PASS  mem_keys() array
+  PASS  mem_get() round-trip (mixed)
+  PASS  mem_get() default
+  PASS  wifi_ip() is ?string
+  PASS  store round-trip
+  PASS  gpio_write coerces "1" -> 1
+  PASS  s3_onboard_rgb_set ran
+
+==== 19 passed, 0 failed ====
+deprecations (expected for psram_/heap_):
+  - Function psram_free() is deprecated
+SELFTEST DONE

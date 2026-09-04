@@ -1,9 +1,9 @@
 /*
- * gpio extension: gpio_mode(), gpio_write(), gpio_read(), delay().
+ * gpio extension: gpio_mode(), gpio_write(), gpio_read(), gpio_delay(), gpio_available().
  *
- * delay() maps onto vTaskDelay(), never a busy-wait: yielding the core keeps the
- * FreeRTOS watchdog happy, which would otherwise reset the board after a couple of
- * seconds of a hot loop.
+ * gpio_delay() maps onto vTaskDelay(), never a busy-wait: yielding the core keeps the FreeRTOS
+ * watchdog happy, which would otherwise reset the board after a couple of seconds of a hot loop.
+ * `delay()` is a deprecated alias of gpio_delay() kept for older sketches.
  */
 #include "php.h"
 #include "php_gpio.h"
@@ -11,25 +11,28 @@
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 
-ZEND_BEGIN_ARG_INFO_EX(arginfo_gpio_mode, 0, 0, 2)
-    ZEND_ARG_INFO(0, pin)
-    ZEND_ARG_INFO(0, mode)
+ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_gpio_mode, 0, 2, IS_VOID, 0)
+    ZEND_ARG_TYPE_INFO(0, pin, IS_LONG, 0)
+    ZEND_ARG_TYPE_INFO(0, mode, IS_LONG, 0)
 ZEND_END_ARG_INFO()
 
-ZEND_BEGIN_ARG_INFO_EX(arginfo_gpio_write, 0, 0, 2)
-    ZEND_ARG_INFO(0, pin)
-    ZEND_ARG_INFO(0, level)
+ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_gpio_write, 0, 2, IS_VOID, 0)
+    ZEND_ARG_TYPE_INFO(0, pin, IS_LONG, 0)
+    ZEND_ARG_TYPE_INFO(0, level, IS_LONG, 0)
 ZEND_END_ARG_INFO()
 
-ZEND_BEGIN_ARG_INFO_EX(arginfo_gpio_read, 0, 0, 1)
-    ZEND_ARG_INFO(0, pin)
+ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_gpio_read, 0, 1, IS_LONG, 0)
+    ZEND_ARG_TYPE_INFO(0, pin, IS_LONG, 0)
 ZEND_END_ARG_INFO()
 
-ZEND_BEGIN_ARG_INFO_EX(arginfo_delay, 0, 0, 1)
-    ZEND_ARG_INFO(0, ms)
+ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_gpio_delay, 0, 1, IS_VOID, 0)
+    ZEND_ARG_TYPE_INFO(0, ms, IS_LONG, 0)
 ZEND_END_ARG_INFO()
 
-/* gpio_mode(int pin, int mode): mode is GPIO_INPUT or GPIO_OUTPUT. */
+ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_gpio_available, 0, 0, _IS_BOOL, 0)
+ZEND_END_ARG_INFO()
+
+/* gpio_mode(int pin, int mode): void -- mode is GPIO_INPUT or GPIO_OUTPUT. */
 PHP_FUNCTION(gpio_mode)
 {
     zend_long pin, mode;
@@ -45,7 +48,7 @@ PHP_FUNCTION(gpio_mode)
                        mode ? GPIO_MODE_INPUT_OUTPUT : GPIO_MODE_INPUT);
 }
 
-/* gpio_write(int pin, int level) */
+/* gpio_write(int pin, int level): void */
 PHP_FUNCTION(gpio_write)
 {
     zend_long pin, level;
@@ -68,25 +71,39 @@ PHP_FUNCTION(gpio_read)
     RETURN_LONG(gpio_get_level((gpio_num_t) pin));
 }
 
-/* delay(int ms): sleep, yielding the core. */
-PHP_FUNCTION(delay)
+static void gpio_delay_impl(zend_long ms)
 {
-    zend_long ms;
-    ZEND_PARSE_PARAMETERS_START(1, 1)
-        Z_PARAM_LONG(ms)
-    ZEND_PARSE_PARAMETERS_END();
-
     if (ms < 0) {
         ms = 0;
     }
     vTaskDelay(pdMS_TO_TICKS(ms));
 }
 
+/* gpio_delay(int ms): void -- sleep, yielding the core. `delay()` is a plain alias (below). */
+PHP_FUNCTION(gpio_delay)
+{
+    zend_long ms;
+    ZEND_PARSE_PARAMETERS_START(1, 1)
+        Z_PARAM_LONG(ms)
+    ZEND_PARSE_PARAMETERS_END();
+
+    gpio_delay_impl(ms);
+}
+
+/* gpio_available(): bool -- the extension is compiled in (GPIO has no extra precondition). */
+PHP_FUNCTION(gpio_available)
+{
+    ZEND_PARSE_PARAMETERS_NONE();
+    RETURN_TRUE;
+}
+
 static const zend_function_entry gpio_functions[] = {
-    PHP_FE(gpio_mode,  arginfo_gpio_mode)
-    PHP_FE(gpio_write, arginfo_gpio_write)
-    PHP_FE(gpio_read,  arginfo_gpio_read)
-    PHP_FE(delay,      arginfo_delay)
+    PHP_FE(gpio_mode,      arginfo_gpio_mode)
+    PHP_FE(gpio_write,     arginfo_gpio_write)
+    PHP_FE(gpio_read,      arginfo_gpio_read)
+    PHP_FE(gpio_delay,     arginfo_gpio_delay)
+    PHP_FE(gpio_available, arginfo_gpio_available)
+    PHP_FALIAS(delay, gpio_delay, arginfo_gpio_delay)   /* Arduino-style alias of gpio_delay() */
     PHP_FE_END
 };
 
@@ -106,6 +123,6 @@ zend_module_entry gpio_module_entry = {
     NULL,   /* RINIT */
     NULL,   /* RSHUTDOWN */
     NULL,   /* MINFO */
-    "0.1",
+    "1.0",
     STANDARD_MODULE_PROPERTIES
 };

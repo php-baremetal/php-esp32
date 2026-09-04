@@ -65,7 +65,8 @@ milestone and the one most open to change along the way.
   the firmware tree into a dedicated, versioned extension repository. The tooling then resolves and
   downloads on the fly only the extensions a project actually asks for, and builds them in — think
   Composer, but for bare-metal PHP extensions. This keeps the core small and lets extensions evolve
-  and be shared on their own schedule.
+  and be shared on their own schedule. *(Evaluating [php/pie](https://github.com/php/pie) for the
+  packaging/distribution layer.)*
 - **A new tool, most likely from scratch.** `phpflash` today is best treated as a convenience for the
   current ESP32-only layout. A multi-family world (generic config + an extension registry) will most
   likely mean tearing it down and building a fresh tool around the new model, rather than stretching

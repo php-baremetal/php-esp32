@@ -135,20 +135,34 @@ static const char *auth_str(wifi_auth_mode_t a)
     }
 }
 
-ZEND_BEGIN_ARG_INFO_EX(arginfo_wifi_none, 0, 0, 0)
+/* No-argument functions, one arginfo per return type. */
+ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_wifi_bool, 0, 0, _IS_BOOL, 0)
 ZEND_END_ARG_INFO()
 
-ZEND_BEGIN_ARG_INFO_EX(arginfo_wifi_connect, 0, 0, 1)
-    ZEND_ARG_INFO(0, ssid)
-    ZEND_ARG_INFO(0, password)
-    ZEND_ARG_INFO(0, timeout_ms)
+/* wifi_scan() returns the AP list, or false on a scan error. */
+ZEND_BEGIN_ARG_WITH_RETURN_TYPE_MASK_EX(arginfo_wifi_scan, 0, 0, MAY_BE_ARRAY|MAY_BE_FALSE)
 ZEND_END_ARG_INFO()
 
-ZEND_BEGIN_ARG_INFO_EX(arginfo_wifi_ap_start, 0, 0, 1)
-    ZEND_ARG_INFO(0, ssid)
-    ZEND_ARG_INFO(0, password)
-    ZEND_ARG_INFO(0, channel)
-    ZEND_ARG_INFO(0, max_conn)
+ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_wifi_string, 0, 0, IS_STRING, 1)   /* ?string */
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_wifi_int_nullable, 0, 0, IS_LONG, 1)   /* ?int */
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_wifi_int, 0, 0, IS_LONG, 0)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_wifi_connect, 0, 1, _IS_BOOL, 0)
+    ZEND_ARG_TYPE_INFO(0, ssid, IS_STRING, 0)
+    ZEND_ARG_TYPE_INFO(0, password, IS_STRING, 1)
+    ZEND_ARG_TYPE_INFO(0, timeout_ms, IS_LONG, 0)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_wifi_ap_start, 0, 1, _IS_BOOL, 0)
+    ZEND_ARG_TYPE_INFO(0, ssid, IS_STRING, 0)
+    ZEND_ARG_TYPE_INFO(0, password, IS_STRING, 1)
+    ZEND_ARG_TYPE_INFO(0, channel, IS_LONG, 0)
+    ZEND_ARG_TYPE_INFO(0, max_conn, IS_LONG, 0)
 ZEND_END_ARG_INFO()
 
 PHP_FUNCTION(wifi_available)
@@ -338,17 +352,17 @@ PHP_FUNCTION(wifi_ap_clients)
 }
 
 static const zend_function_entry wifi_functions[] = {
-    PHP_FE(wifi_available,   arginfo_wifi_none)
-    PHP_FE(wifi_scan,        arginfo_wifi_none)
+    PHP_FE(wifi_available,   arginfo_wifi_bool)
+    PHP_FE(wifi_scan,        arginfo_wifi_scan)
     PHP_FE(wifi_connect,     arginfo_wifi_connect)
-    PHP_FE(wifi_disconnect,  arginfo_wifi_none)
-    PHP_FE(wifi_connected,   arginfo_wifi_none)
-    PHP_FE(wifi_ip,          arginfo_wifi_none)
-    PHP_FE(wifi_rssi,        arginfo_wifi_none)
+    PHP_FE(wifi_disconnect,  arginfo_wifi_bool)
+    PHP_FE(wifi_connected,   arginfo_wifi_bool)
+    PHP_FE(wifi_ip,          arginfo_wifi_string)
+    PHP_FE(wifi_rssi,        arginfo_wifi_int_nullable)
     PHP_FE(wifi_ap_start,    arginfo_wifi_ap_start)
-    PHP_FE(wifi_ap_stop,     arginfo_wifi_none)
-    PHP_FE(wifi_ap_ip,       arginfo_wifi_none)
-    PHP_FE(wifi_ap_clients,  arginfo_wifi_none)
+    PHP_FE(wifi_ap_stop,     arginfo_wifi_bool)
+    PHP_FE(wifi_ap_ip,       arginfo_wifi_string)
+    PHP_FE(wifi_ap_clients,  arginfo_wifi_int)
     PHP_FE_END
 };
 
@@ -366,7 +380,7 @@ zend_module_entry wifi_module_entry = {
     NULL,   /* RINIT */
     NULL,   /* RSHUTDOWN */
     NULL,   /* MINFO */
-    "0.1",
+    "1.0",
     STANDARD_MODULE_PROPERTIES
 };
 
