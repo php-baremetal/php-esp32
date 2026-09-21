@@ -1,0 +1,29 @@
+name = "display-hello"
+storage_type = "embedded"
+type = "init-loop"
+
+[board]
+target = "esp32-s3-pico"    # any board works; the panel pins are passed at construction
+port   = ""
+
+[esp-idf]
+path    = ""
+version = ""
+
+[php-esp32]
+path    = ""
+version = ""
+
+[storage]
+microsd = false
+
+# The SPI/QSPI extension: Baremetal\Spi\Bus / \Device and the Output\Display panels. `drivers`
+# selects which panel drivers are compiled into Baremetal\Spi\Driver\*.
+[extensions.spi]
+enabled = true
+drivers = ["st77916"]
+
+[php]
+src     = "project-src"
+entry   = "index.php"
+version = ""

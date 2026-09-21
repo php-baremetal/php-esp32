@@ -31,6 +31,12 @@ extern zend_module_entry gpio_module_entry;
 extern zend_module_entry store_module_entry;
 extern zend_module_entry mem_module_entry;
 extern zend_module_entry sys_module_entry;
+#ifdef PHP_EXT_I2C_ENABLED
+extern zend_module_entry i2c_module_entry;
+#endif
+#ifdef PHP_EXT_SPI_ENABLED
+extern zend_module_entry spi_module_entry;
+#endif
 
 #ifdef PHP_EXT_S3_ONBOARD_RGB_ENABLED
 extern zend_module_entry s3_onboard_rgb_module_entry;
@@ -132,6 +138,12 @@ static zend_module_entry * const php_builtin_extensions[] = {
 	&store_module_entry,
 	&mem_module_entry,
 	&sys_module_entry,
+#ifdef PHP_EXT_I2C_ENABLED
+	&i2c_module_entry,
+#endif
+#ifdef PHP_EXT_SPI_ENABLED
+	&spi_module_entry,
+#endif
 #ifdef PHP_EXT_S3_ONBOARD_RGB_ENABLED
 	&s3_onboard_rgb_module_entry,
 #endif

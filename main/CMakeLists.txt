@@ -37,6 +37,18 @@ if(PHP_EXT_WIFI)
     set(WIFI_REQUIRES php_ext_wifi)
 endif()
 
+# i2c (Baremetal\I2c bus + device): pulled in only when the project enables it.
+set(I2C_REQUIRES "")
+if(PHP_EXT_I2C)
+    set(I2C_REQUIRES php_ext_i2c)
+endif()
+
+# spi (Baremetal\Spi bus + device + Output\Display panels): pulled in only when enabled.
+set(SPI_REQUIRES "")
+if(PHP_EXT_SPI)
+    set(SPI_REQUIRES php_ext_spi)
+endif()
+
 # microSD support (mount a card for storage / writable data). On by default; a `microsd` project
 # needs it, an `embedded` one can turn it off (-DPHP_STORAGE_MICROSD=OFF) to drop the SD drivers.
 # The board's board.cmake reads $ENV{PHP_ESP32_MICROSD} to match its REQUIRES in the early phase.
@@ -62,7 +74,7 @@ idf_component_register(
     INCLUDE_DIRS "." "models" ${BOARD_INCLUDE_DIRS}
     # esp_partition/fatfs/vfs: main.c mounts the optional read-only embedded source
     # partition itself (board-agnostic); the board adds its own storage drivers too.
-    REQUIRES php php_ext_gpio php_ext_store php_ext_mem php_ext_sys php_project_exts esp_partition esp_app_format fatfs vfs ${WEB_SERVER_REQUIRES} ${RGB_REQUIRES} ${WIFI_REQUIRES} ${BOARD_REQUIRES}
+    REQUIRES php php_ext_gpio php_ext_store php_ext_mem php_ext_sys php_project_exts esp_partition esp_app_format fatfs vfs ${WEB_SERVER_REQUIRES} ${RGB_REQUIRES} ${WIFI_REQUIRES} ${I2C_REQUIRES} ${SPI_REQUIRES} ${BOARD_REQUIRES}
 )
 
 # fs_pathnorm.c: --wrap the file syscalls so "." / ".." in paths are collapsed before the FATFS VFS

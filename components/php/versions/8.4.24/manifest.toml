@@ -261,3 +261,19 @@ description = "WiFi from PHP: scan/join a network (STA) and create one (SoftAP).
 required_for = []
 flag = "PHP_EXT_WIFI=ON"
 flash_cost = "~600 KB"
+
+[[extension]]
+key = "i2c"
+description = "I2C from PHP: Baremetal\\I2c\\Bus and \\Device (scan/probe/read/write/readReg/writeReg), with a driver framework. Pins are passed at construction."
+required_for = []
+flag = "PHP_EXT_I2C=ON"
+flash_cost = "~15 KB"
+drivers = ["qmi8658"]
+
+[[extension]]
+key = "spi"
+description = "SPI/QSPI from PHP: Baremetal\\Spi\\Bus and \\Device (transfer/write/read), plus the Output\\Display capability and framebuffer panel drivers. Pins are passed at construction."
+required_for = []
+flag = "PHP_EXT_SPI=ON"
+flash_cost = "~20 KB"
+drivers = ["st77916"]

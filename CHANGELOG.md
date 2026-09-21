@@ -1,5 +1,52 @@
 # Changelog
 
+## [1.3.0] - SPI/QSPI bus and the display
+
+The SPI counterpart of the I²C bus, and the first framebuffer panel. Opt-in and off by default — a
+build that doesn't ask for it compiles it out.
+
+### Added
+- **`Baremetal\Spi\Bus` and `Baremetal\Spi\Device`.** A SPI master host as a PHP object, QSPI-aware:
+  the bus owns the shared SCLK/data pins (four data lines for QSPI), and each device is added with its
+  own chip-select, clock and mode. `Device` is raw transport — `transfer()` / `write()` / `read()`.
+  Handles are process-lifetime (a destructor never touches the wire), so a panel and its state survive
+  the web-server model's per-request teardown. Enable with `[extensions.spi]`.
+- **`Baremetal\Output\Display` capability and the ST77916 QSPI panel.** A bus-agnostic display
+  contract — `instanceof Output\Display` is the presence check whatever the wire — implemented by the
+  ST77916 driver (`Baremetal\Spi\Driver\St77916`). The panel auto-detects its init variant (a hardware
+  reset, then an ID-register read) and its size, offset and orientation are constructor options, so one
+  driver covers different ST77916 panels. This release ships a **minimal proof-of-concept** surface —
+  bring-up plus `fill(color)` and `rgb()` — verified on hardware; the framebuffer, text and region
+  flush follow later. Example: [`display-hello`](examples/display-hello/).
+
+### Changed
+- **Per-project C extensions can now pull extra ESP-IDF components.** The `firmware/exts/` mechanism
+  propagates each extension's `idf_requires.txt` through ESP-IDF's early requirement-expansion pass, so
+  a custom extension that needs a component beyond the common hardware set (e.g. `esp_lcd`) links
+  correctly instead of failing to find its headers.
+
+## [1.2.0] - I²C bus and drivers
+
+The first object-oriented hardware bus exposed to PHP — and it is useful in *every* execution model,
+not just the coming `event-driven` one. Opt-in and off by default.
+
+### Added
+- **`Baremetal\I2c\Bus` and `Baremetal\I2c\Device`.** An I²C master bus as a PHP object:
+  `new Bus(sda: …, scl: …)` is an idempotent handle (same pins return the same underlying bus), with
+  per-bus locking, `scan()` (sweeps `0x08`–`0x77` and reports which addresses answered, annotated with
+  the driver mounted there), and raw device transport — `probe()` / `read()` / `write()` /
+  `readReg()` / `writeReg()`. Handles are process-lifetime and destructors never touch the hardware, so
+  the same code is correct in `init-loop` and in the per-request `web-server` model. Enable with
+  `[extensions.i2c]`. Example: [`i2c-scan`](examples/i2c-scan/).
+- **The device-driver framework.** Drivers are real PHP classes under `Baremetal\I2c\Driver\*`,
+  registered at startup, chosen per project in the manifest (`[extensions.i2c] drivers = [...]`) and
+  collected into a generated table that `check-manifest` verifies. A driver's C descriptor carries its
+  init, its PHP methods and an optional capability; capability interfaces (`Baremetal\Sensor\Imu`,
+  `Baremetal\Input\Touch`) let application code name the contract rather than the chip
+  (`instanceof Sensor\Imu`).
+- **QMI8658 IMU driver.** The reference driver (`Baremetal\I2c\Driver\Qmi8658`, implements
+  `Sensor\Imu`): `accel()` / `gyro()` / `temp()`. Verified on ESP32-S3 hardware.
+
 ## [1.1.0] - Event bus core
 
 Groundwork for the upcoming `event-driven` execution mode: the C core of the event bus. It is not

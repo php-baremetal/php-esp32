@@ -98,6 +98,11 @@ for e in exts:
     for dep in e.get("requires", []):
         if dep not in {x["key"] for x in exts}:
             errors.append(f"extension '{e['key']}' requires unknown extension '{dep}'")
+    # every driver an extension declares must have a source directory + descriptor source
+    for drv in e.get("drivers", []):
+        p = os.path.join("components", f"php_ext_{e['key']}", "drivers", drv, f"{drv}.c")
+        if not os.path.exists(os.path.join(ROOT, p)):
+            errors.append(f"extension '{e['key']}' lists driver '{drv}' but {p} is missing")
 
 # 4) board descriptors: the storage/project types a board claims to support must be
 #    keys this manifest declares; the board's family must be its parent directory.

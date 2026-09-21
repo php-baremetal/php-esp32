@@ -14,6 +14,13 @@ set(_ext_incs "")
 set(_ext_names "")
 set(_ext_extra_reqs "")
 
+# -DPHP_PROJECT_EXTS_DIR isn't visible in ESP-IDF's early requirement-expansion pass, where REQUIRES
+# (including each ext's idf_requires.txt) is captured; recover it from the environment the top-level
+# CMakeLists exports, so an ext that needs extra IDF components links in that phase too.
+if((NOT DEFINED PHP_PROJECT_EXTS_DIR OR PHP_PROJECT_EXTS_DIR STREQUAL "") AND NOT "$ENV{PHP_PROJECT_EXTS_DIR}" STREQUAL "")
+    set(PHP_PROJECT_EXTS_DIR "$ENV{PHP_PROJECT_EXTS_DIR}")
+endif()
+
 if(DEFINED PHP_PROJECT_EXTS_DIR AND NOT PHP_PROJECT_EXTS_DIR STREQUAL "")
     if(NOT IS_ABSOLUTE "${PHP_PROJECT_EXTS_DIR}")
         set(PHP_PROJECT_EXTS_DIR "${CMAKE_SOURCE_DIR}/${PHP_PROJECT_EXTS_DIR}")
