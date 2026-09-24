@@ -1,0 +1,29 @@
+name = "http-events"
+storage_type = "embedded"
+type = "event-driven"
+
+[board]
+target = "esp32-s3-pico"    # any WiFi-capable board works
+port   = ""
+
+[esp-idf]
+path    = ""
+version = ""
+
+[php-esp32]
+path    = ""
+version = ""
+
+[storage]
+microsd = false
+
+[extensions.wifi]
+enabled = true
+
+[extensions.web]
+enabled = true
+
+[php]
+src     = "project-src"
+entry   = "index.php"
+version = ""

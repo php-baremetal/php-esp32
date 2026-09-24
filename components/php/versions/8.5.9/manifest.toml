@@ -83,8 +83,9 @@ description = "An HTTP server (esp_http_server) runs in front and PHP is invoked
 
 [[project_type]]
 key = "event-driven"
-available = false
-description = "(reserved) execution driven by events."
+available = true
+flag = "PHP_PROJECT_EVENT_DRIVEN=ON"
+description = "PHP registers listeners and sources (every(), watch_gpio()) at top level; the reactor then blocks on the event queue and delivers each event to its listeners -- no busy-wait. Needs a board that lists event-driven."
 
 # --- Core extensions: always compiled in, no flag ----------------------------
 
@@ -282,3 +283,10 @@ required_for = []
 flag = "PHP_EXT_SPI=ON"
 flash_cost = "~20 KB"
 drivers = ["st77916"]
+
+[[extension]]
+key = "web"
+description = "HTTP server from PHP in the event-driven model: Baremetal\\Http\\Request/\\Response + serve_http(). Requests arrive as Request events; the handler returns a Response. Needs a board with a network."
+required_for = []
+flag = "PHP_EXT_WEB=ON"
+flash_cost = "~40 KB"

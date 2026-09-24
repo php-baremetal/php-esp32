@@ -4,6 +4,7 @@
   - [Overview](./overview.md)
   - [Getting started](./getting-started/quick-start.md)
   - [Architecture](./getting-started/architecture.md)
+  - [Execution models (init-loop / web-server / event-driven)](./getting-started/execution-models.md)
 - Extensions
   - [Built-in extension API (GPIO, WiFi, RGB, memory, store)](./extensions/builtin-api.md)
   - [Extension porting status](./extensions/porting-status.md)
@@ -20,6 +21,9 @@
   - [Drive an SSD1306 OLED](./recipes/ssd1306-oled.md)
   - [Read and write the microSD](./recipes/microsd-files.md)
   - [Serve a web page](./recipes/web-page.md)
+  - [Event-driven basics](./recipes/event-driven.md)
+  - [HTTP & WebSocket (event-driven)](./recipes/http-and-websocket.md)
+  - [Read the QMI8658 IMU](./recipes/qmi8658-imu.md)
   - [Query SQLite with PDO](./recipes/sqlite-pdo.md)
   - [Make an HTTPS request](./recipes/https-request.md)
   - [Persist and share state](./recipes/persist-state.md)

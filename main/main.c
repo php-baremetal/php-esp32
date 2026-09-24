@@ -17,7 +17,7 @@
 char s_board_ip[16] = "";
 
 /* The resolved entry script and its source mount, published by boot.c once known so the selected
- * model runner (which takes no args, §8.2) can read them. NULL until then. */
+ * model runner (which takes no args) can read them. NULL until then. */
 const char *g_entry_script = NULL;
 const char *g_src_dir       = NULL;
 

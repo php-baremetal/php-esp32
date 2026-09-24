@@ -31,3 +31,8 @@ CONFIG_ESP_TASK_WDT_TIMEOUT_S=60
 # crypto, and it's what makes the TLS client (ext/openssl PHP_EXT_OPENSSL_TLS) actually connect.
 CONFIG_MBEDTLS_HARDWARE_AES=n
 CONFIG_MBEDTLS_HARDWARE_GCM=n
+
+# WebSocket support in esp_http_server (httpd_ws_recv_frame / httpd_ws_send_frame_async). Needed by the
+# `web` extension's ws source (serve_ws + Baremetal\Http\Message). Off by default in ESP-IDF; enabling it
+# only adds code to builds that actually link esp_http_server.
+CONFIG_HTTPD_WS_SUPPORT=y

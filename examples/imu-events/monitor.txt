@@ -1,0 +1,16 @@
+PHP 8.4.25 on ESP32-S3
+--- /app/index.php (event-driven) ---
+imu-events: polling on core 1, reacting to SamplesReady on core 0
+I (1204) php-esp32: entering event loop
+samples-ready #1  accel = [0.03 0.05 1.02] g
+samples-ready #2  accel = [0.03 0.05 1.02] g
+samples-ready #3  accel = [0.03 0.05 1.02] g
+samples-ready #4  accel = [0.03 0.05 1.02] g
+samples-ready #5  accel = [0.03 0.05 1.02] g
+samples-ready #6  accel = [0.03 0.05 1.02] g
+samples-ready #7  accel = [0.03 0.05 1.02] g
+samples-ready #8  accel = [0.03 0.05 1.02] g
+samples-ready #9  accel = [0.03 0.05 1.02] g
+samples-ready #10  accel = [0.03 0.05 1.02] g
+samples-ready #11  accel = [0.03 0.05 1.02] g
+samples-ready #12  accel = [0.03 0.05 1.02] g

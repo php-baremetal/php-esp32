@@ -1,0 +1,51 @@
+I (6112) esp_netif_handlers: eth ip: 10.42.0.224, mask: 255.255.255.0, gw: 10.42.0.1
+I (6112) php-esp32: network up -- http://10.42.0.224/
+PHP 8.4.25 on ESP32-P4
+--- /app/index.php (event-driven) ---
+I (6202) php-esp32: serve_http: listening on :80 (requests -> Request events)
+full HTTP test ready on :80 -- see the 'network up' line above for the address
+I (6202) php-esp32: entering event loop
+
+# All methods exercised from the host (10.42.0.1) against the board (10.42.0.224).
+# The default route reflects the request as JSON.
+
+$ curl 'http://10.42.0.224/get?name=ada&n=42&tags[]=x&tags[]=y'
+{"ok":true,"method":"GET","path":"/get","query":{"name":"ada","n":"42","tags":["x","y"]},"body":null,"client_ip":"10.42.0.1",...}
+
+$ curl -X POST http://10.42.0.224/form -d 'a=1&b=two&nested[k]=v'          # x-www-form-urlencoded
+{"method":"POST","query":[],"body":{"a":"1","b":"two","nested":{"k":"v"}},...}
+
+$ curl -X POST http://10.42.0.224/json -H 'Content-Type: application/json' -d '{"x":[1,2,3],"who":"ada"}'
+{"method":"POST","body":{"x":[1,2,3],"who":"ada"},...}
+
+$ curl -X POST 'http://10.42.0.224/both?src=url&id=9' -d 'field=frombody'   # query AND body
+{"method":"POST","query":{"src":"url","id":"9"},"body":{"field":"frombody"},...}
+
+$ curl -X PUT    http://10.42.0.224/item/7 -d 'v=updated'                   -> 200 {"method":"PUT",...,"body":{"v":"updated"}}
+$ curl -X PATCH  http://10.42.0.224/item/7 -H 'Content-Type: application/json' -d '{"v":9}'  -> 200 {"method":"PATCH","body":{"v":9}}
+$ curl -X DELETE 'http://10.42.0.224/item?id=7'                             -> 200 {"method":"DELETE","query":{"id":"7"}}
+$ curl -X OPTIONS http://10.42.0.224/anything                              -> 200 {"method":"OPTIONS",...}
+$ curl -I http://10.42.0.224/                                              -> HTTP/1.1 200, Content-Type/Length headers (HEAD, no body)
+
+$ curl -i http://10.42.0.224/nope     -> 404 "Not Found"
+$ curl -i http://10.42.0.224/boom     -> 500 "Internal Server Error"  (handler threw; server keeps serving)
+
+# WebSocket at /ws (echoed back; a minimal client does the handshake + masked frames):
+handshake: HTTP/1.1 101 Switching Protocols
+sent 'hello world'                   -> recv "echo #1 from client 57: hello world"
+sent '{"cmd":"led","rgb":[255,0,0]}' -> recv {"echo":{"cmd":"led","rgb":[255,0,0]},"frame":2,"client":57}
+sent 'third frame'                   -> recv "echo #3 from client 57: third frame"
+# HTTP and WebSocket share one server + one reactor queue; /ws wins over the catch-all.
+
+# ws_broadcast(): a 1 Hz timer pushes a heartbeat to every connected client (unsolicited). Two clients
+# connected at once both receive the same frames:
+#   client A (listen only): {"beat":36} {"beat":37} {"beat":38}
+#   client B (listen only): {"beat":36} {"beat":37} {"beat":38}
+# ...while another client's echo (reply) keeps working on the same server.
+
+# The classic superglobals are populated per request too (not only the Request object):
+$ curl 'http://10.42.0.224/page?name=ada&tags[]=x&tags[]=y'
+{... "_GET":{"name":"ada","tags":["x","y"]}, "_POST":[], "_REQUEST":{...},
+     "_SERVER":{"REQUEST_METHOD":"GET","REQUEST_URI":"/page?name=ada...","REMOTE_ADDR":"10.42.0.1",...}}
+$ curl -X POST 'http://10.42.0.224/save?q=fromurl' -d 'a=1&b=two'
+{... "_GET":{"q":"fromurl"}, "_POST":{"a":"1","b":"two"}, "_REQUEST":{"q":"fromurl","a":"1","b":"two"}, ...}

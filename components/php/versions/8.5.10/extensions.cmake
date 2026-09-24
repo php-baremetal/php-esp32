@@ -402,10 +402,18 @@ if(PHP_EXT_I2C)
     target_compile_definitions(${COMPONENT_LIB} PRIVATE PHP_EXT_I2C_ENABLED)
 endif()
 
-# --- spi: Baremetal\Spi\Bus and \Device + the display/panel framework (§2.9) -----------------
+# --- spi: Baremetal\Spi\Bus and \Device + the display/panel framework -----------------
 # The extension lives in components/php_ext_spi/. Here we declare the flag and switch on its
 # registration in internal_functions.c.
 option(PHP_EXT_SPI "Build the spi extension (Baremetal\\Spi\\Bus and \\Device + Output\\Display)" OFF)
 if(PHP_EXT_SPI)
     target_compile_definitions(${COMPONENT_LIB} PRIVATE PHP_EXT_SPI_ENABLED)
+endif()
+
+# --- web: Baremetal\Http\Request/\Response + serve_http() (the `http` source) --------
+# The extension lives in components/php_ext_web/. Here we declare the flag and switch on its
+# registration in internal_functions.c.
+option(PHP_EXT_WEB "Build the web extension (Baremetal\\Http\\Request/\\Response + serve_http())" OFF)
+if(PHP_EXT_WEB)
+    target_compile_definitions(${COMPONENT_LIB} PRIVATE PHP_EXT_WEB_ENABLED)
 endif()

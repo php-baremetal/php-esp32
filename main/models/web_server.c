@@ -1,5 +1,5 @@
 /* web_server.c -- the web-server execution model: an esp_http_server in front of PHP, run fresh per
- * request (shared-nothing). Moved out of main.c in Phase 0.5; the former ws_* names are web_* now,
+ * request (shared-nothing). Moved out of main.c; the former ws_* names are web_* now,
  * so ws_* is free for the real WebSocket support coming later. Empty TU unless PHP_PROJECT_WEB_SERVER. */
 #ifdef PHP_PROJECT_WEB_SERVER
 

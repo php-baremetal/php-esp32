@@ -1,23 +1,28 @@
-I (652) boot: Loaded app from partition at offset 0x10000
-I (654) esp_psram: Found 2MB PSRAM device
-I (884) esp_psram: SPI SRAM memory test OK
-I (905) app_init: Project name:     php-esp32
-I (905) app_init: ESP-IDF:          v5.5.5
-I (906) efuse_init: Chip rev:         v0.2
-I (911) esp_psram: Adding pool of 2048K of PSRAM memory to heap allocator
-I (921) php-esp32: starting PHP runtime
-I (921) php-esp32: embedded source mounted at /app
-I (921) php-esp32: php_embed_init()...
-PHP 8.4.24 on ESP32-S3
---- web-server init: /app/init.php ---
-I (1171) phy_init: phy_version 712,87e8c20e,Apr 13 2026,18:51:10
-I (1231) wifi:mode : softAP (28:84:85:67:57:81)
-[init] access point 'php-rgb' up at 192.168.4.1
-[init] join it (password 'baremetal') then open http://192.168.4.1/
-I (1241) esp_netif_lwip: DHCP server started on interface WIFI_AP_DEF with IP: 192.168.4.1
-[init] LED ready (h=210 s=255 v=40)
---- web-server init done ---
-I (1251) php-esp32: web-server model: serving /app/index.php over HTTP on :80
+PHP 8.4.25 on ESP32-S3
+--- /app/init.php (event-driven) ---
+I (1214) wifi:mode : softAP (28:84:85:67:58:d1)
+I (1224) esp_netif_lwip: DHCP server started on interface WIFI_AP_DEF with IP: 192.168.4.1
+I (1234) php-esp32: serve_ws: WebSocket endpoint at /ws (frames -> Message events)
+I (1244) php-esp32: serve_http: listening on :80 (requests -> Request events)
+RGB control up: join 'php-rgb' (pw 'baremetal') and open http://192.168.4.1/
+I (1244) php-esp32: entering event loop
 
-# Now connect a phone/laptop to the "php-rgb" WiFi network and open http://192.168.4.1/ -- drag the
-# sliders and each move sends GET /set to the board, so the onboard RGB LED reacts instantly.
+# Verified from a host joined to the 'php-rgb' access point (got 192.168.4.3):
+$ curl http://192.168.4.1/            # index.php -> page.php, server-rendered with the current colour
+  ...<script>window.__S = {"h":210,"s":255,"v":40,"on":1}</script><script src="/app.js"></script>...
+
+$ curl -i http://192.168.4.1/app.js   # served by the same handler
+  200 application/javascript
+
+# WebSocket /ws: a frame is either a manual colour {h,s,v,on} or an effect command {effect:…}. Each
+# change is applied to the LED and broadcast to every client.
+  sent {"h":0,"s":255,"v":120,"on":1} -> recv {"h":0,"s":255,"v":120,"on":1,"effect":"none"}
+  sent {"v":300}                       -> recv {"h":0,"s":255,"v":255,"on":1,"effect":"none"}   (v clamped)
+
+# Board-side effect (tab "Effects"): a EffectTick timer animates the LED and broadcasts each frame.
+  sent {"effect":"disco"} -> a stream of {"h":<random>,...,"effect":"disco"} ~4/s   (keeps running with no browser)
+  pulse effect broadcasts a breathing v: ...,"v":50,... "v":54,... "v":57,... "v":60,...
+
+# JS-side effect (tab "JS FX"): the browser generates the colours and streams them as {h,s,v,on} frames
+# (effect stays "none" server-side). e.g. its disco: {"h":<random>,"s":255,"v":60,"on":1,"effect":"none"}.
+# The onboard RGB LED physically follows every change.

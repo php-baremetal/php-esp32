@@ -69,6 +69,7 @@ OPTIONAL_EXTS=(
     "s3_onboard_rgb|s3_onboard_rgb: drive the onboard WS2812 RGB LED (ESP32-S3 boards only)|"
     "i2c|i2c: Baremetal\\I2c bus + device (scan/probe/read/write/readReg/writeReg)|"
     "spi|spi: Baremetal\\Spi bus + device (QSPI-aware) + Output\\Display panels|"
+    "web|web: Baremetal\\Http Request/Response + serve_http/serve_ws/ws_broadcast (event-driven)|"
 )
 
 EXT_ARGS=()

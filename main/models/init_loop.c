@@ -1,5 +1,5 @@
 /* init_loop.c -- the init-loop (run-once) execution model: run the script once at top level, then,
- * if it defined loop(), drive setup()/loop() Arduino-style. Moved out of main.c in Phase 0.5. */
+ * if it defined loop(), drive setup()/loop() Arduino-style. Moved out of main.c. */
 #include <stdio.h>
 
 #include "esp_log.h"

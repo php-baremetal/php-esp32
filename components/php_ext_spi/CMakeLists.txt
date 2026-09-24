@@ -1,4 +1,4 @@
-# spi -- Baremetal\Spi\Bus and \Device plus the display/panel framework (§ twin of php_ext_i2c).
+# spi -- Baremetal\Spi\Bus and \Device plus the display/panel framework (twin of php_ext_i2c).
 #
 # The component always registers (a stable REQUIRES list keeps ESP-IDF's early-expansion pass happy),
 # but the sources compile to empty translation units unless PHP_SPI_BUILD is defined -- which happens

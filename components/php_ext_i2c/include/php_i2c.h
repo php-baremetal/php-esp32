@@ -38,6 +38,9 @@ void i2c_device_class_register(void);
 /* Register the capability interfaces (Baremetal\Sensor\Imu, Baremetal\Input\Touch). */
 void i2c_capabilities_register(void);
 
+/* Register the driver-emitted event classes (Baremetal\Sensor\Imu\SamplesReady, extends Event). */
+void i2c_events_register(void);
+
 /* Register the selected driver classes (Baremetal\I2c\Driver\*), each extending Device. */
 void i2c_driver_classes_register(void);
 

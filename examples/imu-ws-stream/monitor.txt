@@ -1,0 +1,28 @@
+PHP 8.4.25 on ESP32-S3
+--- /app/index.php (event-driven) ---
+I (1360) wifi:mode : softAP
+I (1380) esp_netif_lwip: DHCP server started on interface WIFI_AP_DEF with IP: 192.168.4.1
+I (1390) php-esp32: serve_ws: WebSocket endpoint at /ws (frames -> Message events)
+I (1400) php-esp32: serve_http: listening on :80 (requests -> Request events)
+imu-ws-stream: join 'php-imu' (pw 'baremetal') and open http://192.168.4.1/
+I (1400) php-esp32: entering event loop
+
+# Verified from a host joined to the 'php-imu' access point (got 192.168.4.3):
+$ curl http://192.168.4.1/          # the page: a <canvas id="plot"> + <script src="/app.js">
+
+# WebSocket /ws stream (QMI8658 polled on core 1, broadcast per sample): accel + gyro + temperature.
+#   102 frames in 2 s  (~51 Hz, matching poll(hz: 50))
+#   {"ax":0.029,"ay":0.039,"az":-0.995,"gx":-3.1,"gy":2.2,"gz":-0.1,"t":38.2}
+#   at rest: az ~ -1 g (gravity), gyro ~ 0, chip temp ~ 38 C -> real data.
+#   (accel/gyro come from the core-1 ring; temperature is read ~5 Hz and folded into every frame.)
+#
+# A 20 Hz timer (every(50, StreamTick)) broadcasts the latest sample, decoupled from the 50 Hz core-1
+# poll. Steady under load -- WS stream + 15 concurrent GET /:
+#   idle rate:       20 Hz
+#   under-load rate: 20 Hz   (unchanged)
+#   GET / during stream: 15/15 -> 200
+# ws_broadcast() also sends non-blocking (select-guarded): a slow client is skipped, never stalls the
+# reactor. No "reactor queue full", no lag.
+#
+# The full 2.0.0 path in one demo:
+#   core 1: poll QMI8658 -> SamplesReady -> core 0: decode (ring) -> ws_broadcast -> browser plot.

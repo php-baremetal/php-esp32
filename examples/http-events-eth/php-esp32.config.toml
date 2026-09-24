@@ -1,0 +1,26 @@
+name = "http-events-eth"
+storage_type = "embedded"
+type = "event-driven"
+
+[board]
+target = "esp32-p4-eth"    # wired Ethernet: the link comes up at boot
+port   = ""
+
+[esp-idf]
+path    = ""
+version = ""
+
+[php-esp32]
+path    = ""
+version = ""
+
+[storage]
+microsd = false
+
+[extensions.web]
+enabled = true
+
+[php]
+src     = "project-src"
+entry   = "index.php"
+version = ""

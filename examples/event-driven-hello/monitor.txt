@@ -1,0 +1,14 @@
+--- /app/index.php (event-driven) ---
+event-driven: registered listeners + sources; the reactor now blocks on the queue
+I (1178) php-esp32: entering event loop
+I (1178) main_task: Returned from app_main()
+tick 1  (a Tick delivered by the reactor)
+tick 2  (a Tick delivered by the reactor)
+tick 3  (a Tick delivered by the reactor)
+tick 4  (a Tick delivered by the reactor)
+tick 5  (a Tick delivered by the reactor)
+tick 6  (a Tick delivered by the reactor)
+tick 7  (a Tick delivered by the reactor)
+tick 8  (a Tick delivered by the reactor)
+tick 9  (a Tick delivered by the reactor)
+tick 10  (a Tick delivered by the reactor)

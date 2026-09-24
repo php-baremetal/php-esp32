@@ -1,0 +1,23 @@
+name = "event-driven-hello"
+storage_type = "embedded"
+type = "event-driven"
+
+[board]
+target = "esp32-s3-pico"
+port   = ""
+
+[esp-idf]
+path    = ""
+version = ""
+
+[php-esp32]
+path    = ""
+version = ""
+
+[storage]
+microsd = false
+
+[php]
+src     = "project-src"
+entry   = "index.php"
+version = ""

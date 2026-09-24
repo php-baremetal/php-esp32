@@ -1,0 +1,33 @@
+name = "imu-ws-stream"
+storage_type = "embedded"
+type = "event-driven"
+
+[board]
+target = "esp32-s3-pico"    # a WiFi-capable ESP32-S3 with a QMI8658 IMU on I2C (SDA=11/SCL=10)
+port   = ""
+
+[esp-idf]
+path    = ""
+version = ""
+
+[php-esp32]
+path    = ""
+version = ""
+
+[storage]
+microsd = false
+
+[extensions.wifi]
+enabled = true
+
+[extensions.web]
+enabled = true
+
+[extensions.i2c]
+enabled = true
+drivers = ["qmi8658"]
+
+[php]
+src     = "project-src"
+entry   = "index.php"
+version = ""

@@ -43,6 +43,9 @@ struct i2c_dev {
     i2c_master_dev_handle_t  handle;
     const i2c_driver_desc_t *driver;   /* NULL for a raw device */
     void                    *state;    /* driver per-instance state (state_size), or NULL */
+    void                    *poller;   /* executor_poller_t* once poll() is called, or NULL */
+    void                    *emit_obj; /* the PHP device object (zend_object*) $e->device when emitting */
+    uint16_t                 emit_tag; /* event source tag emitted on each new sample */
 };
 
 /* Reset the tables. Runs once at MINIT; creates nothing on the wire. */

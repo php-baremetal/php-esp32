@@ -1,5 +1,72 @@
 # Changelog
 
+## [1.4.0] - Events and the event-driven model HTTP & Websocket
+
+The reactor arrives: a third execution model where PHP registers listeners and sleeps, and typed
+events wake it. Plus the core-1 executor that will feed it. Off by default; a build that doesn't ask
+for events pays nothing.
+
+### Added
+- **`Baremetal\Event` and `Baremetal\Events`.** A typed event facade: a subclass of `Event` is an
+  event, `Events::listen(Class::class, callable)` subscribes, `Events::now($e)` delivers inline and
+  `Events::dispatch($e)` defers (the queue drains breadth-first at the end of the outermost dispatch).
+  A listener returning `false` stops propagation. PHP-originated events are delivered PHP→PHP with no
+  C-side buffer — the object is the payload. Registered at startup, always available. Example:
+  [`events-hello`](examples/events-hello/).
+- **The `event-driven` execution model** (`type = "event-driven"`). No `loop()`: the script runs once
+  to register listeners and start sources, then a reactor blocks on a cross-core event queue and
+  delivers each event to its listeners, sleeping in between — the CPU idles, no busy-wait. Selected
+  per build alongside `init-loop` and `web-server`. Example:
+  [`event-driven-hello`](examples/event-driven-hello/).
+- **Timer and GPIO sources.** `every(ms, Class::class)` emits a typed event on a periodic timer;
+  `watch_gpio(pin, Class::class)` emits one on a debounced falling-edge interrupt. Sources are C
+  producers that hand a typed event to the reactor across cores.
+- **The core-1 executor and I²C polling.** A single background task on core 1 samples registered
+  pollers at a fixed rate into per-poller ring buffers; `$device->poll(hz, depth)` starts one and
+  `sample()` / `drain()` read the latest / accumulated samples. Keeps steady-rate bus reads off the
+  PHP core. Example: [`imu-poll-core1`](examples/imu-poll-core1/).
+- **The executor feeds the reactor.** `$device->poll(hz, depth, event: SamplesReady::class)` makes the
+  core-1 poller emit an event on each new sample; it crosses to the reactor on core 0 and is delivered
+  as a typed object whose `$e->device` is the emitting sensor — so a handler reacts to fresh data
+  (`$e->device->drain()`, no bus traffic) instead of looping. `Baremetal\Sensor\Imu\SamplesReady` is the
+  shared contract, the same handler for any polled IMU. Example: [`imu-events`](examples/imu-events/).
+- **HTTP as an event source** (`[extensions.web]`). In the `event-driven` model, `serve_http(port)`
+  starts an HTTP server whose requests arrive at the reactor as `Baremetal\Http\Request` events; a
+  listener returns a `Baremetal\Http\Response`, routed back to the same socket — so a REST API and
+  hardware reactions run on one resident engine, off the same queue.
+  ```php
+  Events::listen(Request::class, fn (Request $r): Response => match (true) {
+      $r->method === 'GET'  && $r->path === '/status' => Response::json($state),
+      $r->method === 'POST' && $r->path === '/echo'   => Response::json($r->json()),
+      default => Response::notFound(),
+  });
+  serve_http(80);
+  ```
+  Routing is userland — the firmware ships no router. Exactly one handler answers (the first to return a
+  `Response`); an unmatched path yields `404`, a handler that throws yields `500`, and the socket is
+  never left hanging. `Request` exposes `method`, `path`, `query`, `body`, `ip`, `headers`, plus
+  `->json()` and `->header()`; `Response` has `ok()`, `text()`, `html()`, `json()`, `notFound()`,
+  `noContent()`. The classic superglobals `$_GET`, `$_POST`, `$_REQUEST` and `$_SERVER` are also
+  populated per request (a JSON body populates `->json()`, not `$_POST`, as in standard PHP), so existing
+  request code works. PHP runs on its own core-0 stack, not httpd's; one request is in flight at a time.
+  Verified on hardware across `GET`/`POST`/`PUT`/`PATCH`/`DELETE`/`OPTIONS`/`HEAD`. Examples:
+  [`http-events`](examples/http-events/) (WiFi SoftAP) and [`http-events-eth`](examples/http-events-eth/)
+  (wired, a full HTTP test).
+- **WebSocket as an event source.** `serve_ws(path)` registers a WebSocket endpoint on the same server;
+  each inbound frame arrives at the reactor as a `Baremetal\Http\Message` event with `->text`,
+  `->client`, `->binary` and `->reply($data)` to answer that client. HTTP and WebSocket share one
+  server and one reactor queue, so a REST API and live push coexist. Requires WebSocket support in the
+  HTTP server (`CONFIG_HTTPD_WS_SUPPORT`, enabled in `sdkconfig.defaults`). Verified on hardware
+  (echo, JSON, per-client frames).
+- **`ws_broadcast($data)`.** Push a text frame to every connected WebSocket client — the streaming half
+  of the model (a sensor window, a state update: nobody asked for it). The live clients are the HTTP
+  server's own open sockets, so there is no separate table to keep in sync. Verified on hardware: a 1 Hz
+  timer broadcasting a heartbeat reaches multiple concurrent clients at once, alongside request/response
+  and echo on the same server.
+- **WebSocket backpressure.** An inbound frame is handed to the reactor with a blocking enqueue: when the
+  event queue is full the HTTP task pauses reading, so TCP flow control slows the sender instead of
+  dropping commands. Verified on hardware — blasting 200 frames (far past the queue depth) loses none.
+
 ## [1.3.0] - SPI/QSPI bus and the display
 
 The SPI counterpart of the I²C bus, and the first framebuffer panel. Opt-in and off by default — a

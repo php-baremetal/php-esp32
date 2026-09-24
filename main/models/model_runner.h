@@ -7,7 +7,7 @@
  * / g_src_dir (app.h), published by php_task before the hand-off.
  *
  * The build's project type selects exactly one runner (model_runner_current). Adding a model is a
- * new models/<name>.c plus one arm in model_runner.c -- never another #ifdef in the boot path. §8.2. */
+ * new models/<name>.c plus one arm in model_runner.c -- never another #ifdef in the boot path. */
 typedef struct {
     void (*run)(void);
 } model_runner_t;

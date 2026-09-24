@@ -1,6 +1,6 @@
 name = "wifi-ap-s3-rgb-manage"
 storage_type = "embedded"   # PHP source packed into flash
-type = "web-server"         # HTTP server in front, PHP per request
+type = "event-driven"       # resident reactor: HTTP + WebSocket as event sources (no per-request teardown)
 
 [board]
 target = "esp32-s3-zero"    # any WiFi-capable ESP32-S3 board with the onboard RGB LED
@@ -14,7 +14,7 @@ version = ""
 path    = ""
 version = ""
 
-# WiFi from PHP. init.php creates a SoftAP so the board serves its page over WiFi -- no router.
+# WiFi from PHP. index.php creates a SoftAP so the board serves its page over WiFi -- no router.
 [extensions.wifi]
 enabled = true
 
@@ -23,10 +23,10 @@ enabled = true
 enabled = true
 pin     = 48
 
-# Runs once, before the HTTP server starts (server_init): brings up the WiFi AP and the LED.
-[web-server]
-init = "init.php"
+# HTTP + WebSocket sources (Baremetal\Http\Request/Response/Message, serve_http/serve_ws, ws_broadcast).
+[extensions.web]
+enabled = true
 
 [php]
 src   = "project-src"      # PHP source folder (packed into the embedded image)
-entry = "index.php"    # per-request front controller
+entry = "init.php"     # runs once: brings up the AP, registers listeners, starts the server

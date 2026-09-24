@@ -1,0 +1,21 @@
+PHP 8.4.25 on ESP32-S3
+--- /app/index.php (event-driven) ---
+I (1366) wifi:mode : softAP (28:84:85:87:96:ed)
+I (1376) esp_netif_lwip: DHCP server started on interface WIFI_AP_DEF with IP: 192.168.4.1
+I (1386) php-esp32: serve_http: listening on :80 (requests -> Request events)
+AP 'php-esp32' up at 192.168.4.1 -- join it and open http://192.168.4.1/
+I (1386) php-esp32: entering event loop
+
+# Verified from a host joined to the 'php-esp32' access point (got 192.168.4.2):
+$ curl http://192.168.4.1/
+<!doctype html>...<h1>php-esp32</h1><p>event-driven HTTP source.</p><p>requests served: 9</p>...  [200 text/html]
+
+$ curl -X POST http://192.168.4.1/echo -H 'Content-Type: application/json' -d '{"hello":"world","n":42}'
+{"you_sent":{"hello":"world","n":42}}   [200 application/json]
+
+$ curl http://192.168.4.1/status
+{"requests":11,"ap_clients":1,"ssid":"php-esp32"}
+
+# The full request/response behaviour (all methods, query + JSON/form bodies,
+# $_GET/$_POST/$_REQUEST/$_SERVER, 404, 500) is the same php_ext_web code path exercised in
+# http-events-eth over wired Ethernet.

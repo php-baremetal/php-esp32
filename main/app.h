@@ -9,7 +9,7 @@ void register_esp32_server_vars(zval *srv);
 
 /* The resolved entry script and its source-mount directory, published by boot_php_runtime() (boot.c)
  * once known and before php_task hands off to the selected model runner. A runner takes no arguments
- * (§8.2 model_runner_t), so it reads these: the web-server resolves its init script under g_src_dir,
+ * (model_runner_t), so it reads these: the web-server resolves its init script under g_src_dir,
  * the init-loop only needs g_entry_script. Both are NULL until boot sets them (NULL entry => no
  * script found, and php_task runs the engine-check fallback instead of a model). */
 extern const char *g_entry_script;
