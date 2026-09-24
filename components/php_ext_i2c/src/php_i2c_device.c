@@ -4,9 +4,11 @@
  */
 #ifdef PHP_I2C_BUILD
 #include "php_i2c.h"
+#include "executor.h"
 #include "zend_exceptions.h"
 
 #define XFER_TIMEOUT_MS  1000
+#define POLL_DRAIN_CAP   256
 
 zend_class_entry *i2c_device_ce;
 static zend_object_handlers i2c_device_handlers;
@@ -241,6 +243,97 @@ PHP_METHOD(I2cDevice, writeReg)
     }
 }
 
+/* poll/sample/drain: available on any driver whose descriptor declares a poll block. The executor
+ * on core 1 samples the device at `hz` into a ring; sample()/drain() read the ring, no bus traffic. */
+ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_device_poll, 0, 1, IS_VOID, 0)
+    ZEND_ARG_TYPE_INFO(0, hz, IS_LONG, 0)
+    ZEND_ARG_TYPE_INFO_WITH_DEFAULT_VALUE(0, depth, IS_LONG, 0, "64")
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_device_sample, 0, 0, IS_STRING, 1)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_device_drain, 0, 0, IS_ARRAY, 0)
+ZEND_END_ARG_INFO()
+
+static i2c_dev_t *this_poller_dev(zval *zthis)
+{
+    i2c_dev_t *d = i2c_device_this(zthis);
+    if (!d) {
+        return NULL;
+    }
+    if (!d->driver || !d->driver->poll.sample || !d->driver->poll.sample_size) {
+        zend_throw_exception(zend_ce_exception, "this device has no poller (driver has no poll block)", 0);
+        return NULL;
+    }
+    return d;
+}
+
+PHP_METHOD(I2cDevice, poll)
+{
+    zend_long hz, depth = 64;
+    ZEND_PARSE_PARAMETERS_START(1, 2)
+        Z_PARAM_LONG(hz)
+        Z_PARAM_OPTIONAL
+        Z_PARAM_LONG(depth)
+    ZEND_PARSE_PARAMETERS_END();
+    if (hz <= 0) {
+        zend_argument_value_error(1, "must be greater than 0");
+        RETURN_THROWS();
+    }
+    i2c_dev_t *d = this_poller_dev(ZEND_THIS);
+    if (!d) {
+        RETURN_THROWS();
+    }
+    d->poller = executor_poll((esp_err_t (*)(void *, void *)) d->driver->poll.sample, d,
+                              d->driver->poll.sample_size, (uint32_t) hz, (size_t) depth);
+    if (!d->poller) {
+        zend_throw_exception(zend_ce_exception, "cannot start poller (too many, or out of memory)", 0);
+        RETURN_THROWS();
+    }
+}
+
+PHP_METHOD(I2cDevice, sample)
+{
+    ZEND_PARSE_PARAMETERS_NONE();
+    i2c_dev_t *d = this_poller_dev(ZEND_THIS);
+    if (!d) {
+        RETURN_THROWS();
+    }
+    if (!d->poller) {
+        zend_throw_exception(zend_ce_exception, "not polling; call poll() first", 0);
+        RETURN_THROWS();
+    }
+    size_t sz = d->driver->poll.sample_size;
+    zend_string *s = zend_string_alloc(sz, 0);
+    if (executor_poll_latest(d->poller, ZSTR_VAL(s))) {
+        ZSTR_VAL(s)[sz] = '\0';
+        RETURN_STR(s);
+    }
+    zend_string_release(s);
+    RETURN_NULL();
+}
+
+PHP_METHOD(I2cDevice, drain)
+{
+    ZEND_PARSE_PARAMETERS_NONE();
+    i2c_dev_t *d = this_poller_dev(ZEND_THIS);
+    if (!d) {
+        RETURN_THROWS();
+    }
+    array_init(return_value);
+    if (!d->poller) {
+        return;
+    }
+    size_t sz = d->driver->poll.sample_size;
+    uint8_t *buf = emalloc(POLL_DRAIN_CAP * sz);
+    size_t n = executor_poll_drain(d->poller, buf, POLL_DRAIN_CAP);
+    for (size_t i = 0; i < n; i++) {
+        add_next_index_stringl(return_value, (char *) (buf + i * sz), sz);
+    }
+    efree(buf);
+}
+
 static const zend_function_entry i2c_device_methods[] = {
     PHP_ME(I2cDevice, __construct, arginfo_device_ctor,     ZEND_ACC_PUBLIC)
     PHP_ME(I2cDevice, probe,       arginfo_device_probe,    ZEND_ACC_PUBLIC)
@@ -248,6 +341,9 @@ static const zend_function_entry i2c_device_methods[] = {
     PHP_ME(I2cDevice, write,       arginfo_device_write,    ZEND_ACC_PUBLIC)
     PHP_ME(I2cDevice, readReg,     arginfo_device_readreg,  ZEND_ACC_PUBLIC)
     PHP_ME(I2cDevice, writeReg,    arginfo_device_writereg, ZEND_ACC_PUBLIC)
+    PHP_ME(I2cDevice, poll,        arginfo_device_poll,     ZEND_ACC_PUBLIC)
+    PHP_ME(I2cDevice, sample,      arginfo_device_sample,   ZEND_ACC_PUBLIC)
+    PHP_ME(I2cDevice, drain,       arginfo_device_drain,    ZEND_ACC_PUBLIC)
     PHP_FE_END
 };
 

@@ -43,6 +43,7 @@ struct i2c_dev {
     i2c_master_dev_handle_t  handle;
     const i2c_driver_desc_t *driver;   /* NULL for a raw device */
     void                    *state;    /* driver per-instance state (state_size), or NULL */
+    void                    *poller;   /* executor_poller_t* once poll() is called, or NULL */
 };
 
 /* Reset the tables. Runs once at MINIT; creates nothing on the wire. */

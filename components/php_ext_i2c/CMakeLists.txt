@@ -44,7 +44,7 @@ idf_component_register(
     # php for the engine headers; esp_driver_i2c for the master-bus API; esp_driver_gpio for the
     # drivers that own a reset/interrupt line (e.g. the touch controller). The module_entry symbol is
     # pulled from a data table in the php component, out of --gc-sections' reach -> WHOLE_ARCHIVE.
-    REQUIRES php esp_driver_i2c esp_driver_gpio
+    REQUIRES php esp_driver_i2c esp_driver_gpio executor
     WHOLE_ARCHIVE
 )
 
