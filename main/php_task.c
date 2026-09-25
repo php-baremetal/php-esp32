@@ -18,6 +18,7 @@
 #include "zend_exceptions.h"
 
 #include "boot.h"          /* boot_php_runtime() / boot_php_shutdown(), the pinning defines */
+#include "event_bus_php.h" /* bm_events_freeze() -- close the listener table after setup() */
 #include "app.h"           /* g_entry_script -- did boot find a script? */
 #include "model_runner.h"  /* model_runner_current() -- the project type's execution model */
 #include "php_task.h"
@@ -99,6 +100,7 @@ void run_setup_loop(void)
         zend_call_known_function(fn_setup, NULL, NULL, &ret, 0, NULL, NULL);
         zval_ptr_dtor(&ret);
     }
+    bm_events_freeze();   /* the Events listener table is immutable once setup() has run */
 
     ESP_LOGI(TAG, "entering loop()");
     for (uint32_t tick = 0; ; tick++) {

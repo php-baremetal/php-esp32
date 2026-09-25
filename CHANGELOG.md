@@ -1,5 +1,31 @@
 # Changelog
 
+## [1.4.0] - Events and the event-driven model
+
+The reactor arrives: a third execution model where PHP registers listeners and sleeps, and typed
+events wake it. Plus the core-1 executor that will feed it. Off by default; a build that doesn't ask
+for events pays nothing.
+
+### Added
+- **`Baremetal\Event` and `Baremetal\Events`.** A typed event facade: a subclass of `Event` is an
+  event, `Events::listen(Class::class, callable)` subscribes, `Events::now($e)` delivers inline and
+  `Events::dispatch($e)` defers (the queue drains breadth-first at the end of the outermost dispatch).
+  A listener returning `false` stops propagation. PHP-originated events are delivered PHP→PHP with no
+  C-side buffer — the object is the payload. Registered at startup, always available. Example:
+  [`events-hello`](examples/events-hello/).
+- **The `event-driven` execution model** (`type = "event-driven"`). No `loop()`: the script runs once
+  to register listeners and start sources, then a reactor blocks on a cross-core event queue and
+  delivers each event to its listeners, sleeping in between — the CPU idles, no busy-wait. Selected
+  per build alongside `init-loop` and `web-server`. Example:
+  [`event-driven-hello`](examples/event-driven-hello/).
+- **Timer and GPIO sources.** `every(ms, Class::class)` emits a typed event on a periodic timer;
+  `watch_gpio(pin, Class::class)` emits one on a debounced falling-edge interrupt. Sources are C
+  producers that hand a typed event to the reactor across cores.
+- **The core-1 executor and I²C polling.** A single background task on core 1 samples registered
+  pollers at a fixed rate into per-poller ring buffers; `$device->poll(hz, depth)` starts one and
+  `sample()` / `drain()` read the latest / accumulated samples. Keeps steady-rate bus reads off the
+  PHP core. Example: [`imu-poll-core1`](examples/imu-poll-core1/).
+
 ## [1.3.0] - SPI/QSPI bus and the display
 
 The SPI counterpart of the I²C bus, and the first framebuffer panel. Opt-in and off by default — a

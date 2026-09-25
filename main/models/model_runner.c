@@ -4,9 +4,12 @@
 #include "model_runner.h"
 #include "init_loop.h"     /* run_init_loop */
 #include "web_server.h"    /* run_web_server */
+#include "event_driven.h"  /* run_event_driven */
 
 #if defined(PHP_PROJECT_WEB_SERVER)
 static const model_runner_t s_runner = { .run = run_web_server };
+#elif defined(PHP_PROJECT_EVENT_DRIVEN)
+static const model_runner_t s_runner = { .run = run_event_driven };
 #else
 static const model_runner_t s_runner = { .run = run_init_loop };
 #endif

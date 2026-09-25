@@ -22,6 +22,10 @@ if(_web_server)
     set(WEB_SERVER_REQUIRES esp_http_server esp_netif)
 endif()
 
+# The `event-driven` project type (-DPHP_PROJECT_EVENT_DRIVEN=ON): model_runner picks run_event_driven.
+# No extra components -- the reactor and sources live in the event_bus component, already required.
+option(PHP_PROJECT_EVENT_DRIVEN "Build the event-driven execution model (block on the event queue)" OFF)
+
 # s3_onboard_rgb (ESP32-S3 onboard WS2812 LED): pulled in only when the project enables it.
 # The component itself refuses to build on a non-esp32s3 target (see its CMakeLists and the php
 # component's extensions.cmake), so this stays empty on the P4.
@@ -70,11 +74,11 @@ else()
 endif()
 
 idf_component_register(
-    SRCS "boot.c" "php_task.c" "main.c" "models/model_runner.c" "models/init_loop.c" "models/web_server.c" "fs_pathnorm.c" "fs_glob.c" "${_env_src}" ${BOARD_SRCS}
+    SRCS "boot.c" "php_task.c" "main.c" "models/model_runner.c" "models/init_loop.c" "models/web_server.c" "models/event_driven.c" "fs_pathnorm.c" "fs_glob.c" "${_env_src}" ${BOARD_SRCS}
     INCLUDE_DIRS "." "models" ${BOARD_INCLUDE_DIRS}
     # esp_partition/fatfs/vfs: main.c mounts the optional read-only embedded source
     # partition itself (board-agnostic); the board adds its own storage drivers too.
-    REQUIRES php php_ext_gpio php_ext_store php_ext_mem php_ext_sys php_project_exts esp_partition esp_app_format fatfs vfs ${WEB_SERVER_REQUIRES} ${RGB_REQUIRES} ${WIFI_REQUIRES} ${I2C_REQUIRES} ${SPI_REQUIRES} ${BOARD_REQUIRES}
+    REQUIRES php php_ext_gpio php_ext_store php_ext_mem php_ext_sys php_project_exts event_bus esp_partition esp_app_format fatfs vfs ${WEB_SERVER_REQUIRES} ${RGB_REQUIRES} ${WIFI_REQUIRES} ${I2C_REQUIRES} ${SPI_REQUIRES} ${BOARD_REQUIRES}
 )
 
 # fs_pathnorm.c: --wrap the file syscalls so "." / ".." in paths are collapsed before the FATFS VFS
@@ -93,6 +97,9 @@ endforeach()
 
 if(_web_server)
     target_compile_definitions(${COMPONENT_LIB} PRIVATE PHP_PROJECT_WEB_SERVER=1)
+endif()
+if(PHP_PROJECT_EVENT_DRIVEN)
+    target_compile_definitions(${COMPONENT_LIB} PRIVATE PHP_PROJECT_EVENT_DRIVEN=1)
 endif()
 if(_microsd)
     target_compile_definitions(${COMPONENT_LIB} PRIVATE PHP_STORAGE_MICROSD=1)
