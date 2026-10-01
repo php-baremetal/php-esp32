@@ -16,6 +16,7 @@ static zend_object_handlers i2c_device_handlers;
 
 static zend_class_entry *i2c_cap_imu_ce;
 static zend_class_entry *i2c_cap_touch_ce;
+static zend_class_entry *i2c_cap_mag_ce;
 
 static zend_object *i2c_device_create(zend_class_entry *ce)
 {
@@ -391,6 +392,8 @@ void i2c_capabilities_register(void)
     i2c_cap_imu_ce = zend_register_internal_interface(&ce);
     INIT_NS_CLASS_ENTRY(ce, "Baremetal\\Input", "Touch", NULL);
     i2c_cap_touch_ce = zend_register_internal_interface(&ce);
+    INIT_NS_CLASS_ENTRY(ce, "Baremetal\\Sensor", "Magnetometer", NULL);
+    i2c_cap_mag_ce = zend_register_internal_interface(&ce);
 }
 
 void i2c_events_register(void)
@@ -425,6 +428,8 @@ void i2c_driver_classes_register(void)
                 iface = i2c_cap_imu_ce;
             } else if (i2c_cap_touch_ce && strcmp(desc->capability, "Baremetal\\Input\\Touch") == 0) {
                 iface = i2c_cap_touch_ce;
+            } else if (i2c_cap_mag_ce && strcmp(desc->capability, "Baremetal\\Sensor\\Magnetometer") == 0) {
+                iface = i2c_cap_mag_ce;
             }
             if (iface) {
                 zend_class_implements(dce, 1, iface);

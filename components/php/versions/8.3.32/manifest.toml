@@ -269,7 +269,7 @@ description = "I2C from PHP: Baremetal\\I2c\\Bus and \\Device (scan/probe/read/w
 required_for = []
 flag = "PHP_EXT_I2C=ON"
 flash_cost = "~15 KB"
-drivers = ["qmi8658"]
+drivers = ["qmi8658", "mmc5603"]
 
 [[extension]]
 key = "spi"
