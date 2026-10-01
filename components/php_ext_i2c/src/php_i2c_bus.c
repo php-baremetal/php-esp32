@@ -1,13 +1,11 @@
 /*
- * Baremetal\I2c\Bus -- an I2C master bus. The constructor is an idempotent lookup keyed by
- * (port, sda, scl): same pins, same underlying bus. device() adds a child device; scan() sweeps the
- * bus under its lock. SYNC ownership only for now; CORE1 is reserved.
+ * Baremetal\I2c\Bus -- an I2C master bus. Idempotent ctor keyed by (port, sda, scl). device() adds a
+ * child; scan() sweeps. Ownership SYNC (per-bus lock) or CORE1 (executor owns the wire); the transport
+ * routes by ownership.
  */
 #ifdef PHP_I2C_BUILD
 #include "php_i2c.h"
 #include "zend_exceptions.h"
-
-#define PROBE_TIMEOUT_MS  50
 
 zend_class_entry *i2c_bus_ce;
 static zend_object_handlers i2c_bus_handlers;
@@ -53,11 +51,7 @@ PHP_METHOD(I2cBus, __construct)
         Z_PARAM_LONG(owner)
     ZEND_PARSE_PARAMETERS_END();
 
-    if (owner == I2C_OWNER_CORE1) {
-        zend_throw_exception(zend_ce_exception, "I2cBus::CORE1 ownership is not available yet", 0);
-        RETURN_THROWS();
-    }
-    if (owner != I2C_OWNER_SYNC) {
+    if (owner != I2C_OWNER_SYNC && owner != I2C_OWNER_CORE1) {
         zend_argument_value_error(4, "must be I2cBus::SYNC or I2cBus::CORE1");
         RETURN_THROWS();
     }
@@ -107,10 +101,12 @@ PHP_METHOD(I2cBus, scan)
         RETURN_THROWS();
     }
 
+    uint8_t found[16];
+    i2c_bus_scan_sweep(o->bus, found);
+
     array_init(return_value);
-    i2c_bus_lock(o->bus);
     for (uint16_t a = I2C_SCAN_FIRST; a <= I2C_SCAN_LAST; a++) {
-        if (i2c_master_probe(o->bus->handle, a, PROBE_TIMEOUT_MS) != ESP_OK) {
+        if (!(found[a >> 3] & (1u << (a & 7)))) {
             continue;
         }
         zval info;
@@ -123,7 +119,6 @@ PHP_METHOD(I2cBus, scan)
         }
         add_index_zval(return_value, a, &info);
     }
-    i2c_bus_unlock(o->bus);
 }
 
 static const zend_function_entry i2c_bus_methods[] = {

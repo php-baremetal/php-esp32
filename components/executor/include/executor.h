@@ -1,8 +1,6 @@
 /*
- * The single core-1 executor task. Today it runs device pollers: it samples a device at a fixed rate
- * on core 1 and drops each raw sample into a ring buffer, so PHP on core 0 reads snapshots without
- * touching the bus and without its sample rate depending on how long a handler takes. The task is
- * created lazily on the first poller, so a firmware that never polls pays nothing.
+ * The single core-1 executor task: device pollers (sample into a ring) and handed-over work (a CORE1 bus
+ * runs its transactions here as sole owner). Created lazily; a firmware that uses neither pays nothing.
  */
 #pragma once
 
@@ -31,3 +29,10 @@ bool executor_poll_latest(executor_poller_t *p, void *out);
 /* Copy up to max_samples unread samples into out (contiguous, sample_size bytes each), oldest first,
  * and mark them read. Returns how many were copied. */
 size_t executor_poll_drain(executor_poller_t *p, void *out, size_t max_samples);
+
+/* Run fn(arg) on the executor task and block until done, returning its result; run inline if already on
+ * the task. Starts the executor lazily. A full queue for enqueue_timeout_ms returns ESP_ERR_TIMEOUT. */
+esp_err_t executor_run_sync(esp_err_t (*fn)(void *arg), void *arg, uint32_t enqueue_timeout_ms);
+
+/* True when the caller runs on the executor task. */
+bool executor_on_task(void);

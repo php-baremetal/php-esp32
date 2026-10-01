@@ -66,9 +66,12 @@ i2c_dev_t *i2c_dev_find(i2c_bus_t *bus, uint16_t addr);
 void i2c_bus_lock(i2c_bus_t *bus);
 void i2c_bus_unlock(i2c_bus_t *bus);
 
-/* Driver-facing transport. Each takes the bus lock for the whole transaction. */
+/* Driver-facing transport. SYNC runs under the bus lock; CORE1 hands off to the executor (blocking). */
 esp_err_t i2c_dev_read(i2c_dev_t *d, uint8_t *buf, size_t n);
 esp_err_t i2c_dev_write(i2c_dev_t *d, const uint8_t *buf, size_t n);
 esp_err_t i2c_dev_read_reg(i2c_dev_t *d, uint8_t reg, uint8_t *buf, size_t n);
 esp_err_t i2c_dev_write_reg(i2c_dev_t *d, uint8_t reg, const uint8_t *buf, size_t n);
 esp_err_t i2c_dev_write_reg1(i2c_dev_t *d, uint8_t reg, uint8_t val);
+
+/* Probe I2C_SCAN_FIRST..LAST, setting bit a of bitmap (16 bytes) per answering address. */
+void i2c_bus_scan_sweep(i2c_bus_t *bus, uint8_t bitmap[16]);

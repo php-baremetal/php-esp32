@@ -1,5 +1,6 @@
 #ifdef PHP_I2C_BUILD
 #include "i2c_registry.h"
+#include "executor.h"
 
 #include <string.h>
 #include <stdlib.h>
@@ -185,59 +186,141 @@ void i2c_bus_unlock(i2c_bus_t *bus)
     xSemaphoreGive(bus->lock);
 }
 
-#define DEV_TIMEOUT_MS  1000
+#define DEV_TIMEOUT_MS     1000
+#define PROBE_TIMEOUT_MS   50
+#define ENQUEUE_TIMEOUT_MS 1000
+
+/* One transaction, captured so it runs inline or is handed to the executor. */
+typedef enum { I2C_OP_READ, I2C_OP_WRITE, I2C_OP_RREG, I2C_OP_WREG, I2C_OP_WREG1 } i2c_op_kind_t;
+
+typedef struct {
+    i2c_dev_t     *d;
+    i2c_op_kind_t  op;
+    uint8_t       *rbuf;
+    const uint8_t *wbuf;
+    size_t         n;
+    uint8_t        reg;
+    uint8_t        val;
+} i2c_txn_t;
+
+/* The wire op. No lock: dispatch holds it for SYNC, the executor is sole owner for CORE1. */
+static esp_err_t i2c_txn_run(void *arg)
+{
+    i2c_txn_t *t = (i2c_txn_t *) arg;
+    i2c_master_dev_handle_t h = t->d->handle;
+    switch (t->op) {
+    case I2C_OP_READ:
+        return i2c_master_receive(h, t->rbuf, t->n, DEV_TIMEOUT_MS);
+    case I2C_OP_WRITE:
+        return i2c_master_transmit(h, t->wbuf, t->n, DEV_TIMEOUT_MS);
+    case I2C_OP_RREG:
+        return i2c_master_transmit_receive(h, &t->reg, 1, t->rbuf, t->n, DEV_TIMEOUT_MS);
+    case I2C_OP_WREG: {
+        uint8_t stack[1 + 32];
+        uint8_t *p = stack;
+        if (1 + t->n > sizeof(stack)) {
+            p = malloc(1 + t->n);
+            if (!p) {
+                return ESP_ERR_NO_MEM;
+            }
+        }
+        p[0] = t->reg;
+        memcpy(p + 1, t->wbuf, t->n);
+        esp_err_t e = i2c_master_transmit(h, p, 1 + t->n, DEV_TIMEOUT_MS);
+        if (p != stack) {
+            free(p);
+        }
+        return e;
+    }
+    case I2C_OP_WREG1: {
+        uint8_t b[2] = { t->reg, t->val };
+        return i2c_master_transmit(h, b, 2, DEV_TIMEOUT_MS);
+    }
+    }
+    return ESP_ERR_INVALID_ARG;
+}
+
+/* Route by ownership: CORE1 to the executor (inline if already on it), SYNC under the bus lock. */
+static esp_err_t i2c_txn_dispatch(i2c_txn_t *t)
+{
+    i2c_bus_t *bus = t->d->bus;
+    if (bus->owner == I2C_OWNER_CORE1) {
+        if (executor_on_task()) {
+            return i2c_txn_run(t);
+        }
+        return executor_run_sync(i2c_txn_run, t, ENQUEUE_TIMEOUT_MS);
+    }
+    i2c_bus_lock(bus);
+    esp_err_t e = i2c_txn_run(t);
+    i2c_bus_unlock(bus);
+    return e;
+}
 
 esp_err_t i2c_dev_read(i2c_dev_t *d, uint8_t *buf, size_t n)
 {
-    i2c_bus_lock(d->bus);
-    esp_err_t e = i2c_master_receive(d->handle, buf, n, DEV_TIMEOUT_MS);
-    i2c_bus_unlock(d->bus);
-    return e;
+    i2c_txn_t t = { .d = d, .op = I2C_OP_READ, .rbuf = buf, .n = n };
+    return i2c_txn_dispatch(&t);
 }
 
 esp_err_t i2c_dev_write(i2c_dev_t *d, const uint8_t *buf, size_t n)
 {
-    i2c_bus_lock(d->bus);
-    esp_err_t e = i2c_master_transmit(d->handle, buf, n, DEV_TIMEOUT_MS);
-    i2c_bus_unlock(d->bus);
-    return e;
+    i2c_txn_t t = { .d = d, .op = I2C_OP_WRITE, .wbuf = buf, .n = n };
+    return i2c_txn_dispatch(&t);
 }
 
 esp_err_t i2c_dev_read_reg(i2c_dev_t *d, uint8_t reg, uint8_t *buf, size_t n)
 {
-    i2c_bus_lock(d->bus);
-    esp_err_t e = i2c_master_transmit_receive(d->handle, &reg, 1, buf, n, DEV_TIMEOUT_MS);
-    i2c_bus_unlock(d->bus);
-    return e;
+    i2c_txn_t t = { .d = d, .op = I2C_OP_RREG, .rbuf = buf, .n = n, .reg = reg };
+    return i2c_txn_dispatch(&t);
 }
 
 esp_err_t i2c_dev_write_reg(i2c_dev_t *d, uint8_t reg, const uint8_t *buf, size_t n)
 {
-    uint8_t stack[1 + 32];
-    uint8_t *p = stack;
-    if (1 + n > sizeof(stack)) {
-        p = malloc(1 + n);
-        if (!p) {
-            return ESP_ERR_NO_MEM;
-        }
-    }
-    p[0] = reg;
-    memcpy(p + 1, buf, n);
-    i2c_bus_lock(d->bus);
-    esp_err_t e = i2c_master_transmit(d->handle, p, 1 + n, DEV_TIMEOUT_MS);
-    i2c_bus_unlock(d->bus);
-    if (p != stack) {
-        free(p);
-    }
-    return e;
+    i2c_txn_t t = { .d = d, .op = I2C_OP_WREG, .wbuf = buf, .n = n, .reg = reg };
+    return i2c_txn_dispatch(&t);
 }
 
 esp_err_t i2c_dev_write_reg1(i2c_dev_t *d, uint8_t reg, uint8_t val)
 {
-    uint8_t b[2] = { reg, val };
-    i2c_bus_lock(d->bus);
-    esp_err_t e = i2c_master_transmit(d->handle, b, 2, DEV_TIMEOUT_MS);
-    i2c_bus_unlock(d->bus);
-    return e;
+    i2c_txn_t t = { .d = d, .op = I2C_OP_WREG1, .reg = reg, .val = val };
+    return i2c_txn_dispatch(&t);
+}
+
+/* The probe sweep behind scan(): sets bit a of a 16-byte bitmap per answering address. The caller builds
+ * the result array on core 0. */
+typedef struct {
+    i2c_bus_t *bus;
+    uint8_t    bits[16];
+} i2c_scan_ctx_t;
+
+static esp_err_t i2c_scan_run(void *arg)
+{
+    i2c_scan_ctx_t *c = (i2c_scan_ctx_t *) arg;
+    for (uint16_t a = I2C_SCAN_FIRST; a <= I2C_SCAN_LAST; a++) {
+        if (i2c_master_probe(c->bus->handle, a, PROBE_TIMEOUT_MS) == ESP_OK) {
+            c->bits[a >> 3] |= (uint8_t) (1u << (a & 7));
+        }
+    }
+    return ESP_OK;
+}
+
+void i2c_bus_scan_sweep(i2c_bus_t *bus, uint8_t bitmap[16])
+{
+    i2c_scan_ctx_t ctx;
+    ctx.bus = bus;
+    memset(ctx.bits, 0, sizeof(ctx.bits));
+
+    if (bus->owner == I2C_OWNER_CORE1) {
+        if (executor_on_task()) {
+            i2c_scan_run(&ctx);
+        } else {
+            executor_run_sync(i2c_scan_run, &ctx, ENQUEUE_TIMEOUT_MS);
+        }
+    } else {
+        i2c_bus_lock(bus);
+        i2c_scan_run(&ctx);
+        i2c_bus_unlock(bus);
+    }
+    memcpy(bitmap, ctx.bits, 16);
 }
 #endif /* PHP_I2C_BUILD */

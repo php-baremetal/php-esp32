@@ -1,0 +1,34 @@
+ESP32-S3-Touch-LCD-1.85B (QMI8658 on SDA=11/SCL=10), PHP 8.4.25, I2cBus owner=CORE1.
+scan() sweeps on the core-1 executor; accel() reads route through the core-1 intent queue.
+
+I (1026) main_task: Calling app_main()
+I (1026) php-esp32: starting PHP runtime
+I (1026) php-esp32: php_task pinned to core 0
+I (1026) php-esp32: embedded source mounted at /app
+I (1036) php-esp32: php_embed_init()...
+PHP 8.4.25 on ESP32-S3
+--- /app/index.php ---
+I (1196) main_task: Returned from app_main()
+scan (CORE1):
+  0x15  (no driver)
+  0x18  (no driver)
+  0x40  (no driver)
+  0x51  (no driver)
+  0x55  (no driver)
+  0x6B  qmi8658
+I (1216) php-esp32: entering loop()
+accel (CORE1) = [0.00 0.00 0.00] g
+I (1736) php-esp32: tick 0 -- heap free: 7250751 bytes
+accel (CORE1) = [0.33 0.18 -0.96] g
+accel (CORE1) = [0.24 0.36 -0.81] g
+accel (CORE1) = [0.11 0.16 -0.93] g
+accel (CORE1) = [0.04 0.05 -0.99] g
+accel (CORE1) = [0.02 0.04 -0.99] g
+accel (CORE1) = [0.02 0.04 -1.00] g
+accel (CORE1) = [0.02 0.04 -1.00] g
+accel (CORE1) = [0.02 0.04 -1.00] g
+accel (CORE1) = [0.02 0.04 -0.99] g
+accel (CORE1) = [0.02 0.04 -0.99] g
+accel (CORE1) = [0.02 0.04 -0.99] g
+accel (CORE1) = [0.02 0.04 -0.98] g
+accel (CORE1) = [0.02 0.04 -0.99] g
