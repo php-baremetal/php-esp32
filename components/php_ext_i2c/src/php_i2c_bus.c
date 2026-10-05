@@ -6,6 +6,7 @@
 #ifdef PHP_I2C_BUILD
 #include "php_i2c.h"
 #include "zend_exceptions.h"
+#include "event_bus_php.h"   /* bm_events_power_save -- reject CORE1 polling under power_save */
 
 zend_class_entry *i2c_bus_ce;
 static zend_object_handlers i2c_bus_handlers;
@@ -53,6 +54,12 @@ PHP_METHOD(I2cBus, __construct)
 
     if (owner != I2C_OWNER_SYNC && owner != I2C_OWNER_CORE1) {
         zend_argument_value_error(4, "must be I2cBus::SYNC or I2cBus::CORE1");
+        RETURN_THROWS();
+    }
+
+    if (owner == I2C_OWNER_CORE1 && bm_events_power_save()) {
+        zend_throw_exception(zend_ce_exception,
+            "I2cBus::CORE1 polling keeps the CPU busy and defeats power_save; use I2cBus::SYNC", 0);
         RETURN_THROWS();
     }
 

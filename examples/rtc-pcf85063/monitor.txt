@@ -1,0 +1,12 @@
+ESP32-S3-Touch-LCD-1.85B, PCF85063 RTC at 0x51 on the onboard I2C (SDA=11/SCL=10), PHP 8.4.25.
+
+--- /app/index.php ---
+RTC was unset -> seeded 2026-10-04 12:00:00
+I (1194) php-esp32: entering loop()
+2026-10-04 12:00:00  valid=yes
+2026-10-04 12:00:01  valid=yes
+2026-10-04 12:00:02  valid=yes
+2026-10-04 12:00:03  valid=yes
+2026-10-04 12:00:04  valid=yes
+2026-10-04 12:00:05  valid=yes
+# ticks one per second; valid=yes (clock integrity ok); time persists across a reset.

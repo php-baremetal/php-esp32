@@ -14,6 +14,7 @@
 #include "freertos/queue.h"
 #include "esp_timer.h"
 #include "driver/gpio.h"
+#include "esp_pm.h"
 
 static zend_class_entry *bm_event_ce;
 static zend_class_entry *bm_events_ce;
@@ -226,6 +227,121 @@ static void bm_timer_cb(void *arg)
     bm_emit_tag((uint16_t) (uintptr_t) arg);
 }
 
+/* ---- Button input source: a debounced per-pin FSM emitting Pressed/Released/Held/Click/Repeat/Double.
+ * A shared sampler timer runs the FSM; button_sampling(false) stops it so the chip can light-sleep. ---- */
+
+#define BM_MAX_BUTTONS 4
+#define BM_BTN_TICK_MS 10
+
+enum { BTN_PRESSED, BTN_RELEASED, BTN_HELD, BTN_CLICK, BTN_REPEAT, BTN_DOUBLE, BTN_EVENTS };
+
+typedef struct {
+    bool    in_use;
+    int     pin;
+    bool    active_low;
+    int     tag[BTN_EVENTS];      /* -1 when that gesture is not wired to a class */
+    int     hold_ms, repeat_ms, double_ms, debounce_ms;
+    bool    pressed;              /* debounced level */
+    int     stable_ms;           /* how long raw has differed from `pressed` */
+    int64_t press_t, last_repeat, last_click;
+    bool    held_fired, click_pending;
+} bm_button_t;
+
+static bm_button_t        bm_buttons[BM_MAX_BUTTONS];
+static int                bm_button_n;
+static esp_timer_handle_t bm_btn_timer;
+static bool               bm_btn_running;
+
+static void bm_btn_emit(bm_button_t *b, int ev)
+{
+    if (b->tag[ev] >= 0) {
+        bm_emit_tag((uint16_t) b->tag[ev]);
+    }
+}
+
+static void bm_btn_tick(void *arg)
+{
+    (void) arg;
+    int64_t now = esp_timer_get_time();
+    for (int i = 0; i < bm_button_n; i++) {
+        bm_button_t *b = &bm_buttons[i];
+        if (!b->in_use) {
+            continue;
+        }
+        int lvl = gpio_get_level((gpio_num_t) b->pin);
+        bool raw = b->active_low ? (lvl == 0) : (lvl != 0);
+
+        if (raw == b->pressed) {
+            b->stable_ms = 0;                                 /* matches current state */
+        } else {
+            b->stable_ms += BM_BTN_TICK_MS;
+            if (b->stable_ms >= b->debounce_ms) {             /* stable long enough -> commit */
+                b->pressed = raw;
+                b->stable_ms = 0;
+                if (raw) {
+                    bm_btn_emit(b, BTN_PRESSED);
+                    b->press_t = now;
+                    b->held_fired = false;
+                    b->last_repeat = now;
+                } else {
+                    bm_btn_emit(b, BTN_RELEASED);
+                    if (!b->held_fired && (now - b->press_t) < (int64_t) b->hold_ms * 1000) {
+                        if (b->double_ms > 0) {
+                            if (b->click_pending && (now - b->last_click) < (int64_t) b->double_ms * 1000) {
+                                bm_btn_emit(b, BTN_DOUBLE);
+                                b->click_pending = false;
+                            } else {
+                                b->click_pending = true;
+                                b->last_click = now;
+                            }
+                        } else {
+                            bm_btn_emit(b, BTN_CLICK);
+                        }
+                    }
+                }
+            }
+        }
+
+        if (b->pressed) {
+            if (!b->held_fired && (now - b->press_t) >= (int64_t) b->hold_ms * 1000) {
+                bm_btn_emit(b, BTN_HELD);
+                b->held_fired = true;
+                b->last_repeat = now;
+            } else if (b->held_fired && b->repeat_ms > 0 &&
+                       (now - b->last_repeat) >= (int64_t) b->repeat_ms * 1000) {
+                bm_btn_emit(b, BTN_REPEAT);
+                b->last_repeat = now;
+            }
+        }
+        if (b->click_pending && (now - b->last_click) >= (int64_t) b->double_ms * 1000) {
+            bm_btn_emit(b, BTN_CLICK);                        /* no second click arrived -> single */
+            b->click_pending = false;
+        }
+    }
+}
+
+static void bm_btn_start(void)
+{
+    if (!bm_btn_timer) {
+        const esp_timer_create_args_t cfg = { .callback = bm_btn_tick, .name = "buttons" };
+        if (esp_timer_create(&cfg, &bm_btn_timer) != ESP_OK) {
+            return;
+        }
+    }
+    if (!bm_btn_running) {
+        esp_timer_start_periodic(bm_btn_timer, (uint64_t) BM_BTN_TICK_MS * 1000);
+        bm_btn_running = true;
+    }
+}
+
+static void bm_btn_stop(void)
+{
+    if (bm_btn_timer && bm_btn_running) {
+        esp_timer_stop(bm_btn_timer);
+        bm_btn_running = false;
+    }
+}
+
 bool bm_events_receive(bm_event_msg_t *out, uint32_t ms)
 {
     if (!bm_queue) {
@@ -422,6 +538,155 @@ PHP_FUNCTION(watch_gpio)
     gpio_isr_handler_add((gpio_num_t) pin, bm_gpio_isr, (void *) (uintptr_t) tag);
 }
 
+ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_watch_button, 0, 2, IS_VOID, 0)
+    ZEND_ARG_TYPE_INFO(0, pin, IS_LONG, 0)
+    ZEND_ARG_TYPE_INFO(0, on, IS_ARRAY, 0)
+    ZEND_ARG_TYPE_INFO_WITH_DEFAULT_VALUE(0, opts, IS_ARRAY, 0, "[]")
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_button_sampling, 0, 1, IS_VOID, 0)
+    ZEND_ARG_TYPE_INFO(0, on, _IS_BOOL, 0)
+ZEND_END_ARG_INFO()
+
+/* watch_button(int $pin, array $on, array $opts = []): void
+ *   $on   : gesture => event-class, keys among pressed/released/held/click/repeat/double
+ *   $opts : holdMs (800), repeatMs (0=off), doubleMs (0=off), debounceMs (30), activeLow (true) */
+PHP_FUNCTION(watch_button)
+{
+    zend_long pin;
+    zval *on, *opts = NULL;
+    ZEND_PARSE_PARAMETERS_START(2, 3)
+        Z_PARAM_LONG(pin)
+        Z_PARAM_ARRAY(on)
+        Z_PARAM_OPTIONAL
+        Z_PARAM_ARRAY(opts)
+    ZEND_PARSE_PARAMETERS_END();
+
+    if (bm_button_n >= BM_MAX_BUTTONS) {
+        zend_throw_exception(zend_ce_exception, "watch_button(): too many buttons", 0);
+        RETURN_THROWS();
+    }
+    bm_button_t *b = &bm_buttons[bm_button_n];
+    memset(b, 0, sizeof(*b));
+    b->pin = (int) pin;
+    b->active_low = true;
+    b->hold_ms = 800;
+    b->debounce_ms = 30;
+    for (int i = 0; i < BTN_EVENTS; i++) {
+        b->tag[i] = -1;
+    }
+
+    static const struct { const char *k; size_t n; int ev; } gestures[] = {
+        { "pressed", sizeof("pressed") - 1, BTN_PRESSED },
+        { "released", sizeof("released") - 1, BTN_RELEASED },
+        { "held", sizeof("held") - 1, BTN_HELD },
+        { "click", sizeof("click") - 1, BTN_CLICK },
+        { "repeat", sizeof("repeat") - 1, BTN_REPEAT },
+        { "double", sizeof("double") - 1, BTN_DOUBLE },
+    };
+    HashTable *ht = Z_ARRVAL_P(on);
+    for (size_t g = 0; g < sizeof(gestures) / sizeof(gestures[0]); g++) {
+        zval *z = zend_hash_str_find(ht, gestures[g].k, gestures[g].n);
+        if (z && Z_TYPE_P(z) == IS_STRING) {
+            int tag = bm_source_tag(Z_STR_P(z));
+            if (tag < 0) {
+                zend_throw_exception_ex(zend_ce_exception, 0,
+                    "watch_button(): unknown class '%s' or too many sources", Z_STRVAL_P(z));
+                RETURN_THROWS();
+            }
+            b->tag[gestures[g].ev] = tag;
+        }
+    }
+
+    if (opts) {
+        HashTable *o = Z_ARRVAL_P(opts);
+        zval *z;
+        if ((z = zend_hash_str_find(o, "holdMs", sizeof("holdMs") - 1))) b->hold_ms = (int) zval_get_long(z);
+        if ((z = zend_hash_str_find(o, "repeatMs", sizeof("repeatMs") - 1))) b->repeat_ms = (int) zval_get_long(z);
+        if ((z = zend_hash_str_find(o, "doubleMs", sizeof("doubleMs") - 1))) b->double_ms = (int) zval_get_long(z);
+        if ((z = zend_hash_str_find(o, "debounceMs", sizeof("debounceMs") - 1))) b->debounce_ms = (int) zval_get_long(z);
+        if ((z = zend_hash_str_find(o, "activeLow", sizeof("activeLow") - 1))) b->active_low = zend_is_true(z);
+    }
+
+    gpio_config_t io = {
+        .pin_bit_mask = 1ULL << pin,
+        .mode = GPIO_MODE_INPUT,
+        .pull_up_en = b->active_low ? GPIO_PULLUP_ENABLE : GPIO_PULLUP_DISABLE,
+        .pull_down_en = b->active_low ? GPIO_PULLDOWN_DISABLE : GPIO_PULLDOWN_ENABLE,
+        .intr_type = GPIO_INTR_DISABLE,
+    };
+    gpio_config(&io);
+    b->in_use = true;
+    bm_button_n++;
+    bm_btn_start();
+}
+
+/* button_sampling(bool $on): void -- pause/resume the button sampler (pause before a light sleep). */
+PHP_FUNCTION(button_sampling)
+{
+    zend_bool on;
+    ZEND_PARSE_PARAMETERS_START(1, 1)
+        Z_PARAM_BOOL(on)
+    ZEND_PARSE_PARAMETERS_END();
+    if (on) {
+        bm_btn_start();
+    } else {
+        bm_btn_stop();
+    }
+}
+
+/* ---- power_save: a no-light-sleep lock PHP can hold, + the build flag others check. ------------- */
+
+static esp_pm_lock_handle_t bm_pm_lock;
+static int                  bm_pm_held;
+static bool                 bm_pm_tried;
+static bool                 bm_power_save;
+
+static void bm_pm_ensure(void)
+{
+    if (!bm_pm_tried) {
+        bm_pm_tried = true;
+        /* fails with ESP_ERR_NOT_SUPPORTED when PM is off (power_save not set) -> lock stays NULL,
+         * so power_hold()/power_release() become no-ops. */
+        esp_pm_lock_create(ESP_PM_NO_LIGHT_SLEEP, 0, "php_hold", &bm_pm_lock);
+    }
+}
+
+void bm_events_power_autorelease(void)
+{
+    while (bm_pm_lock && bm_pm_held > 0) {
+        esp_pm_lock_release(bm_pm_lock);
+        bm_pm_held--;
+    }
+}
+
+void bm_events_set_power_save(bool on) { bm_power_save = on; }
+bool bm_events_power_save(void)        { return bm_power_save; }
+
+ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_power_void, 0, 0, IS_VOID, 0)
+ZEND_END_ARG_INFO()
+
+/* power_hold(): forbid light sleep until power_release() or the end of the current event handler. */
+PHP_FUNCTION(power_hold)
+{
+    ZEND_PARSE_PARAMETERS_NONE();
+    bm_pm_ensure();
+    if (bm_pm_lock) {
+        esp_pm_lock_acquire(bm_pm_lock);
+        bm_pm_held++;
+    }
+}
+
+/* power_release(): drop one power_hold(). */
+PHP_FUNCTION(power_release)
+{
+    ZEND_PARSE_PARAMETERS_NONE();
+    if (bm_pm_lock && bm_pm_held > 0) {
+        esp_pm_lock_release(bm_pm_lock);
+        bm_pm_held--;
+    }
+}
+
 PHP_MINIT_FUNCTION(events)
 {
     zend_class_entry ce;
@@ -442,8 +707,12 @@ PHP_MINIT_FUNCTION(events)
 }
 
 static const zend_function_entry events_functions[] = {
-    PHP_FE(every,      arginfo_every)
-    PHP_FE(watch_gpio, arginfo_watch_gpio)
+    PHP_FE(every,           arginfo_every)
+    PHP_FE(watch_gpio,      arginfo_watch_gpio)
+    PHP_FE(watch_button,    arginfo_watch_button)
+    PHP_FE(button_sampling, arginfo_button_sampling)
+    PHP_FE(power_hold,      arginfo_power_void)
+    PHP_FE(power_release,   arginfo_power_void)
     PHP_FE_END
 };
 

@@ -22,6 +22,9 @@
 #include "freertos/task.h"
 #include "esp_app_desc.h"    /* esp_app_get_description()->version -- the php-esp32 firmware version */
 #include "esp_idf_version.h" /* esp_get_idf_version() */
+#ifdef PHP_POWER_SAVE_ENABLED
+#include "esp_pm.h"          /* esp_pm_configure -- automatic light sleep (power_save) */
+#endif
 
 #include "board.h"   /* board_mount_storage()/board_unmount_storage(), BOARD_NAME, BOARD_SOC, BOARD_HAS_NETWORK */
 
@@ -42,6 +45,7 @@
 
 #include "boot.h"
 #include "app.h"   /* g_entry_script / g_src_dir, s_board_ip, php_esp32_* -- populated here */
+#include "event_bus_php.h"   /* bm_events_set_power_save */
 
 static const char *TAG = "php-esp32";
 
@@ -410,5 +414,18 @@ void boot_php_shutdown(void)
 void app_main(void)
 {
     ESP_LOGI(TAG, "starting PHP runtime");
+#ifdef PHP_POWER_SAVE_ENABLED
+    /* power_save: let FreeRTOS enter light sleep on its own when tasks block (the reactor idles there).
+     * power_hold() in PHP takes a lock to forbid it during work. */
+    esp_pm_config_t pm = {
+        .max_freq_mhz = CONFIG_ESP_DEFAULT_CPU_FREQ_MHZ,
+        .min_freq_mhz = 40,
+        .light_sleep_enable = true,
+    };
+    if (esp_pm_configure(&pm) == ESP_OK) {
+        ESP_LOGI(TAG, "power_save: esp_pm light sleep enabled (max %d MHz)", CONFIG_ESP_DEFAULT_CPU_FREQ_MHZ);
+    }
+    bm_events_set_power_save(true);   /* let other components reject configs that fight light sleep */
+#endif
     xTaskCreatePinnedToCore(php_task, "php", PHP_TASK_STACK_BYTES, NULL, 5, NULL, PHP_TASK_CORE);
 }

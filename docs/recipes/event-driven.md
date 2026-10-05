@@ -17,9 +17,11 @@ engine stays resident, so a variable captured by a listener persists across even
 
 Select the model in `php-esp32.config.toml`:
 
+<!-- @code-block language="toml" label="php-esp32.config.toml" -->
 ```toml
 type = "event-driven"
 ```
+<!-- @endcode-block -->
 
 ## Events and listeners
 
@@ -44,6 +46,7 @@ every(1000, Tick::class);   // a source: emit a Tick once a second
 
 echo "listeners registered; the reactor now runs\n";
 ```
+<!-- @endcode-block -->
 
 - **`Events::listen(Class::class, callable)`** — register a listener. Only during setup: after the
   script returns, the listener table is frozen and `listen()` throws.
@@ -59,12 +62,14 @@ A *source* is what feeds the reactor. Two are built in as global functions (call
 - **`every(int $ms, string $eventClass)`** — emit an instance of `$eventClass` every `$ms`.
 - **`watch_gpio(int $pin, string $eventClass)`** — emit on a debounced falling edge (a button).
 
+<!-- @code-block language="php" label="watch_gpio" -->
 ```php
 final class BootPressed extends Baremetal\Event {}
 
 Events::listen(BootPressed::class, fn () => print("button!\n"));
 watch_gpio(0, BootPressed::class);   // GPIO0 = the BOOT button on many boards
 ```
+<!-- @endcode-block -->
 
 Sources run below your code: the timer and the GPIO interrupt hand a typed event to the reactor, which
 delivers it on the PHP thread. Between events the reactor sleeps, so the CPU is idle without you writing
@@ -75,6 +80,7 @@ a delay.
 A polled I²C sensor can be a source too. `poll()` samples it on core 1; with `event:` it raises a
 `SamplesReady` event on each new sample, carrying the sensor as `$e->device`:
 
+<!-- @code-block language="php" label="a polled sensor as a source" -->
 ```php
 use Baremetal\I2c\{Bus, Driver\Qmi8658};
 use Baremetal\Sensor\Imu\SamplesReady;
@@ -88,6 +94,7 @@ Events::listen(SamplesReady::class, function (SamplesReady $e): void {
 
 $imu->poll(hz: 20, depth: 16, event: SamplesReady::class);
 ```
+<!-- @endcode-block -->
 
 The sampling runs on core 1; the handler reads the latest sample from the ring — no bus traffic, no
 polling in your code. See [imu-ws-stream](../../examples/imu-ws-stream/) for the same idea streamed to a

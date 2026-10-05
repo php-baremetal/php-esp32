@@ -17,23 +17,27 @@ temperature sensor — on the I²C bus. It ships as a driver in the `i2c` extens
 
 ## Enable it
 
+<!-- @code-block language="toml" label="php-esp32.config.toml" -->
 ```toml
 [extensions.i2c]
 enabled = true
 drivers = ["qmi8658"]
 ```
+<!-- @endcode-block -->
 
 ## Wire it up
 
 It sits on an I²C bus; you pass the pins when you make the bus. On the ESP32-S3-Touch boards the IMU is on
 `SDA=11`, `SCL=10`:
 
+<!-- @code-block language="php" label="make the bus and driver" -->
 ```php
 use Baremetal\I2c\Bus;
 use Baremetal\I2c\Driver\Qmi8658;
 
 $imu = new Qmi8658(new Bus(sda: 11, scl: 10));
 ```
+<!-- @endcode-block -->
 
 `new Qmi8658(Bus $bus, int $address = auto, int $hz = 400000)` — the address defaults to the chip's
 (0x6B/0x6A) and the bus runs at 400 kHz. Other devices can share the same bus (different addresses).
@@ -64,6 +68,7 @@ function loop(int $tick): void
     delay(200);
 }
 ```
+<!-- @endcode-block -->
 
 At rest one accel axis reads ≈ ±1 g (gravity) and the gyro reads ≈ 0.
 
@@ -98,6 +103,7 @@ function loop(int $tick): void
     delay(200);
 }
 ```
+<!-- @endcode-block -->
 
 See the [`imu-poll-core1`](../../examples/imu-poll-core1/) example.
 
@@ -123,6 +129,7 @@ Events::listen(SamplesReady::class, function (SamplesReady $e): void {
 
 $imu->poll(hz: 30, depth: 16, event: SamplesReady::class);
 ```
+<!-- @endcode-block -->
 
 Keep the rate modest (each event shares the reactor queue with anything else — HTTP, timers): ~30 Hz is
 plenty for a UI and leaves the queue room. The [`imu-ws-stream`](../../examples/imu-ws-stream/) example
@@ -134,11 +141,13 @@ The driver implements `Baremetal\Sensor\Imu`, a marker interface. Code that only
 any chip that implements it, so swapping the QMI8658 for another IMU driver later doesn't change the
 consumer:
 
+<!-- @code-block language="php" label="the Imu capability" -->
 ```php
 if ($imu instanceof Baremetal\Sensor\Imu) {
     // it's an IMU, whatever the chip
 }
 ```
+<!-- @endcode-block -->
 
 ## Notes
 
@@ -147,4 +156,3 @@ if ($imu instanceof Baremetal\Sensor\Imu) {
 - Temperature is a separate register (not part of the polled block), so read it with `temp()` when you
   need it rather than every sample.
 - The accelerometer is ±4 g and the gyroscope ±512 °/s by default.
-```

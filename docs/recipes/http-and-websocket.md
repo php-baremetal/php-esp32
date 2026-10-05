@@ -17,6 +17,7 @@ reactor. This is different from the [`web-server`](./web-page.md) model: here th
 
 Enable the extension and start the server during setup:
 
+<!-- @code-block language="toml" label="php-esp32.config.toml" -->
 ```toml
 type = "event-driven"
 
@@ -26,6 +27,7 @@ enabled = true
 [extensions.wifi]     # a SoftAP, if the board has no wired network
 enabled = true
 ```
+<!-- @endcode-block -->
 
 > The board needs a network. A wired `-ETH` board brings the link up at boot; on a WiFi board call
 > `wifi_ap_start('my-ap', 'password')` (or `wifi_connect(...)`) during setup before `serve_http()`.
@@ -55,6 +57,7 @@ Events::listen(Request::class, function (Request $r) use (&$state): Response {
 
 serve_http(80);
 ```
+<!-- @endcode-block -->
 
 - **Exactly one handler answers** — the first `Response` wins (like returning `false`, it stops
   propagation). No `Response` → `404`. A handler that throws → `500` (the socket is never left hanging).
@@ -71,6 +74,7 @@ serve_http(80);
 `serve_ws($path)` adds a WebSocket endpoint on the same server. Each inbound frame is a
 `Baremetal\Http\Message` event; `$m->reply()` answers that client, and `ws_broadcast()` pushes to all.
 
+<!-- @code-block language="php" label="serve_ws" -->
 ```php
 use Baremetal\Http\Message;
 
@@ -81,24 +85,29 @@ Events::listen(Message::class, function (Message $m): void {
 serve_ws('/ws');     // call before serve_http() so /ws wins over the catch-all
 serve_http(80);
 ```
+<!-- @endcode-block -->
 
 Unsolicited push — the streaming half — is `ws_broadcast($data)`: send a frame to **every** connected
 client (returns how many it reached). Drive it from any event, e.g. a timer or a sensor:
 
+<!-- @code-block language="php" label="ws_broadcast" -->
 ```php
 final class Beat extends Baremetal\Event {}
 $n = 0;
 Events::listen(Beat::class, function () use (&$n) { ws_broadcast(json_encode(['beat' => ++$n])); });
 every(1000, Beat::class);
 ```
+<!-- @endcode-block -->
 
 On the client:
 
+<!-- @code-block language="js" label="browser client" -->
 ```js
 const ws = new WebSocket('ws://' + location.host + '/ws');
 ws.onmessage = e => console.log(JSON.parse(e.data));
 ws.send(JSON.stringify({ hello: 'board' }));
 ```
+<!-- @endcode-block -->
 
 **Backpressure (inbound):** if events arrive faster than PHP drains them, the server pauses reading the
 socket (TCP slows the sender) rather than dropping frames — inbound commands are not lost.

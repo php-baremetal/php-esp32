@@ -1,0 +1,18 @@
+ESP32-S3-Zero (4MB flash, 2MB PSRAM), PHP 8.4.25, event-driven. Automated bench: active / light sleep /
+deep sleep, 5 s each, repeating (deep sleep reboots). Measured on an AVHzY CT-3 inline on USB (5 V).
+
+power-bench (S3-Zero): active / light sleep / deep sleep, 5 s each.
+[ACTIVE] 5s -- read current
+[LIGHT SLEEP] 5s -- read current
+[DEEP SLEEP] 5s -- read current (then reboot)
+(back from deep sleep -> new cycle)
+
+Measured current @5V (whole board):
+  active (CPU busy)   0.04946 A  ~247 mW
+  light sleep         0.00188 A  ~9.4 mW   (~26x less than active)
+  deep sleep          0.00056 A  ~2.8 mW   (~3.4x less than light sleep -> deep sleep is worth it here)
+
+Note: on this bare board deep sleep clearly beats light sleep (unlike the peripheral-heavy S3-Touch, where a
+~2 mA floor makes deep ~= light). A ~0.56 mA floor remains (regulator quiescent + USB-serial-JTAG while USB is
+connected); the chip datasheet deep-sleep (~7 uA) needs battery + a low-quiescent regulator, not USB.
+Serial can't be captured headlessly during the run (native USB suspends in light sleep, disconnects in deep).

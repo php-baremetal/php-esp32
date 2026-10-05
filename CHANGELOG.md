@@ -1,5 +1,24 @@
 # Changelog
 
+## [1.5.0] - WIP - Power Save, Watch Button
+
+### Added
+- **`power_save` — automatic light sleep.** `power_save = true` makes the event-driven reactor light-sleep
+  between events on its own (RAM retained, instant wake), no sleep code in PHP; `power_hold()` /
+  `power_release()` bracket a stretch that must stay awake. On a bare S3-Zero idle fell to ~0.95 mA (from
+  ~49 mA active). See [Power save](docs/recipes/power-save.md); example: [`power-save`](examples/power-save/).
+- **I²C bus ownership on core 1.** `new I2cBus(..., I2cBus::CORE1)` runs blocking transactions on the
+  core-1 executor over an intent queue, off the PHP core (default `I2cBus::SYNC` unchanged). Example:
+  [`i2c-core1`](examples/i2c-core1/).
+- **MMC5603 magnetometer** + `Baremetal\Sensor\Magnetometer` capability: `mag()`, `heading()`, temperature.
+  Example: [`mmc5603`](examples/mmc5603/).
+- **PCF85063 RTC driver** — `now()` / `set()` (BCD at `0x51`). Example: [`rtc-pcf85063`](examples/rtc-pcf85063/).
+- **`watch_button()`** — GPIO button gestures (`pressed`/`released`/`held`/`click`/`repeat`/`double`) with
+  debounce and timing in C; `button_sampling(false)` pauses the sampler before a light sleep. `watch_gpio`
+  stays for the plain falling-edge case.
+- **`St77916::wake()`** — re-inits the panel (reset, init, orientation) after light sleep disturbs the QSPI
+  lines; call it, then repaint.
+
 ## [1.4.0] - Events and the event-driven model HTTP & Websocket
 
 The reactor arrives: a third execution model where PHP registers listeners and sleeps, and typed

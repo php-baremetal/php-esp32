@@ -50,6 +50,8 @@ void run_event_driven(void)
             ESP_LOGE(TAG, "PHP bailed out in an event handler");
         } zend_end_try();
 
+        bm_events_power_autorelease();   /* drop any power_hold() the handler left held */
+
         if ((++n & 0xFF) == 0) {
             gc_collect_cycles();
         }

@@ -96,6 +96,35 @@ static void st_hw_init(st_state *s, int host, int cs)
     }
 }
 
+/* Re-init the panel after a light sleep that disturbed the QSPI lines: hardware-reset, re-run the init
+ * sequence and re-apply orientation. The caller repaints (fill) afterwards. */
+static void st_reinit(st_state *s)
+{
+    if (!s->panel) {
+        return;
+    }
+    if (s->rst >= 0) {
+        gpio_set_level(s->rst, 0);
+        vTaskDelay(pdMS_TO_TICKS(20));
+        gpio_set_level(s->rst, 1);
+        vTaskDelay(pdMS_TO_TICKS(120));
+    }
+    esp_lcd_panel_init(s->panel);
+    if (s->swap_xy) {
+        esp_lcd_panel_swap_xy(s->panel, true);
+    }
+    if (s->mirror_x || s->mirror_y) {
+        esp_lcd_panel_mirror(s->panel, s->mirror_x, s->mirror_y);
+    }
+    if (s->x_gap || s->y_gap) {
+        esp_lcd_panel_set_gap(s->panel, s->x_gap, s->y_gap);
+    }
+    if (s->invert) {
+        esp_lcd_panel_invert_color(s->panel, true);
+    }
+    esp_lcd_panel_disp_on_off(s->panel, true);
+}
+
 static st_state *this_state(zval *zthis)
 {
     spi_dev_t *d = spi_device_this(zthis);
@@ -225,10 +254,25 @@ PHP_METHOD(St77916, rgb)
     RETURN_LONG(((r & 0xF8) << 8) | ((g & 0xFC) << 3) | (b >> 3));
 }
 
+ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_st_wake, 0, 0, IS_VOID, 0)
+ZEND_END_ARG_INFO()
+
+/* wake(): re-init the panel after a light sleep (then fill() to repaint). */
+PHP_METHOD(St77916, wake)
+{
+    ZEND_PARSE_PARAMETERS_NONE();
+    st_state *s = this_state(ZEND_THIS);
+    if (!s) {
+        RETURN_THROWS();
+    }
+    st_reinit(s);
+}
+
 static const zend_function_entry st77916_methods[] = {
     PHP_ME(St77916, __construct, arginfo_st_ctor, ZEND_ACC_PUBLIC)
     PHP_ME(St77916, fill,        arginfo_st_fill, ZEND_ACC_PUBLIC)
     PHP_ME(St77916, rgb,         arginfo_st_rgb,  ZEND_ACC_PUBLIC)
+    PHP_ME(St77916, wake,        arginfo_st_wake, ZEND_ACC_PUBLIC)
     PHP_FE_END
 };
 

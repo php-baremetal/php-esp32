@@ -1,0 +1,27 @@
+name = "device-power-bench"
+storage_type = "embedded"
+type = "event-driven"
+
+[board]
+target = "esp32-s3-pico"
+port   = ""
+
+[esp-idf]
+path    = ""
+version = ""
+
+[php-esp32]
+path    = ""
+version = ""
+
+[storage]
+microsd = false
+
+[extensions.spi]
+enabled = true
+drivers = ["st77916"]
+
+[php]
+src     = "project-src"
+entry   = "index.php"
+version = ""

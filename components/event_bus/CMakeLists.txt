@@ -5,7 +5,7 @@
 idf_component_register(
     SRCS "src/pool.c" "src/dispatch.c" "src/isr_pool.c" "php/php_events.c"
     INCLUDE_DIRS "include"
-    REQUIRES php esp_timer esp_driver_gpio
+    REQUIRES php esp_timer esp_driver_gpio esp_pm
     WHOLE_ARCHIVE
 )
 

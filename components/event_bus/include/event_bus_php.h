@@ -28,6 +28,15 @@ bool bm_events_receive(bm_event_msg_t *out, uint32_t ms);
  * from the reactor (php_task, core 0). */
 void bm_events_deliver_msg(const bm_event_msg_t *msg);
 
+/* Release any power_hold() still held after an event handler returned (the reactor calls this after each
+ * delivery, so a handler can't leak the no-light-sleep lock). */
+void bm_events_power_autorelease(void);
+
+/* Record whether the build enabled power_save (esp_pm). main sets it at startup; other components read
+ * it to reject contradictory configs (e.g. a CORE1 I2C bus). */
+void bm_events_set_power_save(bool on);
+bool bm_events_power_save(void);
+
 /* The Baremetal\Event base class entry, so another extension can register event subclasses. */
 struct _zend_class_entry *bm_events_base_ce(void);
 

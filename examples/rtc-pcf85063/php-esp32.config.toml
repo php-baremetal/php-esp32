@@ -1,0 +1,27 @@
+name = "rtc-pcf85063"
+storage_type = "embedded"
+type = "init-loop"
+
+[board]
+target = "esp32-s3-pico"
+port   = ""
+
+[esp-idf]
+path    = ""
+version = ""
+
+[php-esp32]
+path    = ""
+version = ""
+
+[storage]
+microsd = false
+
+[extensions.i2c]
+enabled = true
+drivers = ["pcf85063"]
+
+[php]
+src     = "project-src"
+entry   = "index.php"
+version = ""

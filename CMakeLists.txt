@@ -46,6 +46,17 @@ if(DEFINED PHP_CPU_FREQ_MHZ AND NOT "${PHP_CPU_FREQ_MHZ}" STREQUAL "")
     message(STATUS "php-esp32: CPU frequency override -> ${PHP_CPU_FREQ_MHZ} MHz")
 endif()
 
+# power_save (project config `power_save = true`, flash-tool passes -DPHP_POWER_SAVE=ON): turn on
+# ESP-IDF's power management so FreeRTOS enters light sleep by itself when all tasks block long enough
+# (the event-driven reactor idles there). Layered last. main.c calls esp_pm_configure when enabled.
+if(PHP_POWER_SAVE)
+    set(_pm_frag "${CMAKE_BINARY_DIR}/powersave.sdkconfig.defaults")
+    file(WRITE "${_pm_frag}"
+        "CONFIG_PM_ENABLE=y\nCONFIG_FREERTOS_USE_TICKLESS_IDLE=y\nCONFIG_PM_SLP_IRAM_OPT=y\nCONFIG_PM_RTOS_IDLE_OPT=y\n")
+    list(APPEND SDKCONFIG_DEFAULTS "${_pm_frag}")
+    message(STATUS "php-esp32: power_save -> esp_pm light sleep enabled")
+endif()
+
 # Pin the ESP-IDF target from the selected family's sdkconfig.family, BEFORE project.cmake.
 # ESP-IDF only reads CONFIG_IDF_TARGET out of SDKCONFIG_DEFAULTS *after* it has already fixed
 # the target; if IDF_TARGET isn't set it "guesses" from a stray in-source sdkconfig (a leftover

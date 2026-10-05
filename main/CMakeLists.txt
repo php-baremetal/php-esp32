@@ -85,7 +85,7 @@ idf_component_register(
     INCLUDE_DIRS "." "models" ${BOARD_INCLUDE_DIRS}
     # esp_partition/fatfs/vfs: main.c mounts the optional read-only embedded source
     # partition itself (board-agnostic); the board adds its own storage drivers too.
-    REQUIRES php php_ext_gpio php_ext_store php_ext_mem php_ext_sys php_project_exts event_bus esp_partition esp_app_format fatfs vfs ${WEB_SERVER_REQUIRES} ${RGB_REQUIRES} ${WIFI_REQUIRES} ${I2C_REQUIRES} ${SPI_REQUIRES} ${WEB_REQUIRES} ${BOARD_REQUIRES}
+    REQUIRES php php_ext_gpio php_ext_store php_ext_mem php_ext_sys php_project_exts event_bus esp_partition esp_app_format fatfs vfs esp_pm ${WEB_SERVER_REQUIRES} ${RGB_REQUIRES} ${WIFI_REQUIRES} ${I2C_REQUIRES} ${SPI_REQUIRES} ${WEB_REQUIRES} ${BOARD_REQUIRES}
 )
 
 # fs_pathnorm.c: --wrap the file syscalls so "." / ".." in paths are collapsed before the FATFS VFS
@@ -107,6 +107,9 @@ if(_web_server)
 endif()
 if(PHP_PROJECT_EVENT_DRIVEN)
     target_compile_definitions(${COMPONENT_LIB} PRIVATE PHP_PROJECT_EVENT_DRIVEN=1)
+endif()
+if(PHP_POWER_SAVE)
+    target_compile_definitions(${COMPONENT_LIB} PRIVATE PHP_POWER_SAVE_ENABLED=1)
 endif()
 if(_microsd)
     target_compile_definitions(${COMPONENT_LIB} PRIVATE PHP_STORAGE_MICROSD=1)

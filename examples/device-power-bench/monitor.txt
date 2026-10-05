@@ -1,0 +1,18 @@
+ESP32-S3-Touch-LCD-1.85B, PHP 8.4.25, event-driven. Button source (watch_button on BOOT/GPIO0):
+click = screen off + light sleep; hold 2s = deep sleep. Measured on an AVHzY CT-3 inline on USB (5 V).
+
+--- /app/index.php (event-driven) ---
+[ACTIVE] screen RED -- baseline. BOOT: click = sleep, hold 2s = deep sleep.
+I (1606) php-esp32: entering event loop
+[ASLEEP] screen off + light sleep -- read current; press BOOT to wake.
+[ACTIVE] woke -> screen RED.
+[DEEP SLEEP] read current; press BOOT to wake (reboot).
+woke from DEEP SLEEP (cause=3)
+
+Measured current @5V (whole board):
+  active (screen red)      0.0740 A  ~370 mW
+  light sleep (screen off) 0.0030 A  ~15 mW   (~25x less than active; RAM retained, instant wake)
+  deep sleep               0.0020 A  ~10 mW   (only ~1 mA below light sleep -> board floor dominates)
+
+Conclusion: light sleep is the practical low-power regime; deep sleep's ~1 mA gain isn't worth the full
+reboot + lost RAM on this USB-measured board (~2 mA floor from regulators + USB-serial-JTAG).

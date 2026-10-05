@@ -1,0 +1,24 @@
+name = "power-save"
+storage_type = "embedded"
+type = "event-driven"
+power_save = true
+
+[board]
+target = "esp32-s3-zero"
+port   = ""
+
+[esp-idf]
+path    = ""
+version = ""
+
+[php-esp32]
+path    = ""
+version = ""
+
+[storage]
+microsd = false
+
+[php]
+src     = "project-src"
+entry   = "index.php"
+version = ""

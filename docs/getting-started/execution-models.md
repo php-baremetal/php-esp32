@@ -26,10 +26,12 @@ extensions and the storage are the same underneath.
 The default. Your script defines `setup()` (run once) and `loop(int $tick)` (called forever). Good for
 a blink, a sensor read, a bit of local logic. `delay($ms)` paces the loop.
 
+<!-- @code-block language="php" label="init-loop" -->
 ```php
 function setup(): void { gpio_mode(2, OUTPUT); }
 function loop(int $tick): void { gpio_write(2, $tick % 2); delay(500); }
 ```
+<!-- @endcode-block -->
 
 A script with no `loop()` just runs once and stops — fine for a one-shot.
 
@@ -48,6 +50,7 @@ or WebSocket endpoint), then a reactor **blocks on an event queue** and delivers
 listeners — sleeping in between, so the CPU idles with no busy-wait. The engine stays resident, so
 ordinary PHP variables persist between events (no per-request teardown).
 
+<!-- @code-block language="php" label="event-driven" -->
 ```php
 use Baremetal\Events;
 final class Tick extends Baremetal\Event {}
@@ -56,6 +59,7 @@ $n = 0;
 Events::listen(Tick::class, function (Tick $e) use (&$n) { printf("tick %d\n", ++$n); });
 every(1000, Tick::class);          // a source: one Tick per second
 ```
+<!-- @endcode-block -->
 
 It composes the other two ideas: add an `http` source and you serve HTTP *and* react to hardware and
 WebSocket messages on one resident reactor. This is the model for a device that reacts — a button, a
@@ -70,6 +74,8 @@ then [HTTP & WebSocket](../recipes/http-and-websocket.md).
 
 Set it in the project config:
 
+<!-- @code-block language="toml" label="php-esp32.config.toml" -->
 ```toml
 type = "event-driven"
 ```
+<!-- @endcode-block -->
