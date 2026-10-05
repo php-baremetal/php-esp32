@@ -20,11 +20,13 @@ companion**.
 
 The ESP32-P4 has **no built-in radio** — a chip probe says so plainly:
 
+<!-- @code-block language="text" label="phpflash discover" -->
 ```
 $ phpflash discover
 Chip:   ESP32-P4 (revision v1.3)
 Radio:  none (no built-in WiFi/BT; this chip needs a companion for wireless)
 ```
+<!-- @endcode-block -->
 
 So a bare P4 board (`esp32-p4-pico`, `esp32-p4-eth`, `esp32-p4-zero`) has no WiFi at all. It becomes a
 WiFi board only when it carries a **companion radio chip** — typically an on-board **ESP32-C6** — wired
@@ -76,6 +78,7 @@ On an **ESP32-P4-WIFI6** (P4 rev v1.3), verified on hardware: PHP brought up a S
 pins with no schematic needed, the companion was **already pre-flashed**, and the board served a page
 over its own WiFi:
 
+<!-- @code-block language="text" label="Serial output" -->
 ```
 eh_sdio: SDIO 4-bit 40000 kHz CLK=18 CMD=19 D0=14 D1=15 D2=16 D3=17 RESET=54
 eh_sdio: Card init success
@@ -84,6 +87,7 @@ PHP 8.4.25 on ESP32-P4
 access point 'php-esp32' is up at 192.168.4.1
 web-server model: serving /app/index.php over HTTP on :80
 ```
+<!-- @endcode-block -->
 
 The payoff is bigger than on the S3: the P4 has **32 MB of PSRAM**, so it can serve not just plain
 pages but full frameworks (Laravel, Symfony) — now over WiFi, with no wired network at all.
