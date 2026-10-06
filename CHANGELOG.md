@@ -1,8 +1,22 @@
 # Changelog
 
-## [1.5.0] - WIP - Power Save, Watch Button
+## [1.5.0] - WIP - Power Save, Watch Button, Product Protection
 
 ### Added
+- **`secure` — Flash Encryption.** `secure = true` encrypts the flash so a dump can't reveal the baked PHP
+  source or the `.env` (they come out as ciphertext). It marks the embedded `storage` partition `encrypted`
+  (data partitions aren't by default) and turns on Flash Encryption (development mode) in the firmware's
+  sdkconfig; the `.env`, already inside the app image, is covered automatically.
+  [Protect your product](docs/recipes/protect-your-product.md).
+- **`secure_boot` — Secure Boot v2.** `secure_boot = true` makes the chip boot only firmware signed with
+  your key. `phpflash build` provisions one signing key **per unit** at `deploys/<MAC>.pem` (optional
+  `secure_boot_keys_dir`, default `./deploys`) generated, `600`
+  `Signature verified successfully`. Example: [`secure-boot`](examples/secure-boot/).
+- **`phpflash flash` handles encrypted boards.** It detects a chip with Flash Encryption burned and switches
+  to `encrypted-flash` on its own, so the one command works before and after a chip is protected — no manual
+  `esptool --encrypt` or offset juggling.
+- **`phpflash discover` reports the protection state.** It reads the eFuses and prints `Flash encryption` and
+  `Secure boot` as `enabled` / `not set`.
 - **`power_save` — automatic light sleep.** `power_save = true` makes the event-driven reactor light-sleep
   between events on its own (RAM retained, instant wake), no sleep code in PHP; `power_hold()` /
   `power_release()` bracket a stretch that must stay awake. On a bare S3-Zero idle fell to ~0.95 mA (from

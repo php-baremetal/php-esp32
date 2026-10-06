@@ -1,0 +1,18 @@
+name = "secure-boot"
+storage_type = "embedded"
+type = "init-loop"
+
+secure = true               # Flash Encryption (dev mode): the flash is unreadable
+secure_boot = true          # Secure Boot v2: only firmware signed with your key boots
+# secure_boot_keys_dir = "./deploys"   # where the per-unit <MAC>.pem lives (default: ./deploys)
+
+[board]
+target = "esp32-s3-zero"
+port   = ""
+
+[storage]
+microsd = false
+
+[php]
+src     = "project-src"
+entry   = "index.php"

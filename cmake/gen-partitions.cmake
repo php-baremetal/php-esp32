@@ -77,8 +77,16 @@ if(DEFINED PHP_EMBED_SRC AND NOT PHP_EMBED_SRC STREQUAL "")
     endif()
     math(EXPR _size_k "${_size} / 1024")
 
-    string(APPEND _csv "storage,    data, fat,      ,         ${_size_k}K\n")
-    message(STATUS "php-esp32: embedded 'storage' partition = ${_size_k}K "
+    # Under `secure`, mark the partition `encrypted` (6th CSV column): flash encryption only covers
+    # app/bootloader/partition-table by default, so without this the baked PHP source stays in plaintext.
+    set(_storage_flags "")
+    set(_storage_note "")
+    if(PHP_SECURE)
+        set(_storage_flags "encrypted")
+        set(_storage_note " [encrypted]")
+    endif()
+    string(APPEND _csv "storage,    data, fat,      ,         ${_size_k}K,  ${_storage_flags}\n")
+    message(STATUS "php-esp32: embedded 'storage' partition = ${_size_k}K${_storage_note} "
                    "(source ~${_occ} B occupancy + 64K FAT + ${PHP_STORAGE_RESERVE_KB}K reserve)")
 else()
     message(STATUS "php-esp32: microSD project -- no 'storage' partition (source runs from the card)")

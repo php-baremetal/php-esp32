@@ -57,6 +57,38 @@ if(PHP_POWER_SAVE)
     message(STATUS "php-esp32: power_save -> esp_pm light sleep enabled")
 endif()
 
+# secure (project config `secure = true`, flash-tool passes -DPHP_SECURE=ON): turn on Flash Encryption
+# so a flash dump can't reveal the baked PHP source or the .env. Development mode -- still re-flashable
+# while testing (it re-encrypts on each flash). The first flash of a secure build BURNS the encryption
+# key into eFuse on that chip; that step is irreversible, so only flash secure builds onto boards meant
+# for it. The storage partition is marked `encrypted` in gen-partitions.cmake under the same flag.
+if(PHP_SECURE)
+    set(_sec_frag "${CMAKE_BINARY_DIR}/secure.sdkconfig.defaults")
+    file(WRITE "${_sec_frag}"
+        "CONFIG_SECURE_FLASH_ENC_ENABLED=y\nCONFIG_SECURE_FLASH_ENCRYPTION_MODE_DEVELOPMENT=y\n")
+    list(APPEND SDKCONFIG_DEFAULTS "${_sec_frag}")
+    message(STATUS "php-esp32: secure -> Flash Encryption (development mode) enabled; storage partition encrypted")
+endif()
+
+# secure_boot (project config `secure_boot = true`, flash-tool passes -DPHP_SECURE_BOOT=ON and resolves
+# the per-unit signing key into -DPHP_SECURE_BOOT_KEY=<abs path>): enable Secure Boot v2 so only firmware
+# signed with that key boots. The first boot BURNS the public-key digest into eFuse -- irreversible, and
+# the chip then forever requires your signature; losing the key means no more updates. Pair with `secure`
+# for a fully protected product.
+if(PHP_SECURE_BOOT)
+    if(NOT PHP_SECURE_BOOT_KEY OR NOT EXISTS "${PHP_SECURE_BOOT_KEY}")
+        message(FATAL_ERROR "secure_boot: signing key not found (PHP_SECURE_BOOT_KEY='${PHP_SECURE_BOOT_KEY}'). "
+                            "Run `phpflash secure-key` or check [secure_boot_keys_dir].")
+    endif()
+    # The v2 signature appended to the bootloader pushes it past the default 0x8000 partition-table
+    # offset, so move the table out to 0xC000 (the app still aligns to 0x10000 after it).
+    set(_sb_frag "${CMAKE_BINARY_DIR}/secureboot.sdkconfig.defaults")
+    file(WRITE "${_sb_frag}"
+        "CONFIG_SECURE_BOOT=y\nCONFIG_SECURE_BOOT_V2_ENABLED=y\nCONFIG_SECURE_BOOT_SIGNING_KEY=\"${PHP_SECURE_BOOT_KEY}\"\nCONFIG_PARTITION_TABLE_OFFSET=0xC000\n")
+    list(APPEND SDKCONFIG_DEFAULTS "${_sb_frag}")
+    message(STATUS "php-esp32: secure_boot -> Secure Boot v2 enabled, signing with ${PHP_SECURE_BOOT_KEY}")
+endif()
+
 # Pin the ESP-IDF target from the selected family's sdkconfig.family, BEFORE project.cmake.
 # ESP-IDF only reads CONFIG_IDF_TARGET out of SDKCONFIG_DEFAULTS *after* it has already fixed
 # the target; if IDF_TARGET isn't set it "guesses" from a stray in-source sdkconfig (a leftover

@@ -1,0 +1,5 @@
+# NEVER commit signing keys. The Secure Boot private key is the product: anyone with it can sign
+# firmware your fleet will accept. Keep it offline, backed up, out of git.
+*.pem
+*.key
+!.gitignore

@@ -23,6 +23,7 @@
   - [Serve a web page](./recipes/web-page.md)
   - [Event-driven basics](./recipes/event-driven.md)
   - [Power save (automatic light sleep)](./recipes/power-save.md)
+  - [Protect your product (Secure Boot + Flash Encryption)](./recipes/protect-your-product.md)
   - [HTTP & WebSocket (event-driven)](./recipes/http-and-websocket.md)
   - [Read the QMI8658 IMU](./recipes/qmi8658-imu.md)
   - [Query SQLite with PDO](./recipes/sqlite-pdo.md)
