@@ -1,6 +1,6 @@
 # Changelog
 
-## [1.5.0] - WIP - Power Save, Watch Button, Product Protection
+## [1.5.0] - Power Save, Watch Button, Product Protection
 
 ### Added
 - **`secure` — Flash Encryption.** `secure = true` encrypts the flash so a dump can't reveal the baked PHP
