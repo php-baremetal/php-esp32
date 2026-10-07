@@ -1,5 +1,20 @@
 # Changelog
 
+## [1.6.0] - WIP - LED drivers
+
+### Added
+- **`led` — addressable-LED drivers (WS2812, SK6812).** A new opt-in extension (`[extensions.led]`,
+  `leds = ["ws2812", ...]`) with a per-chip driver class under `Baremetal\Led\Driver\*`, backed by ESP-IDF's
+  `led_strip`. The pin and pixel count are passed at construction: `new Baremetal\Led\Driver\Ws2812($pin,
+  $count, $order)`, then `pixel()/fill()/hsv()/set()/show()/off()`. All drivers implement the
+  `Baremetal\Output\Led` capability. Supports multi-pixel strips and multiple instances. Example:
+  [`s3-rgb-show`](examples/s3-rgb-show/).
+
+### Removed
+- **`s3_onboard_rgb`** — replaced by the `led` extension. The onboard LED is now driven with
+  `new Baremetal\Led\Driver\Ws2812($pin, 1, Ws2812::RGB)` (pin at construction, any target), instead of the
+  S3-only `s3_onboard_rgb_*()` functions and the build-time `[extensions.s3_onboard_rgb] pin`.
+
 ## [1.5.0] - Power Save, Watch Button, Product Protection
 
 ### Added

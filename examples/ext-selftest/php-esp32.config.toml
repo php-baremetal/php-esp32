@@ -19,9 +19,9 @@ version = ""
 [extensions.wifi]
 enabled = true
 
-[extensions.s3_onboard_rgb]
+[extensions.led]
 enabled = true
-pin     = 48
+leds    = ["ws2812"]
 
 [store]
 size_kb = 32   # give the persistent store a partition, so store_* can round-trip

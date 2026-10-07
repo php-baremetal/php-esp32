@@ -1,0 +1,8 @@
+# Managed dependency -- downloaded by the ESP-IDF component manager at build time
+# (no manual step; a `phpflash build` fetches it automatically).
+#
+# led_strip drives WS2812/SK6812-style addressable LEDs over RMT (or SPI). It handles the pixel
+# buffer, the bit timings per LED model, and the colour byte order -- our driver framework just binds
+# a descriptor to it.
+dependencies:
+  espressif/led_strip: "^3"

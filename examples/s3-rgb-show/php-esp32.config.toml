@@ -3,7 +3,7 @@ storage_type = "embedded"   # PHP source packed into flash
 type = "init-loop"          # execution model
 
 [board]
-target = "esp32-s3-zero"    # ESP32-S3 ONLY: the onboard RGB LED is an S3 feature
+target = "esp32-s3-zero"    # the onboard RGB LED is on GPIO 48 here (38 on some S3 boards)
 port   = ""          # empty = autodetect at flash time
 
 [esp-idf]
@@ -14,12 +14,11 @@ version = ""
 path    = ""
 version = ""
 
-# The onboard WS2812 RGB LED extension. ESP32-S3 only -- enabling it for a P4 board
-# fails the build with a clear message. The data pin defaults to 48; set it to match
-# your board here.
-[extensions.s3_onboard_rgb]
+# Addressable-LED drivers. The onboard WS2812 is driven by the ws2812 driver; the pin and
+# pixel count are passed in PHP (new Ws2812(48, 1, ...)).
+[extensions.led]
 enabled = true
-pin     = 48
+leds    = ["ws2812"]
 
 [php]
 src   = "project-src"      # PHP source folder (packed into the embedded image)

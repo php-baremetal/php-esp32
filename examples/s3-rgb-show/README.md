@@ -8,28 +8,37 @@ especially on camera; raise it if you want it more vivid.
 
 ## What it needs
 
-- An **ESP32-S3 board with the onboard WS2812 RGB LED** (soldered on most S3 dev boards). This is an
-  S3-only feature: the P4 boards have no such LED.
-- The **`s3_onboard_rgb` extension**, enabled in the config:
+- An **ESP32-S3 board with the onboard WS2812 RGB LED** (soldered on most S3 dev boards).
+- The **`led` extension** with the `ws2812` driver, enabled in the config:
 
   ```toml
-  [extensions.s3_onboard_rgb]
+  [extensions.led]
   enabled = true
-  pin     = 48   # the LED's data pin -- set it to match your board
+  leds    = ["ws2812"]
   ```
 
-  The extension drives the WS2812 straight from the SoC's RMT peripheral (no external library). It is
-  compiled in only for `esp32s3` targets; enabling it for a P4 board fails the build with a clear
-  message.
+  The driver sits on ESP-IDF's `led_strip` (RMT). The pin and pixel count are passed when you make the
+  object, not in the config.
 
 ## The API
 
-- `s3_onboard_rgb_set(int $r, int $g, int $b)` — set the colour, each channel `0..255`.
-- `s3_onboard_rgb_hsv(int $h, int $s, int $v)` — set by hue/saturation/value (`h` 0..359), handy for
-  rainbows.
-- `s3_onboard_rgb_off()` — turn it off.
-- `s3_onboard_rgb_available(): bool` — whether the extension is built in.
-- `S3_ONBOARD_RGB_PIN` — the data pin the firmware was built with.
+A per-chip driver object under `Baremetal\Led\Driver`:
+
+```php
+use Baremetal\Led\Driver\Ws2812;
+
+$led = new Ws2812(48, 1, Ws2812::RGB);  // pin 48, 1 pixel; onboard LED is RGB order (strips are GRB)
+$led->hsv(0, $h, 255, 10);              // pixel 0 from hue/sat/val (h 0..359, s/v 0..255)
+$led->show();                           // flush to the LED
+```
+
+- `pixel(int $i, int $r, int $g, int $b)` / `fill($r, $g, $b)` — write the buffer (each channel `0..255`).
+- `hsv(int $i, int $h, int $s, int $v)` — set a pixel by hue/saturation/value.
+- `set($r, $g, $b)` — fill + show, the convenient one-LED case.
+- `show()` — send the buffer to the LED(s). `off()` — all off.
+- `count(): int` — the number of pixels.
+
+All drivers implement `Baremetal\Output\Led`, so code can accept any addressable LED.
 
 ## Build & flash
 
@@ -39,10 +48,10 @@ phpflash flash
 phpflash monitor
 ```
 
-The serial log prints one line per round; the LED does the rest.
+The serial log prints one line at startup; the LED does the rest.
 
-## The pin
+## The pin and byte order
 
-Different S3 boards wire the LED to different pins (commonly GPIO 48, but boards vary). Set
-`[extensions.s3_onboard_rgb] pin` to the one your board uses. `phpflash discover` identifies the
-board; check its documentation for the LED pin.
+Different S3 boards wire the LED to different pins (commonly GPIO 48, sometimes 38). Change `PIN` in
+`index.php` to match; `phpflash discover` identifies the board. The onboard LED uses **RGB** byte order
+(`Ws2812::RGB`); external WS2812 strips are usually **GRB** (the default, so you can omit the argument).

@@ -18,10 +18,10 @@ version = ""
 [extensions.wifi]
 enabled = true
 
-# The onboard WS2812 RGB LED (ESP32-S3 boards only). pin 48 on the S3-Zero / most S3 dev boards.
-[extensions.s3_onboard_rgb]
+# Addressable-LED drivers; the onboard WS2812 uses the ws2812 driver (pin passed in PHP, see init.php).
+[extensions.led]
 enabled = true
-pin     = 48
+leds    = ["ws2812"]
 
 # HTTP + WebSocket sources (Baremetal\Http\Request/Response/Message, serve_http/serve_ws, ws_broadcast).
 [extensions.web]

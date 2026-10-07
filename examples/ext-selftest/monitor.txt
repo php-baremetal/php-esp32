@@ -1,4 +1,4 @@
-Captured on an ESP32-S3-Zero "Super Mini" (Quad 2MB PSRAM), PHP 8.4.25, with wifi + s3_onboard_rgb +
+Captured on an ESP32-S3-Zero "Super Mini" (Quad 2MB PSRAM), PHP 8.4.25, with wifi + led +
 store compiled in.
 
 ==== ext-selftest (PHP 8.4.25) ====
@@ -7,7 +7,7 @@ store compiled in.
   PASS  store_available() bool
   PASS  sys_available() bool
   PASS  wifi_available() bool
-  PASS  s3_onboard_rgb_available() bool
+  PASS  Baremetal\Led\Driver\Ws2812 class
   PASS  sys_delay(1) ran
   PASS  delay() is a clean alias (no E_DEPRECATED)
   PASS  sys_uptime_ms() > 0
@@ -24,7 +24,7 @@ store compiled in.
   PASS  wifi_ip() is ?string
   PASS  store round-trip
   PASS  gpio_write coerces "1" -> 1
-  PASS  s3_onboard_rgb_set ran
+  PASS  Ws2812 set ran
 
 ==== 23 passed, 0 failed ====
 deprecations (expected for psram_/heap_):

@@ -17,6 +17,9 @@ use Baremetal\Events;
 use Baremetal\Http\Request;
 use Baremetal\Http\Response;
 use Baremetal\Http\Message;
+use Baremetal\Led\Driver\Ws2812;
+
+const LED_PIN = 48;   // the onboard WS2812 data pin (48 on the S3-Zero / most S3 boards; 38 on some)
 
 const AP_SSID = 'php-rgb';
 const AP_PASS = 'baremetal';   // >= 8 chars for WPA2; '' for an open network
@@ -25,14 +28,18 @@ const EFFECTS = ['none', 'disco', 'rainbow', 'pulse', 'strobe'];
 
 final class EffectTick extends Event {}   // the board's animation clock (drives the running effect)
 
+/* ---- the LED (lives in the resident engine) ---- the onboard WS2812 is a single pixel in RGB order */
+$led = new Ws2812(LED_PIN, 1, Ws2812::RGB);
+
 /* ---- the LED state (lives in the resident engine) ---- */
 $state = ['h' => 210, 's' => 255, 'v' => 1, 'on' => 1, 'effect' => 'none'];   // calm blue, very dim, no effect
 
-$apply = function () use (&$state): void {
-    if ($state['on'] && s3_onboard_rgb_available()) {
-        s3_onboard_rgb_hsv($state['h'], $state['s'], $state['v']);
+$apply = function () use (&$state, $led): void {
+    if ($state['on']) {
+        $led->hsv(0, $state['h'], $state['s'], $state['v']);
+        $led->show();
     } else {
-        s3_onboard_rgb_off();
+        $led->off();
     }
 };
 

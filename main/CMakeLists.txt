@@ -26,12 +26,11 @@ endif()
 # No extra components -- the reactor and sources live in the event_bus component, already required.
 option(PHP_PROJECT_EVENT_DRIVEN "Build the event-driven execution model (block on the event queue)" OFF)
 
-# s3_onboard_rgb (ESP32-S3 onboard WS2812 LED): pulled in only when the project enables it.
-# The component itself refuses to build on a non-esp32s3 target (see its CMakeLists and the php
-# component's extensions.cmake), so this stays empty on the P4.
-set(RGB_REQUIRES "")
-if(PHP_EXT_S3_ONBOARD_RGB)
-    set(RGB_REQUIRES php_ext_s3_onboard_rgb)
+# led (Baremetal\Led addressable-LED drivers, WS2812/SK6812 over led_strip): pulled in only when the
+# project enables it.
+set(LED_REQUIRES "")
+if(PHP_EXT_LED)
+    set(LED_REQUIRES php_ext_led)
 endif()
 
 # wifi (STA + SoftAP from PHP): pulled in only when the project enables it. The component refuses
@@ -85,7 +84,7 @@ idf_component_register(
     INCLUDE_DIRS "." "models" ${BOARD_INCLUDE_DIRS}
     # esp_partition/fatfs/vfs: main.c mounts the optional read-only embedded source
     # partition itself (board-agnostic); the board adds its own storage drivers too.
-    REQUIRES php php_ext_gpio php_ext_store php_ext_mem php_ext_sys php_project_exts event_bus esp_partition esp_app_format fatfs vfs esp_pm ${WEB_SERVER_REQUIRES} ${RGB_REQUIRES} ${WIFI_REQUIRES} ${I2C_REQUIRES} ${SPI_REQUIRES} ${WEB_REQUIRES} ${BOARD_REQUIRES}
+    REQUIRES php php_ext_gpio php_ext_store php_ext_mem php_ext_sys php_project_exts event_bus esp_partition esp_app_format fatfs vfs esp_pm ${WEB_SERVER_REQUIRES} ${LED_REQUIRES} ${WIFI_REQUIRES} ${I2C_REQUIRES} ${SPI_REQUIRES} ${WEB_REQUIRES} ${BOARD_REQUIRES}
 )
 
 # fs_pathnorm.c: --wrap the file syscalls so "." / ".." in paths are collapsed before the FATFS VFS

@@ -87,7 +87,7 @@ two are **opt-in** (a flag, like the ported extensions). Full signatures are in 
 | `store` | Built-in | `store_set`, `store_get`, `store_keys`, `store_available`, ... | Reboot-persistent key-value store backed by NVS. Always built in, but needs `[store] size_kb` in the project config to have any flash to use — otherwise `store_available()` is false. See [persistent-store.md](../storage/persistent-store.md). |
 | `mem` | Built-in | `mem_set`, `mem_get`, `mem_keys`, `mem_available`, ... | The volatile in-RAM twin of `store`: shares data across the requests of one boot without touching flash. Cheap to write every request. See [in-ram-store.md](../storage/in-ram-store.md). |
 | `wifi` | Flag | `wifi_scan`, `wifi_connect`, `wifi_ap_start`, `wifi_ip`, `wifi_available`, ... | Opt-in (`[extensions.wifi]`), WiFi-capable SoCs. Scan/join a network or create a SoftAP, from PHP. ~600 KB. |
-| `s3_onboard_rgb` | Flag | `s3_onboard_rgb_set`, `s3_onboard_rgb_hsv`, `s3_onboard_rgb_off`, `s3_onboard_rgb_available` | Opt-in (`[extensions.s3_onboard_rgb]`), **ESP32-S3 only**: the onboard WS2812 RGB LED. |
+| `led` | Flag | `Baremetal\Led\Driver\Ws2812`, `Baremetal\Led\Driver\Sk6812` (classes) | Opt-in (`[extensions.led]`), addressable LEDs (WS2812/SK6812) over `led_strip`: a per-chip driver, pin + count at construction. Works the onboard S3 LED too. |
 
 ## Full list
 

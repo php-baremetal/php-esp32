@@ -8,8 +8,9 @@ quickest way to confirm a build's extensions actually work on real hardware.
 
 It asserts the shape of the stable extension API:
 
-- **`_available()` on every native extension** (`gpio`, `sys`, `mem`, `store`, `wifi`,
-  `s3_onboard_rgb`) returns a bool.
+- **`_available()` on every function-based native extension** (`gpio`, `sys`, `mem`, `store`, `wifi`)
+  returns a bool; the class-based `led` driver (`Baremetal\Led\Driver\Ws2812`) is checked with
+  `class_exists()`.
 - **`sys_delay()` is canonical; `delay()` is a plain alias** (no deprecation warning), plus `sys`
   info functions (`sys_uptime_ms`, `sys_chip_model`, `sys_mac`, `sys_idf_version`).
 - **`sys_*` are canonical for memory** (`sys_psram_free()`, `sys_heap_free()`, …); the unprefixed
@@ -18,13 +19,13 @@ It asserts the shape of the stable extension API:
   `?string`, `store_*` round-trips a value.
 - **Argument coercion**: a numeric string passed to an `int` parameter coerces (weak mode).
 
-It adapts to what's compiled in: the opt-in extensions are guarded with `function_exists()`, so it
-still runs on a build with fewer of them.
+It adapts to what's compiled in: the opt-in extensions are guarded with `function_exists()` /
+`class_exists()`, so it still runs on a build with fewer of them.
 
 ## Build and run
 
-The config targets an ESP32-S3 (so the onboard-RGB extension is available) and enables `wifi`,
-`s3_onboard_rgb` and a `store` partition, so every extension is exercised.
+The config targets an ESP32-S3 and enables `wifi`, `led` (the `ws2812` driver) and a `store` partition,
+so every extension is exercised.
 
 ```sh
 phpflash build && phpflash flash && phpflash monitor

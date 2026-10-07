@@ -4,8 +4,8 @@
 // 1.0 API -- every extension's _available() probe, typed return values, argument coercion, the
 // sys_delay()/delay() pair, and the deprecated psram_*/heap_* aliases of the sys_* memory functions.
 //
-// It adapts to what's compiled in: the opt-in extensions (wifi, s3_onboard_rgb) are guarded with
-// function_exists(), so the script still runs on a build with fewer of them.
+// It adapts to what's compiled in: the opt-in extensions (wifi, led) are guarded with
+// function_exists()/class_exists(), so the script still runs on a build with fewer of them.
 
 $pass = 0; $fail = 0; $deprecations = [];
 set_error_handler(function ($errno, $msg) use (&$deprecations) {
@@ -25,7 +25,7 @@ check('mem_available() bool',   is_bool(mem_available()));
 check('store_available() bool', is_bool(store_available()));
 check('sys_available() bool',    is_bool(sys_available()));
 if (function_exists('wifi_available'))           check('wifi_available() bool', is_bool(wifi_available()));
-if (function_exists('s3_onboard_rgb_available')) check('s3_onboard_rgb_available() bool', is_bool(s3_onboard_rgb_available()));
+if (class_exists('Baremetal\\Led\\Driver\\Ws2812')) check('Baremetal\\Led\\Driver\\Ws2812 class', true);
 
 // 2) sys timing + info; delay() is a plain alias of sys_delay() (no deprecation warning)
 sys_delay(1); check('sys_delay(1) ran', true);
@@ -55,7 +55,11 @@ if (store_available()) { store_set('t', 'hi'); check('store round-trip', store_g
 gpio_mode(2, GPIO_OUTPUT);
 gpio_write(2, "1");
 check('gpio_write coerces "1" -> 1', gpio_read(2) === 1);
-if (function_exists('s3_onboard_rgb_set')) { s3_onboard_rgb_set(0, 8, 0); check('s3_onboard_rgb_set ran', true); }
+if (class_exists('Baremetal\\Led\\Driver\\Ws2812')) {
+    $led = new Baremetal\Led\Driver\Ws2812(48, 1, Baremetal\Led\Driver\Ws2812::RGB);
+    $led->set(0, 8, 0);
+    check('Ws2812 set ran', true);
+}
 
 echo "\n==== $pass passed, $fail failed ====\n";
 if ($deprecations) {

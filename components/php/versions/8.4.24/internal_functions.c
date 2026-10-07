@@ -41,8 +41,8 @@ extern zend_module_entry spi_module_entry;
 extern zend_module_entry web_module_entry;
 #endif
 
-#ifdef PHP_EXT_S3_ONBOARD_RGB_ENABLED
-extern zend_module_entry s3_onboard_rgb_module_entry;
+#ifdef PHP_EXT_LED_ENABLED
+extern zend_module_entry led_module_entry;
 #endif
 
 #ifdef PHP_EXT_WIFI_ENABLED
@@ -141,8 +141,8 @@ static zend_module_entry * const php_builtin_extensions[] = {
 #ifdef PHP_EXT_WEB_ENABLED
 	&web_module_entry,
 #endif
-#ifdef PHP_EXT_S3_ONBOARD_RGB_ENABLED
-	&s3_onboard_rgb_module_entry,
+#ifdef PHP_EXT_LED_ENABLED
+	&led_module_entry,
 #endif
 #ifdef PHP_EXT_WIFI_ENABLED
 	&wifi_module_entry,

@@ -64,8 +64,8 @@ The colour swatch sits above the tabs, so it stays visible on every tab and flic
 - WiFi SoftAP: `wifi_ap_start($ssid, $password = null)`, `wifi_ap_ip()`, `wifi_available()`
 - HTTP + WebSocket: `serve_http($port)`, `serve_ws($path)`, `ws_broadcast($data)`, and the
   `Baremetal\Http\{Request, Response, Message}` classes (`$m->text`, `$m->reply()`)
-- RGB LED: `s3_onboard_rgb_hsv($h, $s, $v)` (h 0-359, s/v 0-255), `s3_onboard_rgb_off()`,
-  `s3_onboard_rgb_available()`
+- RGB LED: `new Baremetal\Led\Driver\Ws2812($pin, 1, Ws2812::RGB)`, then `$led->hsv($i, $h, $s, $v)`
+  (h 0-359, s/v 0-255) + `$led->show()`, and `$led->off()`
 
 ## Build & flash
 
@@ -87,5 +87,5 @@ Set the network name/password at the top of `init.php` (default `php-rgb` / `bar
 ## Board support
 
 Works on any **WiFi-capable ESP32-S3** board with the onboard WS2812 (S3-Zero, S3-Mini, S3-Pico…). Every
-ESP32-S3 has WiFi on the die. This example is ESP32-S3-only because the `s3_onboard_rgb` LED extension is;
-its WiFi + web half would also run on other network-capable boards.
+ESP32-S3 has WiFi on the die. It targets the S3's onboard LED (set `LED_PIN` to match your board); the
+`led` driver and the WiFi + web half would also run on other boards.

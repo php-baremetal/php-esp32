@@ -6,8 +6,8 @@ PHP. This is the reference for their functions as of the 1.0 API.
 Two groups:
 
 - **Always compiled in** — `gpio`, `sys`, `mem`, `store`. Available in every build; no config needed.
-- **Opt-in** — `wifi`, `s3_onboard_rgb`. Compiled in only when the project enables them
-  (`[extensions.<name>] enabled = true`), because they carry weight or are board-specific.
+- **Opt-in** — `wifi`. Compiled in only when the project enables it
+  (`[extensions.wifi] enabled = true`), because it carries weight.
 
 Every extension exposes a **`<name>_available()`** probe that returns `true` when the extension is
 compiled in and its preconditions are met. Because an absent extension's functions don't exist at all,
@@ -157,22 +157,9 @@ foreach ($aps ?: [] as $ap) { /* ... */ }
 ```
 <!-- @endcode-block -->
 
-## s3_onboard_rgb — the onboard RGB LED
-
-Opt-in (`[extensions.s3_onboard_rgb] enabled = true`), **ESP32-S3 only** — the addressable WS2812 LED
-soldered onto S3 dev boards. The data pin is set at build time (`[extensions.s3_onboard_rgb] pin = N`,
-default 48).
-
-<!-- @code-block language="php" label="s3_onboard_rgb" -->
-```php
-s3_onboard_rgb_set(int $r, int $g, int $b): void   // each 0..255
-s3_onboard_rgb_hsv(int $h, int $s, int $v): void   // h 0..359, s/v 0..255
-s3_onboard_rgb_off(): void
-s3_onboard_rgb_available(): bool
-```
-<!-- @endcode-block -->
-
-Constant: `S3_ONBOARD_RGB_PIN` (the data GPIO the build was configured with).
+Addressable LEDs (WS2812, SK6812) are a separate opt-in extension, `led`, with a per-chip driver class
+(`Baremetal\Led\Driver\*`) rather than global functions — the pin and pixel count are passed at
+construction. See the [`led-strip`](../../examples/led-strip/) example.
 
 ---
 
