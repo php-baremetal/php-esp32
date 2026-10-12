@@ -9,11 +9,17 @@ board="$1"
 build_dir="${BUILD_DIR:-build}"
 # The `factory` cap is read from the partition table the build actually used. That table is
 # generated per build (cmake/gen-partitions.cmake, sized to fill the flash) and its absolute path is
-# recorded in sdkconfig; this tracks the real limit for both the chip/preset model and legacy boards.
-csv=$(sed -nE 's/^CONFIG_PARTITION_TABLE_CUSTOM_FILENAME="(.*)"$/\1/p' "${build_dir}/sdkconfig")
+# recorded in the generated sdkconfig. ESP-IDF writes sdkconfig in the project dir (not build/), so
+# look there first, then inside the build dir.
+csv=""
+for sdkconfig in "sdkconfig" "${build_dir}/sdkconfig" "${build_dir}/../sdkconfig"; do
+  [ -f "$sdkconfig" ] || continue
+  csv=$(sed -nE 's/^CONFIG_PARTITION_TABLE_CUSTOM_FILENAME="(.*)"$/\1/p' "$sdkconfig")
+  [ -n "$csv" ] && break
+done
 if [ -z "$csv" ] || [ ! -f "$csv" ]; then
-  # Fallback: a legacy board's committed table.
-  csv=$(ls boards/*/"$board"/partitions.csv 2>/dev/null | head -1)
+  # Fallback: the chip's committed table (boards/<chip>/partitions.csv).
+  csv=$(ls "boards/${board%%/*}/partitions.csv" 2>/dev/null | head -1)
 fi
 cap=$(awk -F',' '/^[[:space:]]*#/ { next } { gsub(/[[:space:]]/,"",$1) } $1 == "factory" { gsub(/[[:space:]]/,"",$5); print $5 }' "$csv")
 

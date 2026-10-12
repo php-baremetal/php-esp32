@@ -69,9 +69,10 @@ behaviour before marking it done.
 
 ## How-to, by area
 
-- **Add a board** — copy the closest existing profile under `boards/<family>/<board>/` (board.toml,
-  board.h, sdkconfig.board, partitions.csv, board.cmake) and adjust. See
-  [boards/README.md](boards/README.md).
+- **Add a board** — for a new product, add a preset (`boards/<chip>/<mode>/presets/<vendor-model>.toml`,
+  or `boards/<chip>/presets/` on a mode-less chip) with its flash, console and peripheral pins; no code
+  is needed. For a new chip, add `boards/<chip>/` with `chip.toml`, `sdkconfig.chip`, `board.c`/`board.h`/
+  `board.cmake` and `partitions.csv`. See [boards/README.md](boards/README.md).
 - **Add / port an extension** —
   - *Per-project C extension* (project-local, the low-friction option): a directory under an example's
     `firmware/exts/<name>/` with a `<name>.c` defining `zend_module_entry <name>_module_entry`. See
@@ -82,7 +83,7 @@ behaviour before marking it done.
 - **Add a PHP version** — a new `components/php/versions/<ver>/` directory (version.env with the
   sha256, patches, sources.cmake, extensions.cmake, manifest.toml). Versions coexist. See
   [components/php/versions/README.md](components/php/versions/README.md).
-- **Add an example** — a folder under `examples/` with `php-esp32.config.toml`, `project-src/`, a
+- **Add an example** — a folder under `examples/` with `php-baremetal.config.toml`, `project-src/`, a
   `README.md`, and (once you've run it) a `monitor.txt` of the real output. Don't commit the `build/`
   directory.
 - **The why behind the port** — [docs/reference/porting-notes.md](docs/reference/porting-notes.md) is

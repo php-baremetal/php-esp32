@@ -72,7 +72,7 @@ Two chip families are supported today:
 
 Within each family, `-ETH` adds a wired network, `-Pico` is the same board without it (microSD +
 embedded), and `-Zero` is the minimal variant: embedded-only, no microSD slot. The ESP32-P4 has no
-native radio, so `esp32-p4-wifi-c6` is a **special board** that adds WiFi through an on-board companion
+native radio, so `waveshare-esp32-p4-wifi6` is a **special board** that adds WiFi through an on-board companion
 chip (see [docs/reference/special-boards.md](docs/reference/special-boards.md)).
 
 More of the ESP32 line will follow. Any part with PSRAM and a reasonable flash is a candidate, and a
@@ -214,17 +214,13 @@ php-esp32/
 ├── scripts/
 │   ├── fetch-php.sh          downloads, verifies and patches the PHP source
 │   ├── fetch-sqlite.sh · fetch-oniguruma.sh · fetch-openssl.sh   optional sources, on demand
-│   └── info.sh               what this checkout can build (versions, boards, modes)
-├── boards/                   one directory per chip family, then per board
-│   ├── esp32-p4/             family: target and PSRAM (sdkconfig.family, family.toml)
-│   │   ├── esp32-p4-zero/    board: embedded-only, no microSD, no network
-│   │   ├── esp32-p4-pico/    board: pins and mount code (board.c/.h), sdkconfig, partitions
-│   │   ├── esp32-p4-eth/     board: adds the wired Ethernet
-│   │   └── esp32-p4-wifi-c6/   board: adds WiFi via an on-board ESP32-C6 (ESP-HOSTED)
-│   └── esp32-s3/
-│       ├── esp32-s3-zero/    board: embedded-only, no microSD, no network
-│       ├── esp32-s3-pico/    board: SD over SPI, no network
-│       └── esp32-s3-eth/     board: SD over SPI, Ethernet over a W5500
+│   └── info.sh               what this checkout can build (versions, chips, modes, presets)
+├── boards/                   one directory per chip; presets name real products
+│   ├── esp32-p4/             chip: target, capabilities, config-driven board.c/.h, sdkconfig.chip
+│   │   └── presets/          products: waveshare-esp32-p4-{pico,eth,wifi6}, generic
+│   └── esp32-s3/             chip: one config-driven board.c/.h for every S3 board
+│       ├── quad/             PSRAM mode (4 MB): sdkconfig.chip, meta.toml, presets/
+│       └── octal/            PSRAM mode (8 MB): sdkconfig.chip, meta.toml, presets/
 ├── main/                     boot: mounts storage and network via the board, starts the engine
 ├── components/
 │   ├── php/
@@ -243,8 +239,8 @@ php-esp32/
 
 Two switches select what gets built, `-DPHP_VERSION=<ver>` and `-DBOARD=<board>` (defaults in
 `php-esp32.toml`), and phpflash sets both from the project config. Everything version-specific lives
-under `components/php/versions/<ver>/` and everything board- or family-specific under
-`boards/<family>/<board>/`, so adding a PHP version or a board is a new directory rather than edits
+under `components/php/versions/<ver>/` and everything chip-specific under
+`boards/<chip>/`, so adding a PHP version or a board is a new directory rather than edits
 scattered across the tree. See [boards/README.md](boards/README.md) and
 [components/php/versions/README.md](components/php/versions/README.md); `./scripts/info.sh` prints what
 the checkout can build.

@@ -6,7 +6,7 @@ cmake_minimum_required(VERSION 3.16)
 # the default comes from `default_board` in php-esp32.toml. Adding a board or a whole
 # family is a new directory under boards/, not an edit here.
 set(REPO_ROOT "${CMAKE_CURRENT_LIST_DIR}")
-include("${REPO_ROOT}/cmake/resolve-board.cmake")   # -> BOARD, BOARD_DIR, FAMILY_DIR
+include("${REPO_ROOT}/cmake/resolve-board.cmake")   # -> BOARD, CHIP_DIR, MODE_DIR, BOARD_DIR, BOARD_IDF_TARGET
 message(STATUS "Board: ${BOARD}  (${BOARD_DIR})")
 
 # Export the resolved board so main/CMakeLists can recover it in ESP-IDF's early
@@ -27,24 +27,18 @@ set(ENV{PHP_ENTRY} "${PHP_ENTRY}")
 # REQUIRES, which ESP-IDF captures in the early pass where -D vars aren't visible -- so export it.
 set(ENV{PHP_PROJECT_EXTS_DIR} "${PHP_PROJECT_EXTS_DIR}")
 
-# Layer sdkconfig defaults, set before project() so ESP-IDF reads them. The new model layers
-# base < chip < PSRAM-mode < preset-fragment; the legacy model layers base < family < board. The
-# preset fragment is written by flash-tool from the preset's flash/console/... config.
+# Layer sdkconfig defaults, set before project() so ESP-IDF reads them:
+# base < chip < PSRAM-mode < preset-fragment. The preset fragment is written by flash-tool from the
+# preset's flash/console/... config.
 set(SDKCONFIG_DEFAULTS "${REPO_ROOT}/sdkconfig.defaults")
-if(NEW_BOARD_MODEL)
-    list(APPEND SDKCONFIG_DEFAULTS "${CHIP_DIR}/sdkconfig.chip")
-    if(EXISTS "${MODE_DIR}/sdkconfig.psram")
-        list(APPEND SDKCONFIG_DEFAULTS "${MODE_DIR}/sdkconfig.psram")
-    endif()
-else()
-    list(APPEND SDKCONFIG_DEFAULTS "${FAMILY_DIR}/sdkconfig.family")
+list(APPEND SDKCONFIG_DEFAULTS "${CHIP_DIR}/sdkconfig.chip")
+if(NOT MODE_DIR STREQUAL CHIP_DIR AND EXISTS "${MODE_DIR}/sdkconfig.chip")
+    list(APPEND SDKCONFIG_DEFAULTS "${MODE_DIR}/sdkconfig.chip")
 endif()
 if(DEFINED PHP_PRESET_SDKCONFIG AND NOT PHP_PRESET_SDKCONFIG STREQUAL "")
     list(APPEND SDKCONFIG_DEFAULTS "${PHP_PRESET_SDKCONFIG}")
-elseif(EXISTS "${BOARD_DIR}/sdkconfig.board")
-    list(APPEND SDKCONFIG_DEFAULTS "${BOARD_DIR}/sdkconfig.board")
-elseif(NEW_BOARD_MODEL AND EXISTS "${MODE_DIR}/meta.toml")
-    # A raw `idf.py -DBOARD=<chip>/<mode>` build (no phpflash, so no preset fragment): give it the
+elseif(EXISTS "${MODE_DIR}/meta.toml")
+    # A raw `idf.py -DBOARD=<chip>[/<mode>]` build (no phpflash, so no preset fragment): give it the
     # mode's default flash size (meta.toml) so the image isn't built for the 2 MB IDF default and
     # overflow. phpflash always passes a preset fragment, so this only applies to bare/CI builds.
     file(STRINGS "${MODE_DIR}/meta.toml" _df_line REGEX "^[ \t]*default_flash[ \t]*=")
@@ -124,8 +118,8 @@ endif()
 # Pin the ESP-IDF target BEFORE project.cmake. ESP-IDF only reads CONFIG_IDF_TARGET out of
 # SDKCONFIG_DEFAULTS *after* it has already fixed the target; if IDF_TARGET isn't set it "guesses"
 # from a stray in-source sdkconfig (a leftover from an earlier in-tree build), which silently builds
-# the wrong architecture for a different chip. BOARD_IDF_TARGET (from resolve-board.cmake: chip.toml
-# in the new model, sdkconfig.family in the legacy one) is the single source of truth.
+# the wrong architecture for a different chip. BOARD_IDF_TARGET (from resolve-board.cmake: the chip's
+# chip.toml) is the single source of truth.
 if(DEFINED BOARD_IDF_TARGET AND NOT BOARD_IDF_TARGET STREQUAL "")
     set(IDF_TARGET "${BOARD_IDF_TARGET}")
     message(STATUS "php-esp32: IDF target pinned to '${IDF_TARGET}'")

@@ -4,7 +4,7 @@ cmake_minimum_required(VERSION 3.16)
 # resolved -DBOARD / -DPHP_PRESET_SDKCONFIG / -DPHP_NETWORK / pins, as the main build does) and sees
 # whose peripherals come up.
 get_filename_component(REPO_ROOT "${CMAKE_CURRENT_LIST_DIR}/../.." ABSOLUTE)
-include("${REPO_ROOT}/cmake/resolve-board.cmake")   # -> BOARD, BOARD_DIR, NEW_BOARD_MODEL, CHIP_DIR, MODE_DIR, FAMILY_DIR, BOARD_IDF_TARGET
+include("${REPO_ROOT}/cmake/resolve-board.cmake")   # -> BOARD, CHIP_DIR, MODE_DIR, BOARD_DIR, BOARD_IDF_TARGET
 message(STATUS "Discover-fw board: ${BOARD} (${BOARD_DIR})")
 
 # board.cmake / board.c read these in ESP-IDF's early requirement-expansion phase (as in the main
@@ -14,16 +14,12 @@ set(ENV{PHP_ESP32_BOARD} "${BOARD}")
 set(ENV{PHP_ESP32_MICROSD} "ON")   # the discovery build always probes the microSD
 
 # Board config (target, chip-rev min, flash size, PSRAM) comes from the layered sdkconfig, mirroring
-# the main project: chip + PSRAM mode (new model) or family + board (legacy), then the preset fragment,
-# then our own file LAST (it overrides the partition table -- the discovery app is tiny).
+# the main project: chip + PSRAM mode, then the preset fragment, then our own file LAST (it overrides
+# the partition table -- the discovery app is tiny).
 set(SDKCONFIG_DEFAULTS "${REPO_ROOT}/sdkconfig.defaults")
-if(NEW_BOARD_MODEL)
-    list(APPEND SDKCONFIG_DEFAULTS "${CHIP_DIR}/sdkconfig.chip")
-    if(EXISTS "${MODE_DIR}/sdkconfig.psram")
-        list(APPEND SDKCONFIG_DEFAULTS "${MODE_DIR}/sdkconfig.psram")
-    endif()
-else()
-    list(APPEND SDKCONFIG_DEFAULTS "${FAMILY_DIR}/sdkconfig.family" "${BOARD_DIR}/sdkconfig.board")
+list(APPEND SDKCONFIG_DEFAULTS "${CHIP_DIR}/sdkconfig.chip")
+if(NOT MODE_DIR STREQUAL CHIP_DIR AND EXISTS "${MODE_DIR}/sdkconfig.chip")
+    list(APPEND SDKCONFIG_DEFAULTS "${MODE_DIR}/sdkconfig.chip")
 endif()
 if(DEFINED PHP_PRESET_SDKCONFIG AND NOT PHP_PRESET_SDKCONFIG STREQUAL "")
     list(APPEND SDKCONFIG_DEFAULTS "${PHP_PRESET_SDKCONFIG}")

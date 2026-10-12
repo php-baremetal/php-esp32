@@ -2,6 +2,23 @@
 
 ## [1.6.0] - WIP - LED drivers
 
+### Changed
+- **Project config renamed `php-esp32.config.toml` to `php-baremetal.config.toml`** (and its local
+  override `php-baremetal.config.local.toml`), with a backend-neutral layout: a portable header (`name`, `type`,
+  `[php]`, `[env]`, `[extensions.*]`, `[store]`, `[web-server]`) describes the app, and an `[esp32]`
+  block holds the board, toolchain (`[esp32.idf]`/`[esp32.sdk]`, was `[esp-idf]`/`[php-esp32]`),
+  `storage_type`, `secure`/`secure_boot`/`power_save`, and `[esp32.storage]`/`[esp32.network]`. Rename
+  the file and move those keys under `[esp32]` to upgrade. See
+  [the config file](https://github.com/php-baremetal/flash-tool/blob/main/docs/configuration/config-file.md).
+- **Boards moved to a chip/mode/preset model.** A project selects a board by `[esp32] preset =
+  "<vendor-model>"` (e.g. `waveshare-esp32-s3-eth`, `waveshare-esp32-p4-eth`) or `family =
+  "<chip>/<mode>"`; one `board.c` per chip compiles only the peripherals the preset/project wires.
+  The ESP32-S3 splits into `quad`/`octal` PSRAM modes (the one build-time split); the ESP32-P4 is a
+  single-mode chip. The app partition is sized to the board's flash automatically, and `phpflash flash`
+  refuses an image too big for the board or a PSRAM-mode mismatch. The old per-model board keys
+  (`esp32-p4-pico`, `esp32-s3-eth`, and so on) are gone — use the preset name; `phpflash init` and `discover`
+  now list and select presets.
+
 ### Added
 - **`led` — addressable-LED drivers (WS2812, SK6812).** A new opt-in extension (`[extensions.led]`,
   `leds = ["ws2812", ...]`) with a per-chip driver class under `Baremetal\Led\Driver\*`, backed by ESP-IDF's
@@ -14,6 +31,15 @@
 - **`s3_onboard_rgb`** — replaced by the `led` extension. The onboard LED is now driven with
   `new Baremetal\Led\Driver\Ws2812($pin, 1, Ws2812::RGB)` (pin at construction, any target), instead of the
   S3-only `s3_onboard_rgb_*()` functions and the build-time `[extensions.s3_onboard_rgb] pin`.
+
+### Fixed
+- **An ESP32-P4 without a WiFi companion no longer stalls and spams the log at boot.** ESP-HOSTED (the
+  WiFi-companion transport, linked on every P4 build) auto-started before `app_main` and probed a
+  co-processor that isn't there on a `-pico`/`-eth` board — repeating `eh_host_port_sdio:
+  sdmmc_card_init failed` and taking the SDMMC host the microSD needs. Its pre-`app_main` auto-init is
+  now off by default for the P4 and re-enabled only by the `waveshare-esp32-p4-wifi6` preset (which has
+  the companion); WiFi otherwise comes up through the `wifi` extension when the project uses it. A
+  P4-Pico/-ETH now boots clean, with the microSD on SDIO and more free heap.
 
 ## [1.5.0] - Power Save, Watch Button, Product Protection
 
