@@ -1,0 +1,9 @@
+# Fixed-partition spec shared by every ESP32-P4 board. cmake/gen-partitions.cmake keeps only the
+# fixed rows below and (re)generates `factory` (sized to fill the flash, from the preset's flash
+# size) and `storage` (the embedded source FAT image) per build. The factory line here is just the
+# fallback size used if a build ever omits the flash size. Only the fixed partitions are below.
+#
+# Name,     Type, SubType,  Offset,   Size
+nvs,        data, nvs,      ,         24K
+phy_init,   data, phy,      ,         4K
+factory,    app,  factory,  ,         7936K

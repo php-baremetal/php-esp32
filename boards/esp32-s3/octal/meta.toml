@@ -1,0 +1,4 @@
+# ESP32-S3 octal-PSRAM mode metadata. default_flash is the flash size used when a project selects
+# this mode by family (esp32-s3/octal) without a preset -- the smallest common octal S3 flash.
+schema_version = 1
+default_flash  = "8MB"

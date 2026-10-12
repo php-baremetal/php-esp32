@@ -1,0 +1,7 @@
+# Waveshare ESP32-S3-Zero (N8R8 variant): ESP32-S3-PICO-1-N8R8 module, 8 MB flash, 8 MB octal PSRAM.
+# USB-C wired to the S3's native USB -> USB Serial/JTAG console. No microSD, no wired network; an
+# onboard WS2812 on GPIO21 driven from PHP via the `led` extension. Runs embedded-only.
+schema_version = 1
+name    = "Waveshare ESP32-S3-Zero (N8R8)"
+flash   = "8MB"
+console = "usb-jtag"

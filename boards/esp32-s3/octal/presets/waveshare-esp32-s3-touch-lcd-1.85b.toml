@@ -1,0 +1,18 @@
+# Waveshare ESP32-S3-Touch-LCD-1.85B: ESP32-S3R8 module, 16 MB flash, 8 MB octal PSRAM. USB-C native
+# USB -> USB Serial/JTAG console. A round 360x360 ST77916 QSPI display + CST816S touch, a QMI8658 IMU,
+# an ES8311/ES7210 audio codec, a BQ27220 fuel gauge and a PCF85063 RTC all share one I2C bus
+# (SDA=11, SCL=10) -- those are driven at runtime from PHP (pins passed at construction), not here.
+#
+# microSD: the TF slot's pins are labelled SDMMC (CLK/CMD/D0..D3) but the S3 has no SD host, so it is
+# wired as SPI -- SCLK=CLK(15), MOSI=CMD(14), MISO=D0(16), CS=D3(13); D1/D2 unused in SPI mode.
+schema_version = 1
+name    = "Waveshare ESP32-S3-Touch-LCD-1.85B"
+flash   = "16MB"
+console = "usb-jtag"
+
+[storage.microsd]
+mode = "spi"
+cs   = 13
+sclk = 15
+mosi = 14
+miso = 16

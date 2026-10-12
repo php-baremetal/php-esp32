@@ -1,0 +1,4 @@
+# ESP32-S3 quad-PSRAM mode metadata. default_flash is the flash size used when a project selects
+# this mode by family (esp32-s3/quad) without a preset -- the smallest common quad S3 flash.
+schema_version = 1
+default_flash  = "4MB"

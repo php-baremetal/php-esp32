@@ -6,6 +6,12 @@
 # the esp_wifi_* API on the host and forwards it to the co-processor; esp_hosted is the
 # transport (SDIO) + the real implementation. Gated to the esp32p4 target so they are
 # fetched only for P4 builds (other targets have native WiFi and must not pull these).
+#
+# esp_hosted is linked on every P4 build (its managed dep can't be pruned per our WiFi flag),
+# but it does NOT auto-start its SDIO transport: CONFIG_ESP_HOSTED_AUTO_CALL_INIT_BEFORE_APP_MAIN
+# is forced off in boards/esp32-p4/sdkconfig.chip, and the wifi-c6 preset turns it back on. Without
+# that, a P4 with no companion (e.g. the Pico) would auto-probe a non-existent SDIO slave at boot and
+# spam `eh_host_port_sdio: sdmmc_card_init failed`, besides grabbing the shared SDMMC host.
 dependencies:
   espressif/esp_wifi_remote:
     version: "*"

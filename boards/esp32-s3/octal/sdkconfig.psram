@@ -1,0 +1,5 @@
+# ESP32-S3 OCTAL PSRAM mode. Layered over sdkconfig.chip. The quad/octal split is the one thing
+# that MUST match the module wiring (8 data lines vs 4): with the wrong mode PSRAM never inits and,
+# since the whole PHP heap lives in PSRAM, the engine has no memory to run in. Modules: ESP32-S3R8 /
+# ESP32-S3-WROOM-1 N8R8 / N16R8 (DevKitC-1, S3-ETH), ESP32-S3-PICO-1-N8R8 (8 MB octal).
+CONFIG_SPIRAM_MODE_OCT=y

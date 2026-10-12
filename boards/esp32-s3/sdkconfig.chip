@@ -1,0 +1,18 @@
+# ESP32-S3 chip-level defaults. Layered on the base sdkconfig.defaults and under the PSRAM-mode
+# leaf (quad/ or octal/ sdkconfig.psram) and the preset fragment. Everything common to every S3
+# board lives here; only the PSRAM mode differs per leaf.
+
+CONFIG_IDF_TARGET="esp32s3"
+
+# External SPI PSRAM -- the runtime heap lives here: with USE_ZEND_ALLOC=0 the engine uses malloc,
+# and SPIRAM_USE_MALLOC routes allocations to PSRAM. The MODE (quad vs octal) is wiring-specific and
+# set in the mode leaf; the SIZE is auto-detected within a mode, so it is NOT fixed here (a quad
+# build runs on 2 MB and 8 MB quad parts, an octal build on 8 MB and 16 MB octal parts).
+CONFIG_SPIRAM=y
+CONFIG_SPIRAM_SPEED_80M=y
+CONFIG_SPIRAM_USE_MALLOC=y
+# Send ALL malloc() allocations to PSRAM (threshold 0), not just large ones. PHP makes thousands of
+# small allocations; with the default 16 KB threshold they land in internal RAM and exhaust it,
+# starving DMA and FreeRTOS. Internal-only needs (DMA, FreeRTOS objects) still get internal RAM via
+# explicit caps.
+CONFIG_SPIRAM_MALLOC_ALWAYSINTERNAL=0

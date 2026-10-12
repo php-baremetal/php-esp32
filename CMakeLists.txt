@@ -16,6 +16,9 @@ message(STATUS "Board: ${BOARD}  (${BOARD_DIR})")
 set(ENV{PHP_ESP32_BOARD} "${BOARD}")
 set(ENV{PHP_ESP32_WEB_SERVER} "${PHP_PROJECT_WEB_SERVER}")
 set(ENV{PHP_ESP32_MICROSD} "${PHP_STORAGE_MICROSD}")
+# Wired-network type (flash-tool passes -DPHP_NETWORK=w5500 from a preset/project [network]); the
+# chip's board.cmake reads it in the early phase to pull the Ethernet stack into its REQUIRES.
+set(ENV{PHP_ESP32_NETWORK} "${PHP_NETWORK}")
 set(ENV{PHP_OPENSSL_CONF} "${PHP_OPENSSL_CONF}")
 set(ENV{PHP_NET_DNS} "${PHP_NET_DNS}")
 set(ENV{PHP_TLS_CAFILE} "${PHP_TLS_CAFILE}")
@@ -24,12 +27,41 @@ set(ENV{PHP_ENTRY} "${PHP_ENTRY}")
 # REQUIRES, which ESP-IDF captures in the early pass where -D vars aren't visible -- so export it.
 set(ENV{PHP_PROJECT_EXTS_DIR} "${PHP_PROJECT_EXTS_DIR}")
 
-# Layer sdkconfig defaults: base (repo root) < family < board. Must be set before
-# project() so ESP-IDF reads them (the target and all board config come from here).
-set(SDKCONFIG_DEFAULTS
-    "${REPO_ROOT}/sdkconfig.defaults"
-    "${FAMILY_DIR}/sdkconfig.family"
-    "${BOARD_DIR}/sdkconfig.board")
+# Layer sdkconfig defaults, set before project() so ESP-IDF reads them. The new model layers
+# base < chip < PSRAM-mode < preset-fragment; the legacy model layers base < family < board. The
+# preset fragment is written by flash-tool from the preset's flash/console/... config.
+set(SDKCONFIG_DEFAULTS "${REPO_ROOT}/sdkconfig.defaults")
+if(NEW_BOARD_MODEL)
+    list(APPEND SDKCONFIG_DEFAULTS "${CHIP_DIR}/sdkconfig.chip")
+    if(EXISTS "${MODE_DIR}/sdkconfig.psram")
+        list(APPEND SDKCONFIG_DEFAULTS "${MODE_DIR}/sdkconfig.psram")
+    endif()
+else()
+    list(APPEND SDKCONFIG_DEFAULTS "${FAMILY_DIR}/sdkconfig.family")
+endif()
+if(DEFINED PHP_PRESET_SDKCONFIG AND NOT PHP_PRESET_SDKCONFIG STREQUAL "")
+    list(APPEND SDKCONFIG_DEFAULTS "${PHP_PRESET_SDKCONFIG}")
+elseif(EXISTS "${BOARD_DIR}/sdkconfig.board")
+    list(APPEND SDKCONFIG_DEFAULTS "${BOARD_DIR}/sdkconfig.board")
+elseif(NEW_BOARD_MODEL AND EXISTS "${MODE_DIR}/meta.toml")
+    # A raw `idf.py -DBOARD=<chip>/<mode>` build (no phpflash, so no preset fragment): give it the
+    # mode's default flash size (meta.toml) so the image isn't built for the 2 MB IDF default and
+    # overflow. phpflash always passes a preset fragment, so this only applies to bare/CI builds.
+    file(STRINGS "${MODE_DIR}/meta.toml" _df_line REGEX "^[ \t]*default_flash[ \t]*=")
+    if(_df_line MATCHES "\"([0-9]+)(MB|KB)\"")
+        set(_df_num "${CMAKE_MATCH_1}")
+        set(_df_unit "${CMAKE_MATCH_2}")
+        set(_df_frag "${CMAKE_BINARY_DIR}/defaultflash.sdkconfig.defaults")
+        file(WRITE "${_df_frag}" "CONFIG_ESPTOOLPY_FLASHSIZE_${_df_num}${_df_unit}=y\nCONFIG_ESPTOOLPY_FLASHSIZE=\"${_df_num}${_df_unit}\"\n")
+        list(APPEND SDKCONFIG_DEFAULTS "${_df_frag}")
+        if(_df_unit STREQUAL "MB")
+            math(EXPR PHP_FLASH_SIZE_KB "${_df_num} * 1024")
+        else()
+            set(PHP_FLASH_SIZE_KB "${_df_num}")
+        endif()
+        message(STATUS "php-esp32: no preset -- using mode default flash ${_df_num}${_df_unit}")
+    endif()
+endif()
 
 # Optional CPU frequency override, from the project config's [board] cpu_freq_mhz (flash-tool passes
 # -DPHP_CPU_FREQ_MHZ). Layered LAST so it wins over the board defaults. On the ESP32-P4 the choices
@@ -89,16 +121,14 @@ if(PHP_SECURE_BOOT)
     message(STATUS "php-esp32: secure_boot -> Secure Boot v2 enabled, signing with ${PHP_SECURE_BOOT_KEY}")
 endif()
 
-# Pin the ESP-IDF target from the selected family's sdkconfig.family, BEFORE project.cmake.
-# ESP-IDF only reads CONFIG_IDF_TARGET out of SDKCONFIG_DEFAULTS *after* it has already fixed
-# the target; if IDF_TARGET isn't set it "guesses" from a stray in-source sdkconfig (a leftover
-# from an earlier in-tree build), which silently builds the wrong architecture for a different
-# family. Setting IDF_TARGET here makes the family's sdkconfig.family the single source of truth
-# and stops the guess. FAMILY_DIR comes from resolve-board.cmake.
-file(STRINGS "${FAMILY_DIR}/sdkconfig.family" _idf_target_line REGEX "^CONFIG_IDF_TARGET=")
-if(_idf_target_line MATCHES "^CONFIG_IDF_TARGET=\"([^\"]+)\"")
-    set(IDF_TARGET "${CMAKE_MATCH_1}")
-    message(STATUS "php-esp32: IDF target pinned to '${IDF_TARGET}' (from ${FAMILY_DIR}/sdkconfig.family)")
+# Pin the ESP-IDF target BEFORE project.cmake. ESP-IDF only reads CONFIG_IDF_TARGET out of
+# SDKCONFIG_DEFAULTS *after* it has already fixed the target; if IDF_TARGET isn't set it "guesses"
+# from a stray in-source sdkconfig (a leftover from an earlier in-tree build), which silently builds
+# the wrong architecture for a different chip. BOARD_IDF_TARGET (from resolve-board.cmake: chip.toml
+# in the new model, sdkconfig.family in the legacy one) is the single source of truth.
+if(DEFINED BOARD_IDF_TARGET AND NOT BOARD_IDF_TARGET STREQUAL "")
+    set(IDF_TARGET "${BOARD_IDF_TARGET}")
+    message(STATUS "php-esp32: IDF target pinned to '${IDF_TARGET}'")
 endif()
 
 # Dynamic partition table: the `storage` partition is generated from PHP_EMBED_SRC (present and

@@ -1,0 +1,15 @@
+# Waveshare ESP32-P4-WIFI6: ESP32-P4 module, 32 MB flash, 32 MB PSRAM, with an on-board ESP32-C6
+# companion that provides WiFi 6 over ESP-HOSTED (SDIO). USB-C USB-UART (CH343P) console on UART0.
+# microSD on native 4-bit SDMMC (SDIO reference wiring). The P4 has no on-die radio: the `wifi`
+# extension forwards esp_wifi_* to the C6; this preset supplies the ESP-HOSTED build config
+# (C6 slave + the Function-EV-Board SDIO profile). Pins are factory wiring.
+schema_version = 1
+name    = "Waveshare ESP32-P4-WIFI6"
+flash   = "32MB"
+console = "uart"
+
+[storage.microsd]
+mode = "sdio"
+
+[network]
+type = "wifi-c6"

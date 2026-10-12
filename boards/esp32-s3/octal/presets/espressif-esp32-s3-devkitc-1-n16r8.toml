@@ -1,0 +1,6 @@
+# Espressif ESP32-S3-DevKitC-1 (N16R8): ESP32-S3-WROOM-1 module, 16 MB flash, 8 MB octal PSRAM.
+# Same build as the N8R8 (flash size is adaptive) with a larger flash; the app partition grows to
+# fill it. Console over the UART bridge; onboard LED via the `led` extension. Runs embedded-only.
+schema_version = 1
+name  = "Espressif ESP32-S3-DevKitC-1 (N16R8)"
+flash = "16MB"

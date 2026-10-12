@@ -87,6 +87,12 @@ idf_component_register(
     REQUIRES php php_ext_gpio php_ext_store php_ext_mem php_ext_sys php_project_exts event_bus esp_partition esp_app_format fatfs vfs esp_pm ${WEB_SERVER_REQUIRES} ${LED_REQUIRES} ${WIFI_REQUIRES} ${I2C_REQUIRES} ${SPI_REQUIRES} ${WEB_REQUIRES} ${BOARD_REQUIRES}
 )
 
+# The board's display name: a preset sets it (flash-tool passes -DPHP_BOARD_NAME); otherwise board.h's
+# family-level default stands.
+if(DEFINED PHP_BOARD_NAME AND NOT PHP_BOARD_NAME STREQUAL "")
+    target_compile_definitions(${COMPONENT_LIB} PRIVATE "BOARD_NAME=\"${PHP_BOARD_NAME}\"")
+endif()
+
 # fs_pathnorm.c: --wrap the file syscalls so "." / ".." in paths are collapsed before the FATFS VFS
 # (which can't resolve them). Global link options so the wrap applies to every caller (PHP included).
 foreach(_fn stat lstat open opendir access mkdir unlink rmdir rename)
@@ -113,6 +119,31 @@ endif()
 if(_microsd)
     target_compile_definitions(${COMPONENT_LIB} PRIVATE PHP_STORAGE_MICROSD=1)
 endif()
+
+# Wired network type (flash-tool passes -DPHP_NETWORK=<type> from a preset/project [network]).
+# Recover it from the env in the early phase, like the flags above. The chip's board.c compiles its
+# bring-up only for the matching define (and board.h then exposes BOARD_HAS_NETWORK):
+#   w5500 -> SPI Ethernet (S3);  emac -> internal-EMAC Ethernet (P4).
+# "wifi-c6" needs no board.c code -- WiFi runs on a C6 companion via the `wifi` extension / ESP-HOSTED.
+set(_net "${PHP_NETWORK}")
+if(NOT _net AND NOT "$ENV{PHP_ESP32_NETWORK}" STREQUAL "")
+    set(_net "$ENV{PHP_ESP32_NETWORK}")
+endif()
+if(_net STREQUAL "w5500")
+    target_compile_definitions(${COMPONENT_LIB} PRIVATE PHP_NET_W5500=1)
+elseif(_net STREQUAL "emac")
+    target_compile_definitions(${COMPONENT_LIB} PRIVATE PHP_NET_EMAC=1)
+endif()
+
+# Peripheral pins a preset/project configures (flash-tool passes them as -D<name>=<gpio>). The chip's
+# board.c reads these, falling back to the board's factory wiring when a pin isn't passed. Forwarded
+# as compile definitions only when set, so an unconfigured pin keeps board.c's default.
+foreach(_pin PHP_SD_CS PHP_SD_CLK PHP_SD_MOSI PHP_SD_MISO PHP_SD_PWR_EN
+             PHP_ETH_CS PHP_ETH_INT PHP_ETH_RST PHP_ETH_SCLK PHP_ETH_MOSI PHP_ETH_MISO)
+    if(DEFINED ${_pin} AND NOT "${${_pin}}" STREQUAL "")
+        target_compile_definitions(${COMPONENT_LIB} PRIVATE "${_pin}=${${_pin}}")
+    endif()
+endforeach()
 
 # OPcache (-DPHP_EXT_OPCACHE=ON): main.c installs the embed SAPI ini_defaults hook that turns it on
 # and points its file cache at the card. The extension itself is built in the php component; here we

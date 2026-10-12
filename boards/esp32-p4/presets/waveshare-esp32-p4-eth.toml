@@ -1,0 +1,16 @@
+# Waveshare ESP32-P4-ETH: ESP32-P4 module, 32 MB flash, 32 MB PSRAM. USB-C USB-UART (CH343P) console
+# on UART0. microSD on native 4-bit SDMMC (SDIO reference wiring), with the card's VDD switched by a
+# P-MOSFET on GPIO45 (driven low to power it). Wired Ethernet via the internal EMAC + IP101 RMII PHY
+# (reset on GPIO51; RMII data/clock pins are the ESP32-P4 EMAC defaults). Pins are factory wiring.
+schema_version = 1
+name    = "Waveshare ESP32-P4-ETH"
+flash   = "32MB"
+console = "uart"
+
+[storage.microsd]
+mode   = "sdio"
+pwr_en = 45
+
+[network]
+type = "emac"
+rst  = 51

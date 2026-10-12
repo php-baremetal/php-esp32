@@ -1,0 +1,17 @@
+# ESP32-P4 chip descriptor. One board.c / board.cmake / sdkconfig.chip serve every P4 board. The P4
+# has a single PSRAM configuration (32 MB in-package, no quad/octal wiring split), so unlike the S3
+# there are no mode leaves -- the vendor-model presets sit directly under presets/ (a mode-less chip).
+#
+# target       : the ESP-IDF target (RISC-V, dual-core HP + LP).
+# capabilities : which peripheral types this chip can drive -- flash-tool validates a preset's /
+#                project's [storage.microsd] mode and [network] type against these and rejects
+#                impossible combinations.
+
+schema_version = 1
+
+name   = "ESP32-P4"
+target = "esp32p4"
+
+[capabilities]
+microsd = ["sdio"]            # P4 has an SD host -> native 4-bit SDMMC (SDIO)
+network = ["emac", "wifi-c6"] # internal EMAC + RMII PHY (board.c); or WiFi on a C6 companion via ESP-HOSTED

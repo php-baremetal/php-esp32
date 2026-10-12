@@ -1,0 +1,6 @@
+# Open preset for the ESP32-S3 octal-PSRAM family: no peripherals preset. Used when a project selects
+# the family (`[board] family = "esp32-s3/octal"`) without naming a model; the project adds any
+# peripherals itself (declaring type + pins, validated against the chip's capabilities). Flash
+# defaults to the mode's default_flash (meta.toml) when the project doesn't pin one.
+schema_version = 1
+name = "ESP32-S3 (octal PSRAM, generic)"

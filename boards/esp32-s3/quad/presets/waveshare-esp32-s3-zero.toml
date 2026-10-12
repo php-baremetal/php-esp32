@@ -1,0 +1,7 @@
+# Waveshare ESP32-S3-Zero: ESP32-S3FH4R2 module, 4 MB flash, 2 MB quad PSRAM. USB-C wired straight
+# to the S3's native USB (GPIO19/20) -> USB Serial/JTAG console. No microSD, no wired network; an
+# onboard WS2812 on GPIO21 driven from PHP via the `led` extension (not board.c). Runs embedded-only.
+schema_version = 1
+name    = "Waveshare ESP32-S3-Zero"
+flash   = "4MB"
+console = "usb-jtag"

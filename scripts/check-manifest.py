@@ -104,33 +104,31 @@ for e in exts:
         if not os.path.exists(os.path.join(ROOT, p)):
             errors.append(f"extension '{e['key']}' lists driver '{drv}' but {p} is missing")
 
-# 4) board descriptors: the storage/project types a board claims to support must be
-#    keys this manifest declares; the board's family must be its parent directory.
+# 4) chip descriptors: each chip.toml's target must match its sibling sdkconfig.chip, and every
+#    preset under it must wire a microSD mode / network type the chip's capabilities allow.
 import glob
-boards = glob.glob(os.path.join(ROOT, "boards", "*", "*", "board.toml"))
-for bt in boards:
-    b = tomllib.load(open(bt, "rb"))
-    rel = os.path.relpath(bt, ROOT)
-    for st in b.get("storage_types", []):
-        if st not in storage_types:
-            errors.append(f"{rel}: unknown storage_type '{st}'")
-    for pt in b.get("project_types", []):
-        if pt not in types:
-            errors.append(f"{rel}: unknown project_type '{pt}'")
-    fam_dir = os.path.basename(os.path.dirname(os.path.dirname(bt)))
-    if b.get("family") not in (None, fam_dir):
-        errors.append(f"{rel}: family '{b.get('family')}' != its directory '{fam_dir}'")
-
-# 5) family descriptors: target must match the sibling sdkconfig.family.
-families = glob.glob(os.path.join(ROOT, "boards", "*", "family.toml"))
-for ft in families:
-    f = tomllib.load(open(ft, "rb"))
-    rel = os.path.relpath(ft, ROOT)
-    sk = os.path.join(os.path.dirname(ft), "sdkconfig.family")
-    if f.get("target") and os.path.exists(sk):
+for ct in glob.glob(os.path.join(ROOT, "boards", "*", "chip.toml")):
+    c = tomllib.load(open(ct, "rb"))
+    cdir = os.path.dirname(ct)
+    rel = os.path.relpath(ct, ROOT)
+    sk = os.path.join(cdir, "sdkconfig.chip")
+    if c.get("target") and os.path.exists(sk):
         m = re.search(r'CONFIG_IDF_TARGET="([^"]+)"', open(sk).read())
-        if m and m.group(1) != f["target"]:
-            errors.append(f"{rel}: target '{f['target']}' != sdkconfig.family '{m.group(1)}'")
+        if m and m.group(1) != c["target"]:
+            errors.append(f"{rel}: target '{c['target']}' != sdkconfig.chip '{m.group(1)}'")
+    caps = c.get("capabilities", {})
+    cap_msd, cap_net = caps.get("microsd", []), caps.get("network", [])
+    presets = (glob.glob(os.path.join(cdir, "presets", "*.toml")) +
+               glob.glob(os.path.join(cdir, "*", "presets", "*.toml")))
+    for pp in presets:
+        p = tomllib.load(open(pp, "rb"))
+        prel = os.path.relpath(pp, ROOT)
+        msd = p.get("storage", {}).get("microsd", {}).get("mode")
+        if msd and msd not in cap_msd:
+            errors.append(f"{prel}: microsd mode '{msd}' not in chip capabilities {cap_msd}")
+        net = p.get("network", {}).get("type")
+        if net and net not in cap_net:
+            errors.append(f"{prel}: network type '{net}' not in chip capabilities {cap_net}")
 
 if errors:
     print("check-manifest: FAIL")
@@ -138,6 +136,9 @@ if errors:
         print("  -", e)
     sys.exit(1)
 
+n_chips = len(glob.glob(os.path.join(ROOT, "boards", "*", "chip.toml")))
+n_presets = len(glob.glob(os.path.join(ROOT, "boards", "*", "presets", "*.toml")) +
+                glob.glob(os.path.join(ROOT, "boards", "*", "*", "presets", "*.toml")))
 print(f"check-manifest: OK ({len(exts)} extensions, {len(storage_types)} storage types, "
       f"{len(types)} project types, {len(manifest_flags)} ext + {len(pt_flags)} project flags "
-      f"all match CMake; {len(families)} family/families, {len(boards)} board(s) validated)")
+      f"all match CMake; {n_chips} chip(s), {n_presets} preset(s) validated)")

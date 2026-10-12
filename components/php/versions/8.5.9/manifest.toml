@@ -22,12 +22,12 @@
 # a board with a network offers it.
 #
 # [[storage_type]]  where the PHP source lives -- the upstream choice, above `type`.
-#   key          : identifier used in php-esp32.config.toml `storage_type` (microsd/embedded).
+#   key          : identifier used in php-baremetal.config.toml `storage_type` (microsd/embedded).
 #   available    : false = reserved/not implemented in the firmware yet.
 #   description  : one line.
 #
 # [[project_type]]  the execution model.
-#   key          : identifier used in php-esp32.config.toml `type`.
+#   key          : identifier used in php-baremetal.config.toml `type`.
 #   available    : false = reserved/not implemented in the firmware yet.
 #   flag         : optional build define selecting this model, e.g. "PHP_PROJECT_WEB_SERVER=ON"
 #                  (an option() in main/CMakeLists.txt). Absent for the default model (init-loop).

@@ -1,0 +1,26 @@
+# Waveshare ESP32-S3-ETH: ESP32-S3R8 module, 16 MB flash, 8 MB octal PSRAM. USB-C native USB ->
+# USB Serial/JTAG console. Two SPI peripherals, each on its own host so they share no pins:
+#   - microSD in SPI mode (SPI2): CS=4, SCLK=7, MOSI=6, MISO=5.
+#   - W5500 wired Ethernet (SPI3): CS=14, INT=10, RST=9, SCLK=13, MOSI=11, MISO=12.
+# No onboard LED. A `microsd`/`embedded` project gets the card; a project with [network] off drops
+# the W5500. (Pins are the board's factory wiring; a project may override them.)
+schema_version = 1
+name    = "Waveshare ESP32-S3-ETH"
+flash   = "16MB"
+console = "usb-jtag"
+
+[storage.microsd]
+mode = "spi"
+cs   = 4
+sclk = 7
+mosi = 6
+miso = 5
+
+[network]
+type = "w5500"
+cs   = 14
+int  = 10
+rst  = 9
+sclk = 13
+mosi = 11
+miso = 12

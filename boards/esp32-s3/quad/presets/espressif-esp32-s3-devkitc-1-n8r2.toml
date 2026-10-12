@@ -1,0 +1,6 @@
+# Espressif ESP32-S3-DevKitC-1 (N8R2): ESP32-S3-WROOM-1 module, 8 MB flash, 2 MB quad PSRAM. Console
+# over the UART bridge (IDF default). No microSD, no wired network; an onboard addressable LED (GPIO48
+# on v1.0, GPIO38 on v1.1) driven from PHP via the `led` extension. Runs embedded-only.
+schema_version = 1
+name  = "Espressif ESP32-S3-DevKitC-1 (N8R2)"
+flash = "8MB"

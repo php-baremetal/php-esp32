@@ -1,0 +1,4 @@
+# ESP32-P4 chip metadata. default_flash is the flash size used when a project selects the chip
+# (-DBOARD=esp32-p4 or [esp32] family="esp32-p4") without a preset pinning one.
+schema_version = 1
+default_flash  = "32MB"

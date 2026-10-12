@@ -1,0 +1,11 @@
+# Waveshare ESP32-P4-Pico: ESP32-P4 module, 32 MB flash, 32 MB in-package PSRAM. USB-C via an on-board
+# USB-UART bridge (CH343P) on UART0 -> one cable for flashing and console. microSD on native 4-bit
+# SDMMC (SDIO), the P4 reference wiring (CLK=43, CMD=44, D0..D3=39..42, on-chip LDO ch4). No wired
+# network (a sketch can still use WiFi via a companion on the -wifi6 board). Pins are factory wiring.
+schema_version = 1
+name    = "Waveshare ESP32-P4-Pico"
+flash   = "32MB"
+console = "uart"
+
+[storage.microsd]
+mode = "sdio"

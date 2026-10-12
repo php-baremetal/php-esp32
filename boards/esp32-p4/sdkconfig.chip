@@ -1,0 +1,28 @@
+# ESP32-P4 chip-level defaults. Layered on the base sdkconfig.defaults and under the preset fragment.
+# Everything common to every P4 board lives here; the flash size and any console override come from
+# the preset.
+
+CONFIG_IDF_TARGET="esp32p4"
+
+# 32 MB in-package PSRAM. This is where the runtime heap lives: with USE_ZEND_ALLOC=0 the engine uses
+# malloc, and SPIRAM_USE_MALLOC routes allocations to PSRAM. The P4 has a single PSRAM configuration,
+# so (unlike the S3) there is no quad/octal mode to pick.
+CONFIG_SPIRAM=y
+CONFIG_SPIRAM_USE_MALLOC=y
+# Send ALL malloc() allocations to PSRAM (threshold 0), not just large ones. PHP makes thousands of
+# small allocations; with the default 16 KB threshold they land in internal RAM and exhaust it,
+# starving DMA (the SD card) and FreeRTOS. Internal-only needs still get internal RAM via explicit caps.
+CONFIG_SPIRAM_MALLOC_ALWAYSINTERNAL=0
+
+# Chip revision. Early ESP32-P4 boards carry a rev v1.x chip; IDF 5.5.5 defaults to a v3.01 minimum
+# and refuses to flash. SELECTS_REV_LESS_V3 unlocks the <3.0 family, then REV_MIN_100 (v1.00) covers
+# the chip. (A v3.x board can drop these; verify with `esptool chip_id`.)
+CONFIG_ESP32P4_SELECTS_REV_LESS_V3=y
+CONFIG_ESP32P4_REV_MIN_100=y
+
+# ESP-HOSTED (WiFi via an on-board companion over SDIO) is linked on every P4 build, but must NOT
+# auto-start its SDIO transport here: a P4 with no companion (e.g. the Pico/ETH) would probe a
+# non-existent slave before app_main and spam `eh_host_port_sdio: sdmmc_card_init failed` forever,
+# besides grabbing the shared SDMMC host the microSD needs. The wifi-c6 preset turns this back on;
+# otherwise WiFi (the `wifi` extension) brings the transport up lazily when it's actually used.
+CONFIG_ESP_HOSTED_AUTO_CALL_INIT_BEFORE_APP_MAIN=n

@@ -1,0 +1,17 @@
+# ESP32-S3 chip descriptor. One board.c / board.cmake / sdkconfig.chip serve every S3 board;
+# the PSRAM mode (the one irreducible build-time split) lives in the quad/ and octal/ leaves,
+# and a thin vendor-model preset under <mode>/presets/ selects a mode and its board's wiring.
+#
+# target       : the ESP-IDF target (Xtensa LX7, dual-core).
+# capabilities : which peripheral types this chip can drive -- flash-tool validates a preset's /
+#                project's [storage.microsd] mode and [network] type against these and rejects
+#                impossible combinations (e.g. an SDIO card or an internal-EMAC net on the S3).
+
+schema_version = 1
+
+name   = "ESP32-S3"
+target = "esp32s3"
+
+[capabilities]
+microsd = ["spi"]           # S3 has no SD host -> SD runs over SPI
+network = ["w5500", "wifi"] # W5500 over SPI (board.c); wifi is the on-die radio (the `wifi` extension)
