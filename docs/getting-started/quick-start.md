@@ -5,6 +5,7 @@ see_also:
   - { href: './architecture.md', meta: '8 min' }
   - { href: '../extensions/porting-status.md', meta: '6 min' }
   - { href: '../storage/persistent-store.md', meta: '4 min' }
+  - { href: '../reference/serial-console.md', meta: 'Reference', label: 'Reading the serial console' }
   - { href: 'https://github.com/php-baremetal/flash-tool', meta: 'external', label: 'phpflash' }
 prev: { label: 'Overview', href: '../overview.md' }
 next: { label: 'Architecture', href: './architecture.md' }
@@ -259,7 +260,7 @@ phpflash monitor    # open the serial console (Ctrl-] to leave)
 
 `flash` checks that the connected chip matches the project's board before writing, and refuses with a clear message if you have, say, an S3 project but a P4 plugged in. It picks the port from `-p`, then `[esp32].port`, then the first serial device it finds.
 
-`monitor` opens the console. On a networked board the boot log prints the address it came up on (`network up -- http://<ip>/`), which is where you point a browser or `curl` for a `web-server` project.
+`monitor` opens the console. On a networked board the boot log prints the address it came up on (`network up -- http://<ip>/`), which is where you point a browser or `curl` for a `web-server` project. If the monitor stays silent -- the output is on a port autodetect didn't pick, or a native-USB board reset into download mode -- see [reading the serial console](../reference/serial-console.md).
 
 <!-- @callout variant="warning" title="Chip-vs-board mismatch on flash" -->
 `flash` cross-checks the connected chip against the project's board and refuses to write on a mismatch. Pass `--force` to override only when you are sure, for instance when two boards on the same chip differ in a way the probe cannot see.

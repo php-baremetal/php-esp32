@@ -6,7 +6,7 @@ see_also:
   - { href: '../getting-started/architecture.md', meta: 'Getting started', label: 'Architecture' }
   - { href: 'https://github.com/espressif/esp-hosted-mcu', meta: 'external', label: 'ESP-Hosted-MCU' }
 prev: { label: 'Partitions and the flash layout', href: './partitions.md' }
-next: { label: 'No next page', href: '#' }
+next: { label: 'Reading the serial console', href: './serial-console.md' }
 ---
 
 # Special boards
