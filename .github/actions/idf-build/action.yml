@@ -14,6 +14,9 @@ inputs:
   fetch-ext-sources:
     description: Also fetch the SQLite and oniguruma sources (needed by the extensions above).
     default: 'false'
+  network:
+    description: Wired network to compile into board.c (emac | w5500); empty = none.
+    default: ''
 
 runs:
   using: composite
@@ -54,6 +57,8 @@ runs:
       env:
         IDF_CCACHE_ENABLE: '1'
         CCACHE_DIR: ${{ github.workspace }}/.ccache
+        # board.cmake reads this in the early requirement-expansion phase to pull the net REQUIRES.
+        PHP_ESP32_NETWORK: ${{ inputs.network }}
       run: |
         . "$IDF_PATH/export.sh"
         if [ "${{ inputs.fetch-ext-sources }}" = "true" ]; then
@@ -62,12 +67,14 @@ runs:
           ./scripts/fetch-openssl.sh
         fi
         mkdir -p ci-src && printf '<?php echo "ci\\n";\n' > ci-src/index.php
-        # zero boards are embedded-only with no card; drop the SD stack there.
-        msd=ON; [[ "${{ inputs.board }}" == *-zero ]] && msd=OFF
+        # Embedded-only smoke builds drop the SD stack for the bare S3 chip/mode keys (esp32-s3/*);
+        # the P4 chip keeps it (it has a card slot).
+        msd=ON; case "${{ inputs.board }}" in esp32-s3/*) msd=OFF;; esac
         ws=OFF; [ "${{ inputs.web-server }}" = "true" ] && ws=ON
+        netarg=""; [ -n "${{ inputs.network }}" ] && netarg="-DPHP_NETWORK=${{ inputs.network }}"
         idf.py -DBOARD=${{ inputs.board }} -DPHP_VERSION=${{ inputs.version }} \
                -DPHP_EMBED_SRC="$PWD/ci-src" -DPHP_STORAGE_MICROSD=$msd \
-               -DPHP_PROJECT_WEB_SERVER=$ws ${{ inputs.extensions }} build
+               -DPHP_PROJECT_WEB_SERVER=$ws $netarg ${{ inputs.extensions }} build
 
     - name: Check image fits the app partition
       shell: bash
