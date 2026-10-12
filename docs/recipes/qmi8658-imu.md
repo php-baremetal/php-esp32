@@ -105,7 +105,7 @@ function loop(int $tick): void
 ```
 <!-- @endcode-block -->
 
-See the [`imu-poll-core1`](../../examples/imu-poll-core1/) example.
+See the [`imu-events`](https://github.com/php-baremetal/examples/tree/main/05-i2c-sensors/imu-events) example.
 
 ## As an event source (event-driven)
 
@@ -132,7 +132,7 @@ $imu->poll(hz: 30, depth: 16, event: SamplesReady::class);
 <!-- @endcode-block -->
 
 Keep the rate modest (each event shares the reactor queue with anything else — HTTP, timers): ~30 Hz is
-plenty for a UI and leaves the queue room. The [`imu-ws-stream`](../../examples/imu-ws-stream/) example
+plenty for a UI and leaves the queue room. The [`imu-ws-stream`](https://github.com/php-baremetal/examples/tree/main/05-i2c-sensors/imu-ws-stream) example
 streams accel + gyro + temperature to a browser over WebSocket this way.
 
 ## The `Imu` capability

@@ -159,10 +159,10 @@ foreach ($aps ?: [] as $ap) { /* ... */ }
 
 Addressable LEDs (WS2812, SK6812) are a separate opt-in extension, `led`, with a per-chip driver class
 (`Baremetal\Led\Driver\*`) rather than global functions — the pin and pixel count are passed at
-construction. See the [`led-strip`](../../examples/led-strip/) example.
+construction. See the [`s3-rgb-show`](https://github.com/php-baremetal/examples/tree/main/04-gpio-led/s3-rgb-show) example.
 
 ---
 
 To confirm a build's extensions actually work on real hardware, flash the
-[`ext-selftest`](../../examples/ext-selftest/) example: it exercises every function above and reports
+[`ext-selftest`](https://github.com/php-baremetal/examples/tree/main/01-language/ext-selftest) example: it exercises every function above and reports
 PASS/FAIL on the serial log.

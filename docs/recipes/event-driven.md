@@ -97,7 +97,7 @@ $imu->poll(hz: 20, depth: 16, event: SamplesReady::class);
 <!-- @endcode-block -->
 
 The sampling runs on core 1; the handler reads the latest sample from the ring — no bus traffic, no
-polling in your code. See [imu-ws-stream](../../examples/imu-ws-stream/) for the same idea streamed to a
+polling in your code. See [imu-ws-stream](https://github.com/php-baremetal/examples/tree/main/05-i2c-sensors/imu-ws-stream) for the same idea streamed to a
 browser.
 
 ## Why it matters

@@ -120,5 +120,5 @@ since every frame shares the one reactor queue with your HTTP handlers).
 ## Put together
 
 A sensor polled on core 1, broadcast live over WebSocket, with the page served over HTTP — all on one
-reactor — is the [`imu-ws-stream`](../../examples/imu-ws-stream/) example. A REST + WebSocket control
-page driving the onboard LED is [`wifi-ap-s3-rgb-manage`](../../examples/wifi-ap-s3-rgb-manage/).
+reactor — is the [`imu-ws-stream`](https://github.com/php-baremetal/examples/tree/main/05-i2c-sensors/imu-ws-stream) example. A REST + WebSocket control
+page driving the onboard LED is [`wifi-ap-s3-rgb-manage`](https://github.com/php-baremetal/examples/tree/main/08-network-web/wifi-ap-s3-rgb-manage).
