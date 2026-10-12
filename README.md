@@ -278,7 +278,7 @@ is the full account, with each decision and the reason for it.
 
 ## Project & community
 
-- **[Roadmap](ROADMAP.md)** — where the project is heading, and the 1.0.0 → 3.0.0 milestones.
+- **[Roadmap](ROADMAP.md)** — where the project is heading, and the 1.0.0 → 2.0.0 milestones.
 - **[Contributing](CONTRIBUTING.md)** — how to add a board, an extension or an example, and how to open
   a good PR. New contributors are welcome.
 - **[Security policy](SECURITY.md)** — how to report a vulnerability, and the security model of running
