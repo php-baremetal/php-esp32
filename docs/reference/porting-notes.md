@@ -15,7 +15,7 @@ next: { label: 'Partitions and the flash layout', href: './partitions.md' }
 The technical choices behind running PHP on the ESP32, with the reason for each one. This is the place to look when something seems arbitrary: it almost never is. The work started on the ESP32-P4 (RISC-V) and now covers the ESP32-S3 (Xtensa) as well; most of it is target-independent by design, and the parts that are not are called out where they come up — the per-board storage and networking near the end, and the couple of architecture notes below.
 
 <!-- @callout variant="info" title="How this port is organized" -->
-Two structural ideas run through everything below: **one directory per PHP version** (`components/php/versions/<version>/`) and **one directory per board and chip family** (`boards/<family>/<board>/`). A new PHP release or a new board is a new directory, not edits scattered across the build. Keep that in mind as each subsystem is described.
+Two structural ideas run through everything below: **one directory per PHP version** (`components/php/versions/<version>/`) and **one directory per chip** (`boards/<chip>/`), where a thin preset names each real product. A new PHP release or a new chip is a new directory, and a new product is just a preset, not edits scattered across the build. Keep that in mind as each subsystem is described.
 <!-- @endcallout -->
 
 ## The hand-written config
@@ -63,19 +63,19 @@ The version-sensitive parts of `compat/` live here too — `date_stub.c`, `timel
 - **Validate** — `./scripts/check-manifest.py <newver>` validates that version's manifest.
 <!-- @endsteps -->
 
-## One directory per board (and chip family)
+## One directory per chip, presets name products
 
-The same idea applies to the hardware. Everything specific to a board lives under `boards/<family>/<board>/` — for example `boards/esp32-p4/esp32-p4-pico/` and `boards/esp32-p4/esp32-p4-eth/`. A board owns three things:
+The same idea applies to the hardware. Each chip is a directory — `boards/esp32-p4/`, `boards/esp32-s3/` — holding one config-driven implementation for every board of that chip. A chip directory owns:
 
-- its **config** (`sdkconfig.board`: flash size, chip revision, console, partition table);
-- its **pins**;
-- its **code** — `board.c` implements a small interface (`board.h`: `board_mount_storage()` / `board_unmount_storage()`), so the microSD wiring (4-bit SDMMC on GPIO39-44, powered by the on-chip LDO on channel 4) lives with the board, not in `main.c`.
+- its **capabilities** (`chip.toml`: the ESP-IDF target, and which microSD modes and network types the silicon can drive);
+- its **config** (`sdkconfig.chip`: the chip-level defaults shared by every board of that chip);
+- its **code** — `board.c` implements a small interface (`board.h`: `board_mount_storage()` / `board_unmount_storage()` / `board_network_up()`). Each peripheral is compiled only when the project/preset enables it and its pins arrive as `-D` defines, so `main/main.c` stays board-agnostic and just calls the interface — it never knows whether a card is on SPI or SDMMC, or a net on a W5500 or an internal MAC.
 
-A different board — even one that wires storage completely differently (SPI SD, other pins, no LDO) — is a new directory implementing the same functions; `main/main.c` is board-agnostic and just calls them. A board also carries a `board.toml` declaring which storage types (`microsd`/`embedded`) and execution modes (`init-loop`/…) its hardware supports — read by `flash-tool`, intersected with what the firmware implements (the version manifest). That is where the two P4 boards differ: the Pico has no wired network so it omits `web-server`, while the `esp32-p4-eth` (an on-board IP101GRI Ethernet PHY) advertises it — offered once the firmware implements it. The two share the same P4 SD reference design and pin-out; the ETH adds only a GPIO45 high-side switch on the card's VDD, which its `board.c` enables before mounting.
+A real product is a **preset**: a thin TOML naming the board and its flash size, console and factory peripheral pins (`[storage.microsd]`, `[network]`). flash-tool reads the preset, intersects its peripherals with the chip's capabilities and with what the firmware implements (the version manifest), and so decides what a project can select. That is where the P4 products differ: the Pico has no wired network so it omits `web-server`, while `waveshare-esp32-p4-eth` (an on-board IP101GRI Ethernet PHY on GPIO45-switched VDD) advertises it — offered once the firmware implements it. They share the same P4 SD reference design and pin-out.
 
-Chip-family settings sit one level up, in `boards/<family>/sdkconfig.family` (the ESP-IDF target, PSRAM), shared by every board of that family; a future `esp32-s3/` family is a sibling directory.
+The one irreducible build-time split — the S3's quad vs octal PSRAM — is a mode leaf under the chip (`boards/esp32-s3/{quad,octal}/`, each with `sdkconfig.chip`, `meta.toml` and `presets/`). A chip with a single PSRAM configuration (the P4) has no mode leaf: its presets sit directly under `presets/`.
 
-`sdkconfig` is layered **base → family → board** (most specific wins): the repo-root `sdkconfig.defaults` holds only board-agnostic PHP-runtime knobs (the bumped task stack, FAT long filenames). The top-level `CMakeLists.txt` resolves the board (default `default_board` in `php-esp32.toml`, override `-DBOARD=<board>`), assembles that three-file `SDKCONFIG_DEFAULTS` list, and the `main` component pulls in the board's `board.cmake` (its sources, include dir and driver requirements).
+`sdkconfig` is layered **base → chip → PSRAM mode → preset fragment** (most specific wins): the repo-root `sdkconfig.defaults` holds only board-agnostic PHP-runtime knobs (the bumped task stack, FAT long filenames). The top-level `CMakeLists.txt` resolves the board (default `default_board` in `php-esp32.toml`, override `-DBOARD=<chip>` or `-DBOARD=<chip>/<mode>`), assembles that `SDKCONFIG_DEFAULTS` list, and the `main` component pulls in the chip's `board.cmake` (its sources, include dir and driver requirements).
 
 <!-- @callout variant="warning" title="Changing board or family regenerates sdkconfig" -->
 Switching board or family in place does not regenerate the layered `sdkconfig` on its own. Remove the stale one first (`rm sdkconfig`) so it is rebuilt from the new base → family → board layers.
@@ -97,7 +97,7 @@ That runs ESP-IDF's `fatfsgen.py` with long-filename support (Composer's `vendor
 
 At boot `main.c` mounts both sources: the microSD at `/sdcard` (when a card is present) and, if the `storage` partition holds an image, that read-only image at `/app` (via `esp_vfs_fat_spiflash_mount_ro`). It runs `/app/index.php` when present, otherwise `/sdcard/index.php`. The two are not exclusive: an embedded project that needs to *write* (a SQLite database, logs) still gets a writable microSD mounted at `/sdcard`, because the embedded image itself is read-only. So "embedded" is really "source in flash, data still on the card if you want it".
 
-microSD support is itself optional (`-DPHP_STORAGE_MICROSD`, on by default). A `microsd` project needs it (the source is on the card); an `embedded` one defaults to **off** — a self-contained firmware that never touches a card. Off, `main.c` doesn't compile the mount call and the board's `board.cmake` doesn't pull the SDMMC drivers (the whole SD block in `board.c` is behind the same `#ifdef`), so it is ~51 KB smaller and a board with no card slot builds cleanly. `fatfs`/`vfs` stay, since the embedded image is FAT too. An embedded project opts the card back in with `[storage] microsd = true`.
+microSD support is itself optional (`-DPHP_STORAGE_MICROSD`, on by default). A `microsd` project needs it (the source is on the card); an `embedded` one defaults to **off** — a self-contained firmware that never touches a card. Off, `main.c` doesn't compile the mount call and the board's `board.cmake` doesn't pull the SDMMC drivers (the whole SD block in `board.c` is behind the same `#ifdef`), so it is ~51 KB smaller and a board with no card slot builds cleanly. `fatfs`/`vfs` stay, since the embedded image is FAT too. An embedded project opts the card back in with `[esp32.storage] microsd = true`.
 
 <!-- @callout variant="note" title="Flags invisible in early requirement expansion" -->
 Like the board and web-server flags, the `microsd` flag is not visible in ESP-IDF's early requirement-expansion phase, so the top-level exports it to the environment for `board.cmake` to read. See the build aside under **Networking** below.
@@ -105,7 +105,7 @@ Like the board and web-server flags, the `microsd` flag is not visible in ESP-ID
 
 ## Networking and the web-server model
 
-A board with wired Ethernet (the `esp32-p4-eth`) declares `BOARD_HAS_NETWORK`, and its `board.c` implements `board_network_up()`: it initialises the EMAC and the IP101 RMII PHY, starts a DHCP client, waits (bounded) for a lease and returns the address. The ESP32-P4's default EMAC pin map already matches this board's wiring, so the MAC config is the stock `ETH_ESP32_EMAC_DEFAULT_CONFIG()` plus the PHY reset pin. `main.c` calls this for any board that has it and logs `network up -- http://<ip>/`; a board without a network never links the code in.
+A board with wired Ethernet (the `waveshare-esp32-p4-eth` preset, `[network] type = "emac"`) builds `board_network_up()` with `PHP_NET_EMAC`, and `board.h` then exposes `BOARD_HAS_NETWORK`: it initialises the EMAC and the IP101 RMII PHY, starts a DHCP client, waits (bounded) for a lease and returns the address. The ESP32-P4's default EMAC pin map already matches this board's wiring, so the MAC config is the stock `ETH_ESP32_EMAC_DEFAULT_CONFIG()` plus the PHY reset pin. `main.c` calls this for any board that has it and logs `network up -- http://<ip>/`; a board without a network never links the code in.
 
 On top of that, PHP can serve HTTP two ways.
 
@@ -335,7 +335,7 @@ Carrying the port a bit further with three more of PHP's bundled extensions: `ex
 The first handshake died with *"esp-aes: Failed to allocate memory for the array of DMA descriptors"*: the PHP heap is PSRAM (`USE_ZEND_ALLOC=0` → `malloc` → PSRAM), so the TLS record buffers live in PSRAM, and the hardware AES accelerator drives DMA that can't reach PSRAM. `sdkconfig.defaults` disables it (`CONFIG_MBEDTLS_HARDWARE_AES=n`, `…_GCM=n`); software AES works from any memory. A handshake then takes ~10 s (software RSA verify + AES), which the watchdog window covers.
 <!-- @endcallout -->
 
-**Certificates and DNS.** TLS verification uses a CA bundle the firmware reads from `$PHP_TLS_CAFILE` (path from `-DPHP_TLS_CAFILE`, default `certs/ca-bundle.crt` under the source); `phpflash` copies the host's root store into the project (and `phpflash update-certs` refreshes it). With no bundle the client connects but doesn't verify (and logs it). Static DNS servers (`[network] dns`) are applied to the netif after DHCP via `-DPHP_NET_DNS` (comma-separated — a semicolon would be split by CMake's list syntax). See the `https-client` example.
+**Certificates and DNS.** TLS verification uses a CA bundle the firmware reads from `$PHP_TLS_CAFILE` (path from `-DPHP_TLS_CAFILE`, default `certs/ca-bundle.crt` under the source); `phpflash` copies the host's root store into the project (and `phpflash update-certs` refreshes it). With no bundle the client connects but doesn't verify (and logs it). Static DNS servers (`[esp32.network] dns`) are applied to the netif after DHCP via `-DPHP_NET_DNS` (comma-separated — a semicolon would be split by CMake's list syntax). See the `https-client` example.
 
 ## FATFS path resolution: `.`/`..` and `lstat` (running frameworks)
 

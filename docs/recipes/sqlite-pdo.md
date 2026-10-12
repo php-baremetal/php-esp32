@@ -111,15 +111,15 @@ The microSD is a FAT filesystem, which has no POSIX file locking. For plain PDO 
 
 A minimal microSD project with the SQLite extension enabled. The one `[extensions.sqlite]` table builds both `ext/pdo` and `ext/pdo_sqlite`; `phpflash` fetches the SQLite amalgamation on demand.
 
-<!-- @code-block language="toml" label="php-esp32.config.toml" -->
+<!-- @code-block language="toml" label="php-baremetal.config.toml" -->
 ```toml
 name = "sqlite-notes"
-storage_type = "microsd"   # writable database file lives on the card
 type = "cli"
 
-[board]
-target = "esp32-p4-pico"
+[esp32]
+preset = "waveshare-esp32-p4-pico"
 port   = ""                # empty = autodetect at flash time
+storage_type = "microsd"   # writable database file lives on the card
 
 [php]
 src   = "project-src"      # PHP source folder

@@ -28,16 +28,16 @@ Radio:  none (no built-in WiFi/BT; this chip needs a companion for wireless)
 ```
 <!-- @endcode-block -->
 
-So a bare P4 board (`esp32-p4-pico`, `esp32-p4-eth`, `esp32-p4-zero`) has no WiFi at all. It becomes a
+So a bare P4 board (`waveshare-esp32-p4-pico`, `waveshare-esp32-p4-eth`) has no WiFi at all. It becomes a
 WiFi board only when it carries a **companion radio chip** — typically an on-board **ESP32-C6** — wired
 to the P4 over **SDIO** and running the **ESP-HOSTED** slave firmware. The P4 is the *host*; the C6 is
 the *radio*. On the host, `esp_wifi_remote` re-exposes the normal `esp_wifi_*` API and forwards every
 call to the companion over the SDIO transport (`esp_hosted`). This is the **ESP32-P4-WIFI6** board
-(`esp32-p4-wifi-c6`).
+(`waveshare-esp32-p4-wifi6`).
 
 Because the API is identical, **the `wifi` extension and your PHP code are unchanged** — `wifi_scan()`,
-`wifi_connect()`, `wifi_ap_start()` all work exactly as on an ESP32-S3. A board profile declares this
-capability in its `board.toml` with `network = "wifi"`.
+`wifi_connect()`, `wifi_ap_start()` all work exactly as on an ESP32-S3. A preset declares this with
+`[network] type = "wifi-c6"`, allowed by the chip's capabilities.
 
 ## What such a board needs
 
@@ -47,8 +47,9 @@ Three things have to line up for WiFi to work on a P4:
    firmware that turns it into a radio the P4 drives over SDIO.
 2. **The SDIO wiring the firmware expects.** The default matches the **ESP32-P4-Function-EV-Board**
    reference pin map (host side): `CLK=18`, `CMD=19`, `D0=14`, `D1=15`, `D2=16`, `D3=17`, and a
-   `RESET` line to the companion (`GPIO54`). The `esp32-p4-wifi-c6` board's `sdkconfig.board` selects
-   this reference mapping. If a board wires the SDIO differently, it sets custom pins instead.
+   `RESET` line to the companion (`GPIO54`). The `waveshare-esp32-p4-wifi6` preset selects this
+   reference mapping (phpflash emits the ESP-HOSTED build config). If a board wires the SDIO
+   differently, it sets custom pins instead.
 3. **The host components.** `esp_wifi_remote` (the forwarding API) and `esp_hosted` (the SDIO
    transport + implementation). These are ESP-IDF **managed components**: a `phpflash build` for a
    P4 target **downloads them automatically** (declared in `main/idf_component.yml`, gated to the
@@ -62,7 +63,7 @@ SDIO pins, and the extension gate (`esp32p4` is no longer excluded) lets the `wi
 
 **If the WiFi companion is integrated on the board when you buy it, it is very probably already
 pre-flashed with the ESP-HOSTED slave firmware and already wired to the P4 over SDIO.** So it works
-out of the box: build for `esp32-p4-wifi-c6`, flash the **P4** (only the P4 — not the companion), and
+out of the box: build for `waveshare-esp32-p4-wifi6`, flash the **P4** (only the P4 — not the companion), and
 WiFi is there. You do not flash the C6 yourself.
 
 You only need to touch the companion if you wired your own, or if the boot log shows a firmware

@@ -79,7 +79,7 @@ Second, ESP-IDF is configured to send `malloc` to PSRAM. The board's chip-level 
 external PSRAM as a `malloc` region and, critically, set the internal-allocation threshold to
 zero so that *all* allocations — not just large ones — land in PSRAM.
 
-<!-- @code-block language="ini" label="boards/esp32-p4/sdkconfig.family" -->
+<!-- @code-block language="ini" label="boards/esp32-p4/sdkconfig.chip" -->
 ```ini
 # 32 MB in-package PSRAM. This is where the runtime heap lives: with
 # USE_ZEND_ALLOC=0 the engine uses malloc, and SPIRAM_USE_MALLOC routes large

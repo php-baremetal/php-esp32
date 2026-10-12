@@ -89,7 +89,7 @@ If you are not sure, start with the subset. Switching to full later is one flag.
 phpflash derives the CMake flags from the project config. The `[extensions.openssl]` table controls
 the whole thing:
 
-<!-- @code-block language="toml" label="php-esp32.config.toml" -->
+<!-- @code-block language="toml" label="php-baremetal.config.toml" -->
 ```toml
 [extensions.openssl]
 enabled        = true
@@ -107,7 +107,7 @@ By hand, the mapping is direct:
 | `no_load_config = true` | `-DPHP_EXT_OPENSSL_NO_LOAD_CONFIG=ON` | full build skips `openssl.cnf` at startup |
 | `config_path = "…"` | `-DPHP_OPENSSL_CONF=…` | full build reads the cnf from a non-default path |
 | `tls = true` | builds the `ssl://` / `tls://` transport | full build gains an HTTPS/TLS client |
-| `[network] dns = […]` | `-DPHP_NET_DNS=…` | static DNS servers, comma-joined for the firmware |
+| `[esp32.network] dns = […]` | `-DPHP_NET_DNS=…` | static DNS servers, comma-joined for the firmware |
 
 The full build needs the OpenSSL source cross-compiled first. `phpflash build` runs it for you; by
 hand:
@@ -164,14 +164,14 @@ By default the full build is crypto only: the `ssl://` and `tls://` transports a
 refuse to open, so `https://` is unavailable. Turn on the `tls` setting to build a working TLS
 client:
 
-<!-- @code-block language="toml" label="php-esp32.config.toml" -->
+<!-- @code-block language="toml" label="php-baremetal.config.toml" -->
 ```toml
 [extensions.openssl]
 enabled = true
 full    = true
 tls     = true      # build the ssl:// and tls:// transport, so https:// works
 
-[network]
+[esp32.network]
 dns = ["1.1.1.1", "8.8.8.8"]   # optional static DNS (DHCP-provided otherwise)
 ```
 <!-- @endcode-block -->
@@ -191,7 +191,7 @@ four points below before you rely on it.
 <!-- @endcallout -->
 
 - **A networked board.** The transport does DNS, TCP and TLS in one esp-tls call, so name resolution
-  rides the board's network (DHCP DNS, or the static `[network] dns`, comma-joined into
+  rides the board's network (DHCP DNS, or the static `[esp32.network] dns`, comma-joined into
   `-DPHP_NET_DNS`).
 - **Root certificates.** OpenSSL 3.0's TLS still verifies peers, so the device needs a CA bundle.
   `phpflash build` copies your host's root-CA store into the project (`project-src/certs/ca-bundle.crt`
@@ -213,13 +213,13 @@ a certificate-verified TLS 1.2/1.3 connection.
 ### Static DNS
 
 The esp-tls transport resolves names over the board's network. With DHCP the resolver's DNS servers
-are used as provided. To pin your own resolvers, set `[network] dns`; phpflash passes them to the
+are used as provided. To pin your own resolvers, set `[esp32.network] dns`; phpflash passes them to the
 firmware as `-DPHP_NET_DNS=1.1.1.1,8.8.8.8` (comma-separated). Leave the array empty to keep the
 DHCP-provided DNS.
 
 <!-- @code-block language="toml" label="Static DNS servers" -->
 ```toml
-[network]
+[esp32.network]
 dns = ["1.1.1.1", "8.8.8.8"]   # empty or omitted = DHCP-provided DNS
 ```
 <!-- @endcode-block -->

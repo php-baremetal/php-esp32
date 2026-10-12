@@ -87,9 +87,9 @@ signing key**: back up every `deploys/<MAC>.pem` offline — losing it ends upda
 
 ## Step 1 — Flash Encryption (the `secure` flag)
 
-Turn it on in `php-esp32.config.toml`:
+Turn it on in `php-baremetal.config.toml`:
 
-<!-- @code-block language="toml" label="php-esp32.config.toml" -->
+<!-- @code-block language="toml" label="php-baremetal.config.toml" -->
 ```toml
 secure = true
 ```
@@ -158,7 +158,7 @@ Secure boot:      enabled
 Flash Encryption stops reading; Secure Boot stops running *unsigned* firmware. Turn it on with a second
 flag:
 
-<!-- @code-block language="toml" label="php-esp32.config.toml" -->
+<!-- @code-block language="toml" label="php-baremetal.config.toml" -->
 ```toml
 secure = true
 secure_boot = true

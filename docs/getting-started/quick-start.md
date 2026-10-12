@@ -84,7 +84,7 @@ cd my-project
 
 <!-- @steps -->
 - **Project name** — defaults to the directory name.
-- **Chip family, then board** — the list is read from `boards/`, so it grows as new boards are added. Picking the board fixes the ESP-IDF target for you.
+- **Chip, then product** — the preset list is read from `boards/`, so it grows as new boards are added. Picking a preset fixes the ESP-IDF target and the board's wiring for you.
 - **Storage type** — `microsd` or `embedded`, limited to what the board supports (a `-Zero` board offers embedded only).
 - **Project type** — the execution model: `init-loop`, `web-server`, or `event-driven`. A board with no network will not offer `web-server`.
 - **Optional extensions** — a multi-select. Each one you enable then asks about its own settings (for example `mbstring` offers oniguruma for `mb_ereg`, `openssl` offers the full OpenSSL build and the TLS client). The always-on extensions are not listed; they are always there.
@@ -92,10 +92,10 @@ cd my-project
 - **Starter** — a `hello` page or a `blink` sketch to put in `project-src/index.php`.
 <!-- @endsteps -->
 
-Pass `--yes` to accept every default and skip the prompts, or `--board esp32-s3-eth` to preselect a board. When php-esp32 is not installed yet, the board and extension steps are skipped and you edit the config after `system-setup`.
+Pass `--yes` to accept every default and skip the prompts, or `--board waveshare-esp32-s3-eth` to preselect a preset. When php-esp32 is not installed yet, the board and extension steps are skipped and you edit the config after `system-setup`.
 
 <!-- @callout variant="tip" title="Boards only offer real modes" -->
-A board's `board.toml` declares the storage and project types its hardware supports, but a mode is offered only when it is *both* listed there *and* marked implemented in the selected PHP version's manifest. That is why the P4-Pico, with no wired network, omits `web-server` while the P4-ETH and S3-ETH include it.
+What a board can offer comes from its preset (the peripherals it has from the factory) and its chip's capabilities; a mode is offered only when it is *both* possible on that hardware *and* marked implemented in the selected PHP version's manifest. That is why the P4-Pico, with no wired network, omits `web-server` while the P4-ETH and S3-ETH include it.
 <!-- @endcallout -->
 
 ## Project layout
@@ -105,7 +105,7 @@ What lands on disk:
 <!-- @code-block language="text" label="tree — project layout" -->
 ```text
 my-project/
-├── php-esp32.config.toml   the project config (below)
+├── php-baremetal.config.toml   the project config (below)
 ├── .gitignore              ignores build/ and the local override
 └── project-src/
     └── index.php           your entry script
@@ -116,17 +116,17 @@ my-project/
 
 ### The config file
 
-`init` writes `php-esp32.config.toml`. It is meant to be read and edited:
+`init` writes `php-baremetal.config.toml`. It is meant to be read and edited:
 
-<!-- @code-block language="toml" label="php-esp32.config.toml" -->
+<!-- @code-block language="toml" label="php-baremetal.config.toml" -->
 ```toml
 name         = "my-project"
-storage_type = "microsd"       # where the PHP source lives: microsd | embedded
 type         = "init-loop"     # execution model: init-loop | web-server | event-driven
 
-[board]
-target = "esp32-p4-pico"       # the board; its family decides the ESP-IDF target
+[esp32]
+preset = "waveshare-esp32-p4-pico"   # the product; its chip decides the ESP-IDF target
 port   = ""                    # serial port; empty = autodetect at flash time
+storage_type = "microsd"       # where the PHP source lives: microsd | embedded
 
 [php]
 src   = "project-src"          # the PHP source folder
@@ -139,10 +139,10 @@ onig    = true                 # build mb_ereg (bundles oniguruma)
 ```
 <!-- @endcode-block -->
 
-The scaffold also leaves `[esp-idf]` and `[php-esp32]` tables (each with `path` and `version`) so a project can pin a specific toolchain or firmware checkout; leave them empty to use the `system-setup` defaults.
+The scaffold also leaves `[esp32.idf]` and `[esp32.sdk]` tables (each with `path` and `version`) so a project can pin a specific toolchain or firmware checkout; leave them empty to use the `system-setup` defaults.
 
 <!-- @callout variant="tip" title="Keep machine-specific settings out of git" -->
-For tweaks that should not be committed (a serial port, a local toolchain path), put them in a `php-esp32.config.local.toml` next to the main file. Every command overlays that file when present, and the scaffolded `.gitignore` already excludes it.
+For tweaks that should not be committed (a serial port, a local toolchain path), put them in a `php-baremetal.config.local.toml` next to the main file. Every command overlays that file when present, and the scaffolded `.gitignore` already excludes it.
 <!-- @endcallout -->
 
 ## Storage: where the code lives
@@ -158,7 +158,7 @@ This is the fastest loop for developing a script, and the only practical option 
 <!-- @tab index="1" -->
 The build packs `project-src/` into a read-only image in the board's flash, so the board runs with no card at all. Good for a fixed appliance, or for a board you would rather not open up.
 
-The image is read-only; if the code needs to write (sessions, a SQLite file, a cache), enable a microSD alongside it with `[storage] microsd = true`, and writes go to the card while the code is served from flash.
+The image is read-only; if the code needs to write (sessions, a SQLite file, a cache), enable a microSD alongside it with `[esp32.storage] microsd = true`, and writes go to the card while the code is served from flash.
 <!-- @endtab -->
 <!-- @endtabs -->
 
@@ -257,12 +257,12 @@ phpflash monitor    # open the serial console (Ctrl-] to leave)
 
 `build` turns the enabled extensions into a deterministic set of build flags, runs any fetch scripts they need (oniguruma, SQLite, OpenSSL), and drives ESP-IDF into a build tree under the project's own `build/`. Because that tree and its `sdkconfig` are per project, several projects can share one php-esp32 install with isolated, side-by-side builds, and a build does not depend on whatever a shared directory held before.
 
-`flash` checks that the connected chip matches the project's board before writing, and refuses with a clear message if you have, say, an S3 project but a P4 plugged in. It picks the port from `-p`, then `[board].port`, then the first serial device it finds.
+`flash` checks that the connected chip matches the project's board before writing, and refuses with a clear message if you have, say, an S3 project but a P4 plugged in. It picks the port from `-p`, then `[esp32].port`, then the first serial device it finds.
 
 `monitor` opens the console. On a networked board the boot log prints the address it came up on (`network up -- http://<ip>/`), which is where you point a browser or `curl` for a `web-server` project.
 
 <!-- @callout variant="warning" title="Chip-vs-board mismatch on flash" -->
-`flash` cross-checks the connected chip against the project's board family and refuses to write on a mismatch. Pass `--force` to override only when you are sure, for instance when two boards in the same family differ in a way the probe cannot see.
+`flash` cross-checks the connected chip against the project's board and refuses to write on a mismatch. Pass `--force` to override only when you are sure, for instance when two boards on the same chip differ in a way the probe cannot see.
 <!-- @endcallout -->
 
 <!-- @callout variant="note" title="Per-project sdkconfig" -->
@@ -291,7 +291,7 @@ phpflash discover --all    # actively probe a blank board's peripherals to name 
 ```
 <!-- @endcode-block -->
 
-Plain `discover` reads the chip with esptool and lists the boards in that family, including a ready-to-paste `[board] target` line. `--all` goes further: it flashes a small probe firmware, built per candidate board so it uses each board's real wiring, brings up the Ethernet link and mounts the card, and names the match.
+Plain `discover` reads the chip with esptool and lists the boards in that family, including a ready-to-paste `[esp32] target` line. `--all` goes further: it flashes a small probe firmware, built per candidate board so it uses each board's real wiring, brings up the Ethernet link and mounts the card, and names the match.
 
 <!-- @callout variant="warning" title="--all overwrites the app" -->
 `discover --all` flashes a probe firmware over whatever is on the board, so it asks first and reminds you to re-flash your project afterward.
@@ -325,7 +325,7 @@ Build, selecting the board and PHP version (`./scripts/info.sh` lists what is av
 
 <!-- @code-block language="bash" label="terminal — idf.py build" -->
 ```bash
-idf.py -DBOARD=esp32-s3-eth -DPHP_VERSION=8.4.25 build
+idf.py -DBOARD=esp32-s3/octal -DPHP_VERSION=8.4.25 build
 ```
 <!-- @endcode-block -->
 

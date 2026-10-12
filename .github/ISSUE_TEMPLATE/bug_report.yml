@@ -19,13 +19,15 @@ body:
     attributes:
       label: Board
       options:
-        - esp32-p4-zero
-        - esp32-p4-pico
-        - esp32-p4-eth
-        - esp32-p4-wifi-c6
-        - esp32-s3-zero
-        - esp32-s3-pico
-        - esp32-s3-eth
+        - waveshare-esp32-p4-pico
+        - waveshare-esp32-p4-eth
+        - waveshare-esp32-p4-wifi6
+        - waveshare-esp32-s3-zero
+        - espressif-esp32-s3-devkitc-1-n8r2
+        - espressif-esp32-s3-devkitc-1-n8r8
+        - espressif-esp32-s3-devkitc-1-n16r8
+        - waveshare-esp32-s3-zero-n8r8
+        - waveshare-esp32-s3-eth
         - other (say which in "What happened")
     validations:
       required: true

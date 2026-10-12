@@ -20,9 +20,9 @@ next:
 
 ## Automatic light sleep — free, nothing to call
 
-The light sleep is **already in the firmware**: in the event-driven model the reactor sleeps on its own between one event and the next, free, without you calling anything. Turn it on with one line in `php-esp32.config.toml`:
+The light sleep is **already in the firmware**: in the event-driven model the reactor sleeps on its own between one event and the next, free, without you calling anything. Turn it on with one line in `php-baremetal.config.toml`:
 
-<!-- @code-block language="toml" label="php-esp32.config.toml" -->
+<!-- @code-block language="toml" label="php-baremetal.config.toml" -->
 ```toml
 power_save = true
 ```

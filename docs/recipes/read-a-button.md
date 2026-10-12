@@ -73,15 +73,15 @@ function loop(int $tick): void {
 
 A minimal `init-loop` project running its source from the microSD:
 
-<!-- @code-block language="toml" label="php-esp32.config.toml" -->
+<!-- @code-block language="toml" label="php-baremetal.config.toml" -->
 ```toml
 name = "button-led"
-storage_type = "microsd"   # where the PHP source lives
 type = "init-loop"         # execution model
 
-[board]
-target = "esp32-p4-pico"
+[esp32]
+preset = "waveshare-esp32-p4-pico"
 port   = ""                # empty = autodetect at flash time
+storage_type = "microsd"   # where the PHP source lives
 
 [php]
 src   = "project-src"      # PHP source folder

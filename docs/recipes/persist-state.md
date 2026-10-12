@@ -59,7 +59,7 @@ function setup(): void
 {
     echo "\n=== store-demo :: persistent boot counter ===\n";
     if (!store_available()) {
-        echo "  persistence is OFF -- add [store] size_kb to php-esp32.config.toml\n";
+        echo "  persistence is OFF -- add [store] size_kb to php-baremetal.config.toml\n";
         echo "=============================================\n";
         return;
     }
@@ -127,7 +127,7 @@ The boot counter needs a flash partition; the hit counter needs the web-server m
 
 `store_*` is **off by default** because it costs flash. Give it a size and `phpflash` adds a dedicated `phpstore` NVS partition to the generated table. A size below 16 KB is bumped up to that floor (NVS needs the headroom); 32 KB holds a few hundred small entries.
 
-<!-- @code-block language="toml" label="php-esp32.config.toml" -->
+<!-- @code-block language="toml" label="php-baremetal.config.toml" -->
 ```toml
 type = "init-loop"
 
@@ -146,7 +146,7 @@ size_kb = 32     # 0 or absent = no persistence
 
 `mem_*` needs no configuration — it is always built in. What this side needs is the **web-server** model plus a `[web-server] init` script (a path relative to `[php] src`) so setup runs once before the first request. The web-server model needs a networked board.
 
-<!-- @code-block language="toml" label="php-esp32.config.toml" -->
+<!-- @code-block language="toml" label="php-baremetal.config.toml" -->
 ```toml
 type = "web-server"
 

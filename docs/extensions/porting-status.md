@@ -54,7 +54,7 @@ The **Roadmap** classification says where an unshipped extension is headed:
 
 <!-- @callout variant="info" title="The manifest is the contract" -->
 `flash-tool` hardcodes nothing about extensions. It reads `manifest.toml` from the installed
-php-esp32, presents the choices, records them in `php-esp32.config.toml`, and at build time emits
+php-esp32, presents the choices, records them in `php-baremetal.config.toml`, and at build time emits
 exactly the `-D<flag>` arguments declared there. When an extension, setting, flag, dependency or
 per-type rule changes, it is edited in the manifest and kept in step with the actual build
 (`flash.sh` `OPTIONAL_EXTS`, `components/php/CMakeLists.txt` `PHP_EXT_*` options, and
@@ -215,7 +215,7 @@ full OpenSSL build. `phpflash` runs these automatically when the extension is en
 
 ## Enabling an extension in the project config
 
-In a `php-esp32.config.toml`, each optional extension is a `[extensions.<key>]` table with
+In a `php-baremetal.config.toml`, each optional extension is a `[extensions.<key>]` table with
 `enabled = true` and any of its sub-settings. `phpflash` translates these to the `-D` flags above at
 build time. A few worked examples follow.
 
@@ -226,7 +226,7 @@ build time. A few worked examples follow.
 Multibyte strings without the legacy CJK codecs — about 209 KB instead of 965 KB, with UTF-8, UTF-16
 and Latin unaffected.
 
-<!-- @code-block language="toml" label="php-esp32.config.toml" -->
+<!-- @code-block language="toml" label="php-baremetal.config.toml" -->
 ```toml
 [extensions.mbstring]
 enabled = true
@@ -241,7 +241,7 @@ no_cjk = true
 PDO with the SQLite driver (`ext/pdo` and `ext/pdo_sqlite`, built together). The SQLite amalgamation
 is fetched on demand.
 
-<!-- @code-block language="toml" label="php-esp32.config.toml" -->
+<!-- @code-block language="toml" label="php-baremetal.config.toml" -->
 ```toml
 [extensions.sqlite]
 enabled = true
@@ -255,7 +255,7 @@ enabled = true
 The real `ext/date` with the full `DateTime` API and the bundled timezone database, replacing the
 always-on UTC stub. Add `minimal_tz = true` for a UTC-only tz db (~350 KB smaller, no named zones).
 
-<!-- @code-block language="toml" label="php-esp32.config.toml" -->
+<!-- @code-block language="toml" label="php-baremetal.config.toml" -->
 ```toml
 [extensions.date]
 enabled = true
@@ -349,7 +349,7 @@ sub-options.
 ## Networking is not an extension
 
 Networking does not appear in the extension list. It comes with a board that has a network (the
-P4-ETH or the S3-ETH) and is configured in `php-esp32.config.toml` under `[network]` (static DNS) and
+P4-ETH or the S3-ETH) and is configured in `php-baremetal.config.toml` under `[esp32.network]` (static DNS) and
 `[extensions.openssl]` (the `tls` and `certs_path` settings for the HTTPS client). The `web-server`
 project type adds an HTTP server (`esp_http_server`) in front, invoking PHP fresh per request. See
 [openssl.md](./openssl.md) and the `https-client` example.

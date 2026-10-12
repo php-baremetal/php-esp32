@@ -53,13 +53,14 @@ Every path in your script is absolute from that mount point — the card's root 
 Where the card is mounted is independent of where your *code* runs from. That is the project's `storage_type`:
 
 - **`microsd`** — your `project-src/` is copied to the card and the entry script is read from `/sdcard/index.php` at boot. This is the fastest edit loop (pull the card, edit, reinsert) and the case this recipe uses. The card is already mounted, so reading and writing other files on it is free.
-- **`embedded`** — your source is baked into the firmware image, which is read-only. If embedded code needs to write files, mount a card alongside it by adding `[storage] microsd = true`; the code is served from flash while writes go to `/sdcard`.
+- **`embedded`** — your source is baked into the firmware image, which is read-only. If embedded code needs to write files, mount a card alongside it by adding `[esp32.storage] microsd = true`; the code is served from flash while writes go to `/sdcard`.
 
 <!-- @code-block language="toml" label="An embedded project that also mounts a card for writes" -->
 ```toml
+[esp32]
 storage_type = "embedded"
 
-[storage]
+[esp32.storage]
 microsd = true
 ```
 <!-- @endcode-block -->
@@ -130,15 +131,15 @@ foreach (scandir('/sdcard') as $entry) {
 
 The example runs its source straight from the card, so `storage_type` is `microsd`:
 
-<!-- @code-block language="toml" label="php-esp32.config.toml" -->
+<!-- @code-block language="toml" label="php-baremetal.config.toml" -->
 ```toml
 name = "sd-write"
-storage_type = "microsd"   # where the PHP source lives
 type = "init-loop"         # execution model
 
-[board]
-target = "esp32-p4-pico"
+[esp32]
+preset = "waveshare-esp32-p4-pico"
 port   = ""                # empty = autodetect at flash time
+storage_type = "microsd"   # where the PHP source lives
 
 [php]
 src   = "project-src"      # PHP source folder (copied to the microSD)

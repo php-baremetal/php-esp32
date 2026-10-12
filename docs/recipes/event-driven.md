@@ -15,9 +15,9 @@ In the `event-driven` model there is no `loop()`. Your script runs **once** to r
 start *sources*, then a reactor blocks on an event queue and delivers each event to its listeners. The
 engine stays resident, so a variable captured by a listener persists across events.
 
-Select the model in `php-esp32.config.toml`:
+Select the model in `php-baremetal.config.toml`:
 
-<!-- @code-block language="toml" label="php-esp32.config.toml" -->
+<!-- @code-block language="toml" label="php-baremetal.config.toml" -->
 ```toml
 type = "event-driven"
 ```

@@ -32,7 +32,7 @@ and **Symfony** serve pages over HTTP.
 
 ## The shape of a project
 
-A project is a folder with a small `php-esp32.config.toml` and a `project-src/` holding your PHP. You
+A project is a folder with a small `php-baremetal.config.toml` and a `project-src/` holding your PHP. You
 write the code; [`phpflash`](https://github.com/php-baremetal/flash-tool) scaffolds, builds, flashes
 and monitors it.
 
@@ -62,7 +62,7 @@ and a per-request `web-server` model — covered in [Getting started](./getting-
 | **ESP32-P4** | dual-core RISC-V, up to 400 MHz | up to 32 MB | Ethernet on the `-eth` boards |
 | **ESP32-S3** | dual-core Xtensa LX7, 240 MHz | 8 MB | Ethernet (W5500) on the `-eth` boards |
 
-PHP **8.3, 8.4 and 8.5** coexist in the tree and are selectable per project. A new chip family is a
+PHP **8.3, 8.4 and 8.5** coexist in the tree and are selectable per project. A new chip is a
 directory under `boards/`, not a change to the engine.
 
 ## Where to go next

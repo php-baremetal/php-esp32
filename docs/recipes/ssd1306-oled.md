@@ -238,17 +238,17 @@ The `delay()` call in both loops is one of the built-in `gpio` extension's funct
 
 Both projects use the same config: a pure-flash image with the script baked in, no microSD and no network, so it runs straight from reset.
 
-<!-- @code-block language="toml" label="php-esp32.config.toml — both examples" -->
+<!-- @code-block language="toml" label="php-baremetal.config.toml — both examples" -->
 ```toml
 name = "oled-ssd1306-fps"
-storage_type = "embedded"   # baked into flash; the demo needs no microSD
 type = "init-loop"          # setup()/loop() sketch, Arduino-style
 
-[board]
-target = "esp32-p4-eth"
+[esp32]
+preset = "waveshare-esp32-p4-eth"
 port   = ""          # empty = autodetect at flash time
+storage_type = "embedded"   # baked into flash; the demo needs no microSD
 
-[storage]
+[esp32.storage]
 microsd = false      # pure flash: the SD stack isn't compiled in
 
 [php]
@@ -263,7 +263,7 @@ For the C-extension version the only difference on disk is the driver directory:
 <!-- @code-block language="text" label="tree — oled-ssd1306-ext" -->
 ```text
 oled-ssd1306-ext/
-├── php-esp32.config.toml
+├── php-baremetal.config.toml
 ├── project-src/
 │   └── index.php               the demo, calling ssd1306_*
 └── firmware/exts/

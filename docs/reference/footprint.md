@@ -89,7 +89,7 @@ Off by default, enabled per project (phpflash does this from the manifest; by ha
 `ctype`, `filter` and `mbstring` together add about 995 KB; with `date` and PDO/SQLite also on, everything lands around 5.3 MB (the deltas are measured one at a time, so summing them is approximate), still well inside a 12 MB app partition. `mbstring` dominates that cost, and dropping its CJK codecs shrinks it from 965 KB to 209 KB, which brings the three down to about 240 KB together. Runtime memory stays negligible either way: all of these allocate from PSRAM.
 
 <!-- @callout variant="tip" title="Shrinking a build" -->
-Three levers move the image size down. Drop extensions you do not use (each is off by default; `mbstring` and full `openssl` are the two big ones). Prefer the trimmed variants where they exist — `PHP_EXT_MBSTRING_NO_CJK` (-755 KB), `PHP_EXT_DATE_MINIMAL_TZ` (-350 KB), or the `openssl` subset instead of the full build (~42 KB vs ~2.1 MB). Build `embedded` rather than networked when the board does not need the network. And an `embedded` project that runs purely from internal flash can drop the SD stack with `-DPHP_STORAGE_MICROSD=OFF` (`[storage] microsd = false`), saving about 51 KB.
+Three levers move the image size down. Drop extensions you do not use (each is off by default; `mbstring` and full `openssl` are the two big ones). Prefer the trimmed variants where they exist — `PHP_EXT_MBSTRING_NO_CJK` (-755 KB), `PHP_EXT_DATE_MINIMAL_TZ` (-350 KB), or the `openssl` subset instead of the full build (~42 KB vs ~2.1 MB). Build `embedded` rather than networked when the board does not need the network. And an `embedded` project that runs purely from internal flash can drop the SD stack with `-DPHP_STORAGE_MICROSD=OFF` (`[esp32.storage] microsd = false`), saving about 51 KB.
 <!-- @endcallout -->
 
 ## Networking and the web-server model
@@ -104,28 +104,27 @@ These are not extensions; they come with the board and the project type. Network
 
 So a networked init-loop firmware where PHP owns the socket is about 103 KB over the baseline, and the `web-server` project type with an HTTP server in front is about 139 KB over it. Both are small next to a single extension like `date` or `mbstring`, and far inside the app partition.
 
-The image can also go the other way and get smaller. microSD support (the SD drivers plus the board's mount code) is on by default and costs about 51 KB; an `embedded` project that runs purely from internal flash can drop it (`[storage] microsd = false`, the default for embedded). `fatfs` and `vfs` stay either way, since the embedded image is FAT too. Dropping the SD stack also lets a board with no card slot build cleanly.
+The image can also go the other way and get smaller. microSD support (the SD drivers plus the board's mount code) is on by default and costs about 51 KB; an `embedded` project that runs purely from internal flash can drop it (`[esp32.storage] microsd = false`, the default for embedded). `fatfs` and `vfs` stay either way, since the embedded image is FAT too. Dropping the SD stack also lets a board with no card slot build cleanly.
 
 ## Partitions
 
-The flash layout is generated per build (`cmake/gen-partitions.cmake`), not fixed. A board's `partitions.csv` only pins the constant partitions; the `storage` partition — the read-only FAT image that holds an embedded project's PHP source — is generated, and the optional `phpstore` NVS partition is added only when a project asks for it. The generated table lands in the project's `build/` (`partitions.gen.csv`) and is never committed.
+The flash layout is generated per build (`cmake/gen-partitions.cmake`), not fixed. A chip's `partitions.csv` pins only the constant partitions (`nvs`, `phy_init`); `factory` (the app) is regenerated to **fill** the flash, the `storage` partition — the read-only FAT image that holds an embedded project's PHP source — is generated for embedded projects, and the optional `phpstore` NVS partition is added only when a project asks for it. The generated table lands in the project's `build/` (`partitions.gen.csv`) and is never committed.
 
 ### The constant partitions
 
-Every board's committed `partitions.csv` pins the same three fixed partitions; only the `factory` app size differs between the P4 (32 MB flash) and the S3 (16 MB flash).
+Every chip's committed `partitions.csv` pins the same two fixed partitions. `factory` is regenerated per build to fill the flash — it fills the 32 MB on the P4, and whatever flash an S3 preset declares — leaving the ~3 MB engine plenty of room.
 
 | Partition | Type / subtype | Size | Notes |
 |---|---|---|---|
 | `nvs` | data / nvs | 24 KB | the system NVS namespace |
 | `phy_init` | data / phy | 4 KB | RF calibration data |
-| `factory` | app / factory | 12 MB (P4) · 10 MB (S3) | the app image; the ~3 MB engine sits here with plenty of room |
+| `factory` | app / factory | fills the flash | generated per build; the ~3 MB engine sits here with plenty of room |
 
-<!-- @code-block language="text" label="A board partitions.csv (esp32-p4-eth) — only the fixed partitions" -->
+<!-- @code-block language="text" label="boards/<chip>/partitions.csv — only the fixed partitions" -->
 ```text
 # Name,     Type, SubType,  Offset,   Size
 nvs,        data, nvs,      ,         24K
 phy_init,   data, phy,      ,         4K
-factory,    app,  factory,  ,         12M
 ```
 <!-- @endcode-block -->
 
@@ -142,7 +141,7 @@ For an `embedded` project the size is the source's cluster-rounded occupancy (4 
 
 <!-- @code-block language="toml" label="Reserve headroom in the storage image for files written at runtime" -->
 ```toml
-[storage]
+[esp32.storage]
 reserve_kb = 256   # added on top of the source occupancy before alignment
 ```
 <!-- @endcode-block -->

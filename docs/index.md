@@ -29,6 +29,7 @@
   - [Query SQLite with PDO](./recipes/sqlite-pdo.md)
   - [Make an HTTPS request](./recipes/https-request.md)
   - [Persist and share state](./recipes/persist-state.md)
+  - [Migrate an older project](./recipes/migrate-config.md)
 - Reference
   - [Footprint](./reference/footprint.md)
   - [Porting notes](./reference/porting-notes.md)

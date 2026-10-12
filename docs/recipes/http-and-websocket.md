@@ -17,7 +17,7 @@ reactor. This is different from the [`web-server`](./web-page.md) model: here th
 
 Enable the extension and start the server during setup:
 
-<!-- @code-block language="toml" label="php-esp32.config.toml" -->
+<!-- @code-block language="toml" label="php-baremetal.config.toml" -->
 ```toml
 type = "event-driven"
 

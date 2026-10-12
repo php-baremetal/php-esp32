@@ -12,7 +12,7 @@ next: { label: 'Blink an LED', href: '../recipes/blink-an-led.md' }
 
 # Build-time environment (`.env`)
 
-A project can ship a `.env` file next to its `php-esp32.config.toml`. When you build, `phpflash` reads that file, compiles its variables into the firmware image, and the running engine exposes them to PHP the ordinary way — as `$_ENV` and via `getenv()`. Nothing is hardcoded in the PHP source and nothing has to live as a file on the microSD.
+A project can ship a `.env` file next to its `php-baremetal.config.toml`. When you build, `phpflash` reads that file, compiles its variables into the firmware image, and the running engine exposes them to PHP the ordinary way — as `$_ENV` and via `getenv()`. Nothing is hardcoded in the PHP source and nothing has to live as a file on the microSD.
 
 <!-- @code-block language="php" label="reading baked-in values from PHP" -->
 ```php
@@ -37,10 +37,10 @@ Because the value is compiled in, the same PHP source produces different behavio
 
 ## Enabling it
 
-The feature is on by default: if a `.env` sits beside the config, it is baked in with no configuration needed. It is controllable from `php-esp32.config.toml`.
+The feature is on by default: if a `.env` sits beside the config, it is baked in with no configuration needed. It is controllable from `php-baremetal.config.toml`.
 
 <!-- @steps -->
-1. Put a `.env` next to `php-esp32.config.toml` in the project root.
+1. Put a `.env` next to `php-baremetal.config.toml` in the project root.
 2. Add `KEY=VALUE` lines (format below).
 3. Run `phpflash build` — the file is parsed and its entries are compiled into the image. `phpflash flash` writes that image to the board.
 4. Read the values from PHP through `$_ENV[...]` or `getenv(...)`.
@@ -49,7 +49,7 @@ The feature is on by default: if a `.env` sits beside the config, it is baked in
 
 With no `[env]` section in the config, the default applies — baked when `.env` exists, a silent no-op when it does not. The block only exists to override that default:
 
-<!-- @code-block language="toml" label="php-esp32.config.toml — the [env] knobs" -->
+<!-- @code-block language="toml" label="php-baremetal.config.toml — the [env] knobs" -->
 ```toml
 [env]
 enabled = true      # false turns baking off even when .env exists

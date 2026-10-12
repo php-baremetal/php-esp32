@@ -12,7 +12,7 @@ next: { label: 'Event-driven basics', href: '../recipes/event-driven.md' }
 # Execution models
 
 The firmware can run your PHP in three different shapes. You choose one per project with `type` in
-`php-esp32.config.toml`; the rest of your code is written to match. They are peers — the engine, the
+`php-baremetal.config.toml`; the rest of your code is written to match. They are peers — the engine, the
 extensions and the storage are the same underneath.
 
 | `type` | Shape | Your entry point | State between "runs" |
@@ -74,7 +74,7 @@ then [HTTP & WebSocket](../recipes/http-and-websocket.md).
 
 Set it in the project config:
 
-<!-- @code-block language="toml" label="php-esp32.config.toml" -->
+<!-- @code-block language="toml" label="php-baremetal.config.toml" -->
 ```toml
 type = "event-driven"
 ```

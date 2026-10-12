@@ -38,7 +38,7 @@ The [`store-demo`](https://github.com/php-baremetal/php-esp32/tree/master/exampl
 
 The store needs a slice of flash, so it is **off by default**. Give it a size in the project config:
 
-<!-- @code-block language="toml" label="php-esp32.config.toml" -->
+<!-- @code-block language="toml" label="php-baremetal.config.toml" -->
 ```toml
 [store]
 size_kb = 32     # size of the persistent NVS partition; 0 or absent = no persistence
@@ -172,7 +172,7 @@ function setup(): void
 {
     echo "\n=== store-demo :: persistent boot counter ===\n";
     if (!store_available()) {
-        echo "  persistence is OFF -- add [store] size_kb to php-esp32.config.toml\n";
+        echo "  persistence is OFF -- add [store] size_kb to php-baremetal.config.toml\n";
         echo "=============================================\n";
         return;
     }

@@ -62,21 +62,21 @@ The full list of GPIO (and other built-in) functions is in the [built-in extensi
 
 A minimal `init-loop` project. The PHP source lives on the microSD; the entry file is `index.php` inside `project-src`.
 
-<!-- @code-block language="toml" label="php-esp32.config.toml" -->
+<!-- @code-block language="toml" label="php-baremetal.config.toml" -->
 ```toml
 name = "led-blink"
-storage_type = "microsd"   # where the PHP source lives
 type = "init-loop"         # execution model
 
-[board]
-target = "esp32-p4-pico"
+[esp32]
+preset = "waveshare-esp32-p4-pico"
 port   = ""                # empty = autodetect at flash time
+storage_type = "microsd"   # where the PHP source lives
 
-[esp-idf]
+[esp32.idf]
 path    = ""
 version = ""
 
-[php-esp32]
+[esp32.sdk]
 path    = ""
 version = ""
 

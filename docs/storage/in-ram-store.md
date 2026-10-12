@@ -195,7 +195,7 @@ output has not yet been redirected into a request.
 You wire it up in the project config. The key is `init` under the `[web-server]` table, a path
 relative to the `[php] src` source root:
 
-<!-- @code-block language="toml" label="php-esp32.config.toml" -->
+<!-- @code-block language="toml" label="php-baremetal.config.toml" -->
 ```toml
 type = "web-server"
 

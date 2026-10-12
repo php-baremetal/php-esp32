@@ -17,7 +17,7 @@ temperature sensor — on the I²C bus. It ships as a driver in the `i2c` extens
 
 ## Enable it
 
-<!-- @code-block language="toml" label="php-esp32.config.toml" -->
+<!-- @code-block language="toml" label="php-baremetal.config.toml" -->
 ```toml
 [extensions.i2c]
 enabled = true

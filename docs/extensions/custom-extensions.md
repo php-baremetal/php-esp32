@@ -35,7 +35,7 @@ phpflash build              # compiles it into the firmware
 The scaffold defines the module entry and two example functions — `myext_hello()` and `myext_add($a, $b)` — to replace with your own. After the build, phpflash prints a reminder that the extension exposes those two functions and that optional use should be guarded with `function_exists('myext_hello')`. The rest of this page is the contract behind that skeleton.
 
 <!-- @callout variant="note" title="Run it from the project directory" -->
-`phpflash ext new` expects to run where your `php-esp32.config.toml` lives — it writes into `./firmware/exts/`. If it does not find a config file in the current directory it still scaffolds, but prints a note telling you to run it from the project directory. Nothing about the scaffold depends on the config; the warning is only a guard against writing the file in the wrong place.
+`phpflash ext new` expects to run where your `php-baremetal.config.toml` lives — it writes into `./firmware/exts/`. If it does not find a config file in the current directory it still scaffolds, but prints a note telling you to run it from the project directory. Nothing about the scaffold depends on the config; the warning is only a guard against writing the file in the wrong place.
 <!-- @endcallout -->
 
 ## The `phpflash ext new` scaffold
@@ -139,7 +139,7 @@ Put each extension in its own directory under `firmware/exts/`, next to your pro
 <!-- @code-block language="text" label="tree — project with one extension" -->
 ```text
 my-project/
-├── php-esp32.config.toml
+├── php-baremetal.config.toml
 ├── project-src/            your PHP
 └── firmware/exts/
     └── myext/
@@ -358,7 +358,7 @@ The [`oled-ssd1306-ext`](https://github.com/php-baremetal/php-esp32/blob/master/
 <!-- @code-block language="text" label="tree — oled-ssd1306-ext" -->
 ```text
 oled-ssd1306-ext/
-├── php-esp32.config.toml
+├── php-baremetal.config.toml
 ├── project-src/
 │   └── index.php               the demo, calling ssd1306_*
 └── firmware/exts/

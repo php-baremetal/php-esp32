@@ -29,7 +29,7 @@ Fetch an HTTPS URL from PHP over a TLS connection whose peer certificate is veri
 
 ## What you need
 
-- A networked board with a cable on a network that has DHCP and internet. This recipe uses `esp32-p4-eth`.
+- A networked board with a cable on a network that has DHCP and internet. This recipe uses `waveshare-esp32-p4-eth`.
 - The full openssl build (`full = true`) with the `tls` setting. The plain subset and a full build without `tls` have no TLS transport.
 - A CA bundle on the device. `phpflash build` copies your host's root-CA store into the project so it ships with the firmware.
 - Static DNS, or the resolvers DHCP hands out. Name resolution rides the board's network.
@@ -38,9 +38,9 @@ Fetch an HTTPS URL from PHP over a TLS connection whose peer certificate is veri
 
 <!-- @steps -->
 
-1. Enable the full openssl build with the TLS transport in `php-esp32.config.toml` under `[extensions.openssl]`: `enabled = true`, `full = true`, `tls = true`. The `tls` setting builds the `ssl://` / `tls://` stream transport (esp-tls), so `https://` works.
+1. Enable the full openssl build with the TLS transport in `php-baremetal.config.toml` under `[extensions.openssl]`: `enabled = true`, `full = true`, `tls = true`. The `tls` setting builds the `ssl://` / `tls://` stream transport (esp-tls), so `https://` works.
 2. Run `phpflash build` (or `phpflash update-certs`) to copy the host trust store into `project-src/certs/ca-bundle.crt`. The firmware points the TLS transport at it and verifies peers against it.
-3. Set `[network] dns` to pin your own resolvers, or leave it out to use the DHCP-provided DNS.
+3. Set `[esp32.network] dns` to pin your own resolvers, or leave it out to use the DHCP-provided DNS.
 
 <!-- @endsteps -->
 
@@ -91,17 +91,17 @@ The transport reads the shipped `ca-bundle.crt` and validates the peer's certifi
 
 An embedded-storage `init-loop` project on a networked board: the source, the CA bundle, and the `openssl.cnf` are all flashed into the image, so no card is needed.
 
-<!-- @code-block language="toml" label="php-esp32.config.toml" -->
+<!-- @code-block language="toml" label="php-baremetal.config.toml" -->
 ```toml
 name = "https-client"
-storage_type = "embedded"   # source and the CA bundle are flashed into the image
 type = "init-loop"          # execution model
 
-[board]
-target = "esp32-p4-eth"     # a board with a network -- TLS/HTTPS need one
+[esp32]
+preset = "waveshare-esp32-p4-eth"   # a board with a network -- TLS/HTTPS need one
 port   = ""                 # empty = autodetect at flash time
+storage_type = "embedded"   # source and the CA bundle are flashed into the image
 
-[network]
+[esp32.network]
 dns = ["1.1.1.1", "8.8.8.8"]   # static DNS; comment out to use whatever DHCP hands out
 
 [extensions.openssl]
@@ -118,7 +118,7 @@ entry = "index.php"
 <!-- @endcode-block -->
 
 <!-- @callout variant="note" title="DNS is static" -->
-The esp-tls transport resolves names over the board's network. There is no separate DHCP-DNS lookup path unless you rely on the resolvers DHCP hands out — set `[network] dns` to pin your own, and phpflash passes them to the firmware as `-DPHP_NET_DNS=1.1.1.1,8.8.8.8` (comma-separated). Leave the array empty or omit it to keep the DHCP-provided DNS.
+The esp-tls transport resolves names over the board's network. There is no separate DHCP-DNS lookup path unless you rely on the resolvers DHCP hands out — set `[esp32.network] dns` to pin your own, and phpflash passes them to the firmware as `-DPHP_NET_DNS=1.1.1.1,8.8.8.8` (comma-separated). Leave the array empty or omit it to keep the DHCP-provided DNS.
 <!-- @endcallout -->
 
 ## Build & flash

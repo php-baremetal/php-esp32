@@ -79,21 +79,21 @@ A full framework leaves ~33 MB of PSRAM free on the ESP32-P4-ETH (up to 32 MB PS
 
 A minimal `web-server` project on the networked P4 board. For the hand-written page the entry is a bare `index.php`; for a framework, point `entry` at `public/index.php` and enable the framework's extensions plus `opcache`.
 
-<!-- @code-block language="toml" label="php-esp32.config.toml — minimal web-server" -->
+<!-- @code-block language="toml" label="php-baremetal.config.toml — minimal web-server" -->
 ```toml
 name = "web-page"
-storage_type = "microsd"   # where the PHP source lives
 type = "web-server"        # HTTP server in front, PHP per request
 
-[board]
-target = "esp32-p4-eth"    # a networked board -- web-server needs the wired link
+[esp32]
+preset = "waveshare-esp32-p4-eth"    # a networked board -- web-server needs the wired link
 port   = ""                # empty = autodetect at flash time
+storage_type = "microsd"   # where the PHP source lives
 
-[esp-idf]
+[esp32.idf]
 path    = ""
 version = ""
 
-[php-esp32]
+[esp32.sdk]
 path    = ""
 version = ""
 
